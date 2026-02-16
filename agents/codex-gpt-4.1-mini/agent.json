@@ -1,0 +1,5 @@
+{
+  "name": "codex-gpt-4.1-mini",
+  "executable": "codex",
+  "args": ["exec", "--full-auto", "-m", "gpt-4.1-mini"]
+}

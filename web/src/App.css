@@ -1,0 +1,82 @@
+.App {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  font-family: sans-serif;
+}
+
+.Layout {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.MemberList {
+  width: 250px;
+  border-right: 1px solid #ccc;
+  padding: 1rem;
+  overflow-y: auto;
+}
+
+.MemberItem {
+  padding: 0.5rem;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.MemberItem:hover {
+  background: #f0f0f0;
+}
+
+.MemberItem.active {
+  background: #007bff;
+  color: white;
+}
+
+.Chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.MessageList {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-bottom: 1rem;
+}
+
+.Message {
+  max-width: 80%;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+}
+
+.Message.request {
+  align-self: flex-end;
+  background: #e9ecef;
+}
+
+.Message.response {
+  align-self: flex-start;
+  background: #d4edda;
+}
+
+.Sender {
+  font-size: 0.8rem;
+  color: #666;
+  margin-bottom: 0.2rem;
+}
+
+.InputArea {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.InputArea input {
+  flex: 1;
+  padding: 0.5rem;
+}

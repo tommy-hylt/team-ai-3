@@ -1,0 +1,5 @@
+{
+  "name": "codex-o3-mini",
+  "executable": "codex",
+  "args": ["exec", "--full-auto", "-m", "o3-mini"]
+}

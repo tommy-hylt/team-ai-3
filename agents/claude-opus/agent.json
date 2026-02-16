@@ -1,0 +1,5 @@
+{
+  "name": "claude-opus",
+  "executable": "claude",
+  "args": ["--model", "opus", "--dangerously-skip-permissions", "-p"]
+}

@@ -1,0 +1,5 @@
+{
+  "name": "claude-haiku",
+  "executable": "claude",
+  "args": ["--model", "haiku", "--dangerously-skip-permissions", "-p"]
+}

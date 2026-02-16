@@ -1,0 +1,5 @@
+{
+  "name": "gemini-2.5-flash",
+  "executable": "gemini",
+  "args": ["-m", "gemini-2.5-flash", "-y", "-p"]
+}

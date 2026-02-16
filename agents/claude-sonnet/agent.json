@@ -1,0 +1,5 @@
+{
+  "name": "claude-sonnet",
+  "executable": "claude",
+  "args": ["--model", "sonnet", "--dangerously-skip-permissions", "-p"]
+}
