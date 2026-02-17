@@ -2,7 +2,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #0b0e14;
+  background-color: #08090a;
   height: 100%;
 
   .Header {
@@ -10,14 +10,14 @@
     align-items: center;
     gap: 12px;
     padding: 16px 24px;
-    border-bottom: 1px solid #232833;
-    background-color: #0b0e14aa;
+    border-bottom: 1px solid #1c1f23;
+    background-color: #08090aaa;
     backdrop-filter: blur(12px);
     z-index: 10;
 
     h2 {
       font-size: 16px;
-      font-weight: 600;
+      font-weight: 700;
       margin: 0;
       color: #ebecf0;
     }
@@ -25,7 +25,7 @@
     .BackButton {
       background: none;
       border: none;
-      color: #70778b;
+      color: #6b7280;
       font-size: 20px;
       padding: 4px;
       margin-left: -8px;
@@ -37,8 +37,8 @@
       transition: 0.2s;
 
       &:hover {
-        color: #ebecf0;
-        background-color: #1c212e;
+        color: #0abab5;
+        background-color: #16191d;
       }
     }
   }
@@ -46,15 +46,15 @@
   .ScrollArea {
     flex: 1;
     overflow-y: auto;
-    padding: 32px 40px;
+    padding: 40px;
 
     @media (max-width: 768px) {
-      padding: 20px;
+      padding: 24px 20px;
     }
   }
 
   .Form {
-    max-width: 800px;
+    max-width: 700px;
     margin: 0 auto;
     display: flex;
     flex-direction: column;
@@ -72,9 +72,9 @@
       justify-content: space-between;
 
       label {
-        font-size: 12px;
-        font-weight: 700;
-        color: #565d71;
+        font-size: 11px;
+        font-weight: 800;
+        color: #4b5563;
         text-transform: uppercase;
         letter-spacing: 0.1em;
       }
@@ -82,7 +82,7 @@
       button {
         background: none;
         border: none;
-        color: #70778b;
+        color: #6b7280;
         cursor: pointer;
         padding: 4px;
         border-radius: 4px;
@@ -90,8 +90,8 @@
         transition: 0.2s;
 
         &:hover {
-          color: #0066ff;
-          background-color: #0066ff11;
+          color: #0abab5;
+          background-color: #0abab511;
         }
       }
 
@@ -99,25 +99,25 @@
         display: flex;
         gap: 8px;
 
-        .SaveButton:hover { color: #34d399; background-color: #34d39911; }
+        .SaveButton:hover { color: #0abab5; background-color: #0abab511; }
         .CancelButton:hover { color: #f87171; background-color: #f8717111; }
       }
     }
 
     .FieldContent {
-      background-color: #11141d;
-      border: 1px solid #232833;
+      background-color: #0f1113;
+      border: 1px solid #1c1f23;
       border-radius: 12px;
       padding: 16px;
-      min-height: 50px;
+      min-height: 44px;
       transition: 0.2s;
 
       pre {
         margin: 0;
-        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-family: "JetBrains Mono", monospace;
         font-size: 13px;
         line-height: 1.6;
-        color: #949db0;
+        color: #94a3b8;
         white-space: pre-wrap;
         word-break: break-word;
       }
@@ -126,7 +126,7 @@
         width: 100%;
         background: none;
         border: none;
-        color: #ebecf0;
+        color: #e0e6ed;
         font-family: inherit;
         font-size: 14px;
         outline: none;
@@ -136,9 +136,15 @@
       textarea {
         min-height: 150px;
         resize: vertical;
-        font-family: "JetBrains Mono", "Fira Code", monospace;
+        font-family: "JetBrains Mono", monospace;
         font-size: 13px;
       }
+    }
+
+    &.editing .FieldContent {
+      border-color: #0abab5;
+      background-color: #16191d;
+      box-shadow: 0 0 0 4px #0abab511;
     }
 
     .AgentTags {
@@ -150,63 +156,58 @@
     .AgentTag {
       font-size: 11px;
       font-weight: 600;
-      color: #0066ff;
-      background-color: #0066ff11;
-      padding: 4px 10px;
+      color: #0abab5;
+      background-color: #0abab511;
+      padding: 4px 12px;
       border-radius: 6px;
-      border: 1px solid #0066ff22;
-      letter-spacing: 0.05em;
+      border: 1px solid #0abab533;
       transition: 0.2s;
 
       &.toggle {
         cursor: pointer;
         user-select: none;
-        color: #565d71;
-        background-color: #1c212e;
-        border-color: #232833;
+        color: #6b7280;
+        background-color: #16191d;
+        border-color: #1c1f23;
 
         &:hover {
-          color: #949db0;
-          border-color: #33394d;
+          color: #94a3b8;
+          border-color: #4b5563;
         }
 
         &.active {
-          color: #0066ff;
-          background-color: #0066ff11;
-          border-color: #0066ff44;
-          box-shadow: 0 0 12px #0066ff22;
+          color: #0abab5;
+          background-color: #0abab511;
+          border-color: #0abab566;
+          box-shadow: 0 0 12px #0abab522;
         }
       }
-    }
-
-    &.editing .FieldContent {
-      border-color: #0066ff;
-      background-color: #161a26;
-      box-shadow: 0 0 0 4px #0066ff11;
     }
   }
 
   .FormActions {
-    margin-top: 16px;
+    margin-top: 8px;
     display: flex;
   }
 
   .SubmitButton {
     flex: 1;
-    background: linear-gradient(135deg, #0066ff, #0052cc);
-    color: white;
+    background-color: #0abab5;
+    color: #08090a;
     border: none;
     border-radius: 12px;
-    padding: 16px 32px;
-    font-weight: 600;
-    font-size: 15px;
+    padding: 16px;
+    font-weight: 800;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     cursor: pointer;
     transition: 0.2s;
-    box-shadow: 0 8px 24px #0066ff33;
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px #0066ff44;
+      background-color: #0cd4cf;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px #0abab544;
     }
 
     &:active {
