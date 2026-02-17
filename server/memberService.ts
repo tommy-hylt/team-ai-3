@@ -1,9 +1,12 @@
 import { readdir, readFile } from "fs/promises";
-import { join } from "path";
-import { Member } from "./member.ts";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
+import Member from "./member";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export async function listMembers() {
-  const membersDir = join(process.cwd(), "../members");
+  const membersDir = join(__dirname, "../members");
   const entries = await readdir(membersDir, { withFileTypes: true });
   
   const memberPromises = entries
@@ -18,7 +21,7 @@ export async function getMember(name: string) {
 }
 
 async function loadMember(name: string) {
-  const memberJsonPath = join(process.cwd(), "../members", name, "member.json");
+  const memberJsonPath = join(__dirname, "../members", name, "member.json");
   
   try {
     const content = await readFile(memberJsonPath, "utf-8");

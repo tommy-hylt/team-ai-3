@@ -1,5 +1,9 @@
 {
   "name": "gemini-2.5-flash",
   "executable": "gemini",
-  "args": ["-m", "gemini-2.5-flash", "-y", "-p"]
+  "args": [
+    { "type": "basic", "parts": ["-m", "gemini-2.5-flash", "-y", "-o", "json"] },
+    { "type": "resume", "parts": ["-r"] },
+    { "type": "basic", "parts": ["-p"] }
+  ]
 }

@@ -1,5 +1,9 @@
 {
   "name": "claude-haiku",
   "executable": "claude",
-  "args": ["--model", "haiku", "--dangerously-skip-permissions", "-p"]
+  "args": [
+    { "type": "basic", "parts": ["--model", "haiku", "--dangerously-skip-permissions", "--output-format", "json"] },
+    { "type": "resume", "parts": ["-c"] },
+    { "type": "basic", "parts": ["-p"] }
+  ]
 }

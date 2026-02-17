@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import express from "express";
 import cors from "cors";
 import { listMembers, getMember } from "./memberService.ts";
@@ -5,7 +6,7 @@ import { getChatHistory, addRequest, addResponse } from "./chatService.ts";
 import { runAgent } from "./agentService.ts";
 
 const app = express();
-const port = 3000;
+const port = 8698;
 
 app.use(cors());
 app.use(express.json());
@@ -36,39 +37,46 @@ app.get("/api/members/:id/chat", async (req, res) => {
 });
 
 app.post("/api/members/:id/request", async (req, res) => {
-  const memberId = req.params.id;
-  const { text, requester } = req.body;
-  console.log(`POST /api/members/${memberId}/request from ${requester}: ${text}`);
-  
-  const member = await getMember(memberId);
-  if (!member) {
-    console.warn(`Member not found for request: ${memberId}`);
-    res.status(404).json({ error: "Member not found" });
-    return;
+  try {
+    const memberId = req.params.id;
+    const { text, requester } = req.body;
+    console.log(`POST /api/members/${memberId}/request from ${requester}: ${text}`);
+    
+    const member = await getMember(memberId);
+    if (!member) {
+      console.warn(`Member not found for request: ${memberId}`);
+      res.status(404).json({ error: "Member not found" });
+      return;
+    }
+
+    const request = {
+      id: randomUUID(),
+      text,
+      requester,
+      requestTime: new Date(),
+      status: "pending" as const,
+    };
+
+    await addRequest(memberId, request);
+
+    console.log(`Running agent for ${memberId}...`);
+    // Trigger agent
+    const responseText = await runAgent(member, request.text);
+    console.log(`Agent response for ${memberId}: ${responseText}`);
+    
+    const response = {
+      text: responseText,
+      time: new Date(),
+      requestId: request.id,
+    };
+
+    await addResponse(memberId, response);
+
+    res.json(response);
+  } catch (error) {
+    console.error("Error handling request:", error);
+    res.status(500).json({ error: "Internal server error", details: (error as any).message });
   }
-
-  const request = {
-    text,
-    requester,
-    requestTime: new Date(),
-    status: "pending" as const,
-  };
-
-  await addRequest(memberId, request);
-
-  console.log(`Running agent for ${memberId}...`);
-  // Trigger agent
-  const responseText = await runAgent(member, text);
-  console.log(`Agent response for ${memberId}: ${responseText}`);
-  
-  const response = {
-    text: responseText,
-    time: new Date(),
-  };
-
-  await addResponse(memberId, response);
-
-  res.json(response);
 });
 
 app.listen(port, () => {

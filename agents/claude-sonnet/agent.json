@@ -1,5 +1,9 @@
 {
   "name": "claude-sonnet",
   "executable": "claude",
-  "args": ["--model", "sonnet", "--dangerously-skip-permissions", "-p"]
+  "args": [
+    { "type": "basic", "parts": ["--model", "sonnet", "--dangerously-skip-permissions", "--output-format", "json"] },
+    { "type": "resume", "parts": ["-c"] },
+    { "type": "basic", "parts": ["-p"] }
+  ]
 }

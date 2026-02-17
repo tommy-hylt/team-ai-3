@@ -9,7 +9,12 @@ export function MemberProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     fetch("/api/members")
       .then((res) => res.json())
-      .then(setMembers);
+      .then((data) => {
+        setMembers(data);
+        if (data.length > 0 && !selectedMember) {
+          setSelectedMember(data[0]);
+        }
+      });
   }, []);
 
   return (

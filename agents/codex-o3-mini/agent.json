@@ -1,5 +1,8 @@
 {
   "name": "codex-o3-mini",
   "executable": "codex",
-  "args": ["exec", "--full-auto", "-m", "o3-mini"]
+  "args": [
+    { "type": "basic", "parts": ["exec", "--full-auto", "-m", "o3-mini", "--json"] },
+    { "type": "resume", "parts": ["resume", "--last"] }
+  ]
 }

@@ -23,12 +23,18 @@ Minimal schema:
 
 ```json
 {
-  "name": "claude-haiku",
-  "command": "start-agent.cmd"
+  "name": "gemini-2.5-flash",
+  "executable": "gemini",
+  "args": [
+    { "type": "basic", "parts": ["-m", "gemini-2.5-flash", "-y"] },
+    { "type": "resume", "parts": ["-r"] },
+    { "type": "basic", "parts": ["-p"] }
+  ]
 }
 ```
 
-- `command` is a path **relative to the template folder**.
+- `executable` is the command to run.
+- `args` is an array of parts that are conditionally included based on session history.
 
 ## Agents (9)
 

@@ -1,19 +1,33 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, useRef } from "react";
+import { useParams } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
+import { FiChevronLeft } from "react-icons/fi";
+import { MessageTime } from "./MessageTime";
+import "./Chat.css";
 
-export function Chat() {
-  const { selectedMember } = useContext(MemberContext);
+export function Chat({ onBack }: { onBack: () => void }) {
+  const { id } = useParams();
+  const { members } = useContext(MemberContext);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const selectedMember = members.find(m => m.id === id);
 
   useEffect(() => {
-    if (!selectedMember) return;
+    if (!id) return;
     
-    fetch(`/api/members/${selectedMember.id}/chat`)
+    fetch(`/api/members/${id}/chat`)
       .then((res) => res.json())
       .then(setMessages);
-  }, [selectedMember]);
+  }, [id]);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   async function handleSend() {
     if (!selectedMember || !input || loading) return;
@@ -22,7 +36,6 @@ export function Chat() {
     const text = input;
     setInput("");
 
-    // Optimistic update
     const newRequest = { type: "request", text, requestTime: new Date() };
     setMessages(prev => [...prev, newRequest]);
 
@@ -42,31 +55,49 @@ export function Chat() {
   }
 
   if (!selectedMember) {
-    return <div className="Chat">Select a member to start chatting</div>;
+    return (
+      <div className="Chat">
+        <div className="EmptyState">Agent not found</div>
+      </div>
+    );
   }
 
   return (
     <div className="Chat">
-      <h2>{selectedMember.name}</h2>
-      <div className="MessageList">
+      <div className="Header">
+        <button className="BackButton" onClick={onBack}>
+          <FiChevronLeft />
+        </button>
+        <h2>{selectedMember.name}</h2>
+      </div>
+      <div className="MessageList" ref={scrollRef}>
         {messages.map((m, i) => (
           <div key={i} className={`Message ${m.type}`}>
-            <div className="Sender">{m.type === "request" ? (m.requester || "User") : selectedMember.name}</div>
             <div className="Text">{m.text}</div>
+            <MessageTime date={m.time || m.requestTime} />
           </div>
         ))}
+        {loading && (
+          <div className="TypingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+        )}
       </div>
       <div className="InputArea">
-        <input 
-          value={input} 
-          onChange={(e) => setInput(e.target.value)} 
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
-          placeholder="Type a message..."
-          disabled={loading}
-        />
-        <button onClick={handleSend} disabled={loading}>
-          {loading ? "..." : "Send"}
-        </button>
+        <div className="InputWrapper">
+          <input 
+            value={input} 
+            onChange={(e) => setInput(e.target.value)} 
+            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            placeholder={`Message ${selectedMember.name}...`}
+            disabled={loading}
+          />
+          <button onClick={handleSend} disabled={loading || !input.trim()}>
+            {loading ? "..." : "Send"}
+          </button>
+        </div>
       </div>
     </div>
   );

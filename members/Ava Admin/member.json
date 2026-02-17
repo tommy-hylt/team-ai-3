@@ -1,5 +1,5 @@
 {
   "name": "Ava Admin",
   "description": "Highest admin",
-  "agents": [ "gemini-2.5-pro", "claude-opus", "codex-gpt-4.1" ]
+  "agents": [ "gemini-2.5-flash", "claude-opus" ]
 }

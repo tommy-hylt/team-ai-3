@@ -1,5 +1,8 @@
 {
   "name": "codex-gpt-4.1",
   "executable": "codex",
-  "args": ["exec", "--full-auto", "-m", "gpt-4.1"]
+  "args": [
+    { "type": "basic", "parts": ["exec", "--full-auto", "-m", "gpt-4.1", "--json"] },
+    { "type": "resume", "parts": ["resume", "--last"] }
+  ]
 }

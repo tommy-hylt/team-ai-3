@@ -1,5 +1,9 @@
 {
   "name": "claude-opus",
   "executable": "claude",
-  "args": ["--model", "opus", "--dangerously-skip-permissions", "-p"]
+  "args": [
+    { "type": "basic", "parts": ["--model", "opus", "--dangerously-skip-permissions", "--output-format", "json"] },
+    { "type": "resume", "parts": ["-c"] },
+    { "type": "basic", "parts": ["-p"] }
+  ]
 }

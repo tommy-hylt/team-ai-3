@@ -1,7 +1,10 @@
 import { readFile, writeFile } from "fs/promises";
-import { join } from "path";
+import { join, dirname } from "path";
+import { fileURLToPath } from "url";
 import { Request } from "./request.ts";
 import { Response } from "./response.ts";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export async function getChatHistory(memberName: string) {
   const requests = await readJson<Request[]>(memberName, "requests.json") || [];
@@ -28,7 +31,7 @@ export async function addResponse(memberName: string, response: Response) {
 }
 
 async function readJson<T>(memberName: string, fileName: string) {
-  const filePath = join(process.cwd(), "../members", memberName, fileName);
+  const filePath = join(__dirname, "../members", memberName, fileName);
   try {
     const content = await readFile(filePath, "utf-8");
     return JSON.parse(content) as T;
@@ -38,6 +41,6 @@ async function readJson<T>(memberName: string, fileName: string) {
 }
 
 async function writeJson(memberName: string, fileName: string, data: any) {
-  const filePath = join(process.cwd(), "../members", memberName, fileName);
+  const filePath = join(__dirname, "../members", memberName, fileName);
   await writeFile(filePath, JSON.stringify(data, null, 2), "utf-8");
 }
