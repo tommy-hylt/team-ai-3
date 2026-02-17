@@ -122,6 +122,7 @@ function tryParseAgentJson(output: string): string | undefined {
         const json = JSON.parse(line);
         
         // Gemini format
+        if (json.response) return json.response;
         if (json.text) return json.text;
         if (json.replies && Array.isArray(json.replies)) return json.replies.join("\n");
         

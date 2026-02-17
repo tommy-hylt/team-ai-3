@@ -9,12 +9,18 @@
   .Header {
     display: flex;
     align-items: center;
-    gap: 12px;
+    justify-content: space-between;
     padding: 16px 24px;
     border-bottom: 1px solid #232833;
     background-color: #0b0e14aa;
     backdrop-filter: blur(12px);
     z-index: 10;
+
+    .HeaderLeft {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
 
     h2 {
       font-size: 16px;
@@ -24,16 +30,21 @@
       letter-spacing: 0.02em;
     }
 
-    .BackButton {
-      display: none;
+    .HeaderActions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ActionButton, .BackButton {
       background: none;
       border: none;
       color: #70778b;
       font-size: 20px;
-      padding: 4px;
-      margin-left: -8px;
+      padding: 8px;
       cursor: pointer;
-      border-radius: 6px;
+      border-radius: 8px;
+      display: flex;
       align-items: center;
       justify-content: center;
       transition: 0.2s;
@@ -42,7 +53,11 @@
         color: #ebecf0;
         background-color: #1c212e;
       }
+    }
 
+    .BackButton {
+      display: none;
+      margin-left: -8px;
       @media (max-width: 768px) {
         display: flex;
       }

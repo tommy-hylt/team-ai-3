@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import express from "express";
 import cors from "cors";
-import { listMembers, getMember } from "./memberService.ts";
+import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse } from "./chatService.ts";
 import { runAgent } from "./agentService.ts";
 
@@ -16,6 +16,26 @@ app.get("/api/members", async (req, res) => {
   const members = await listMembers();
   console.log(`Found ${members.length} members`);
   res.json(members);
+});
+
+app.post("/api/members", async (req, res) => {
+  try {
+    const details = await createMember(req.body);
+    res.json(details);
+  } catch (error) {
+    res.status(500).json({ error: (error as any).message });
+  }
+});
+
+app.get("/api/members/:id/details", async (req, res) => {
+  const details = await getMemberDetails(req.params.id);
+  if (!details) return res.status(404).json({ error: "Member not found" });
+  res.json(details);
+});
+
+app.post("/api/members/:id/details", async (req, res) => {
+  const details = await updateMemberDetails(req.params.id, req.body);
+  res.json(details);
 });
 
 app.get("/api/members/:id", async (req, res) => {

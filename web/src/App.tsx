@@ -1,24 +1,30 @@
-import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
+import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import "./App.css";
 import { MemberProvider } from "./MemberProvider";
 import { MemberList } from "./MemberList";
 import { Chat } from "./Chat";
+import { MemberEdit } from "./MemberEdit";
+import { MemberNew } from "./MemberNew";
 import { useContext, useEffect } from "react";
 import { MemberContext } from "./MemberContext";
 
 function AppContent() {
-  const { members, selectedMember, setSelectedMember } = useContext(MemberContext);
+  const { members, setSelectedMember } = useContext(MemberContext);
   const navigate = useNavigate();
-  const { id } = useParams();
   const location = useLocation();
 
   // Sync route ID with selectedMember
   useEffect(() => {
-    if (id && members.length > 0) {
+    const parts = location.pathname.split("/");
+    const id = parts[1];
+    const isEdit = parts[2] === "edit";
+    const isNew = id === "new";
+
+    if (id && !isNew && members.length > 0) {
       const member = members.find(m => m.id === id);
       if (member) setSelectedMember(member);
     }
-  }, [id, members, setSelectedMember]);
+  }, [location.pathname, members, setSelectedMember]);
 
   // Redirect to first member on desktop if no ID
   useEffect(() => {
@@ -35,7 +41,9 @@ function AppContent() {
         <MemberList onSelect={(id) => navigate(`/${id}`)} />
         <Routes>
           <Route path="/" element={<div className="Chat Empty"><div className="EmptyState">Select an agent to start chatting</div></div>} />
+          <Route path="/new" element={<MemberNew />} />
           <Route path="/:id" element={<Chat onBack={() => navigate("/")} />} />
+          <Route path="/:id/edit" element={<MemberEdit />} />
         </Routes>
       </div>
     </div>

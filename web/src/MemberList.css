@@ -10,12 +10,36 @@
 
   .Header {
     padding: 0 20px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
     h2 {
       font-size: 14px;
       font-weight: 600;
       color: #70778b;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+      margin: 0;
+    }
+
+    .AddButton {
+      background: none;
+      border: none;
+      color: #70778b;
+      font-size: 20px;
+      padding: 4px;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+
+      &:hover {
+        color: #0066ff;
+        background-color: #0066ff11;
+      }
     }
   }
 
@@ -25,39 +49,37 @@
   }
 
   .MemberItem {
-    padding: 14px 20px;
+    padding: 16px 20px;
     cursor: pointer;
     transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 14px;
-    font-weight: 500;
-    color: #949db0;
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 12px;
     margin: 4px 12px;
-    border-radius: 8px;
+    border-radius: 12px;
     position: relative;
 
     &:hover {
       background-color: #1c212e;
-      color: #ebecf0;
       transform: translateX(4px);
     }
 
     &.active {
       background-color: #1c212e;
-      color: #ebecf0;
       box-shadow: 0 4px 12px #00000033;
       
       &::after {
         content: "";
         position: absolute;
         left: 0;
+        top: 20px;
         height: 20px;
         width: 3px;
         background-color: #0066ff;
         border-radius: 0 4px 4px 0;
       }
+
+      .Name { color: #ebecf0; }
     }
 
     &::before {
@@ -68,6 +90,53 @@
       background-color: #34d399;
       box-shadow: 0 0 10px #34d39944;
       flex-shrink: 0;
+      margin-top: 6px;
+    }
+
+    .Info {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .NameRow {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .Name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #949db0;
+      transition: 0.2s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .AgentTag {
+      font-size: 9px;
+      font-weight: 700;
+      color: #0066ff;
+      background-color: #0066ff11;
+      padding: 2px 6px;
+      border-radius: 4px;
+      border: 1px solid #0066ff22;
+      letter-spacing: 0.02em;
+      flex-shrink: 0;
+    }
+
+    .Description {
+      font-size: 12px;
+      color: #565d71;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-top: 2px;
     }
   }
 
@@ -83,8 +152,13 @@
 
     .MemberItem {
       margin: 8px 16px;
-      padding: 16px 20px;
+      padding: 20px;
       background-color: #1c212e;
+      transform: none !important;
+
+      &::after {
+        display: none;
+      }
     }
   }
 }

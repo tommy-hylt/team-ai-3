@@ -1,12 +1,13 @@
 import { useContext, useEffect, useState, useRef } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft } from "react-icons/fi";
+import { FiChevronLeft, FiEdit2, FiCopy } from "react-icons/fi";
 import { MessageTime } from "./MessageTime";
 import "./Chat.css";
 
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { members } = useContext(MemberContext);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
@@ -65,10 +66,20 @@ export function Chat({ onBack }: { onBack: () => void }) {
   return (
     <div className="Chat">
       <div className="Header">
-        <button className="BackButton" onClick={onBack}>
-          <FiChevronLeft />
-        </button>
-        <h2>{selectedMember.name}</h2>
+        <div className="HeaderLeft">
+          <button className="BackButton" onClick={onBack}>
+            <FiChevronLeft />
+          </button>
+          <h2>{selectedMember.name}</h2>
+        </div>
+        <div className="HeaderActions">
+          <button className="ActionButton" onClick={() => navigate(`/new?clone=${id}`)}>
+            <FiCopy />
+          </button>
+          <button className="ActionButton" onClick={() => navigate(`/${id}/edit`)}>
+            <FiEdit2 />
+          </button>
+        </div>
       </div>
       <div className="MessageList" ref={scrollRef}>
         {messages.map((m, i) => (

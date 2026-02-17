@@ -1,5 +1,5 @@
 {
-  "name": "Ava Admin",
+  "name": "Bob Admin",
   "description": "Lead Administrator",
   "agents": [
     "claude-haiku",
