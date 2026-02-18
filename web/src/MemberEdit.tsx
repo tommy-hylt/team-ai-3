@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder } from "react-icons/fi";
+import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2 } from "react-icons/fi";
 import "./MemberEdit.css";
 
 interface MemberDetails {
@@ -166,13 +166,13 @@ export function MemberEdit() {
 
       <div className="Header">
 
-        <button className="BackButton" onClick={() => navigate(-1)}>
+        <button className="BackButton" onClick={() => navigate(`/${id}`)}>
 
           <FiChevronLeft />
 
         </button>
 
-        <h2>Edit Agent: {details.name}</h2>
+        <h2>{details.name}</h2>
 
       </div>
 
@@ -356,6 +356,15 @@ export function MemberEdit() {
                 <pre>(No skills)</pre>
               )}
             </div>
+          </div>
+
+          <div className="FormActions">
+            <button className="CloneButton" onClick={() => navigate(`/new?clone=${id}`)}>
+              <FiCopy /> Clone Member
+            </button>
+            <button className="DeleteButton" onClick={() => navigate(`/${id}/delete`)}>
+              <FiTrash2 /> Delete Member
+            </button>
           </div>
         </div>
       </div>

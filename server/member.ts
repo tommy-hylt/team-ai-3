@@ -3,4 +3,5 @@ export default interface Member {
   name: string;
   description: string;
   agents: string[];
+  status?: "active" | "deleted";
 }

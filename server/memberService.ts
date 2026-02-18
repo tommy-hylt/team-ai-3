@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, mkdir } from "fs/promises";
+import { readdir, readFile, writeFile, mkdir, cp } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import Member from "./member";
@@ -13,11 +13,13 @@ export async function listMembers() {
     .filter((entry) => entry.isDirectory())
     .map((entry) => loadMember(entry.name));
     
-  return (await Promise.all(memberPromises)).filter((member) => !!member);
+  return (await Promise.all(memberPromises)).filter((member) => !!member && member.status !== "deleted");
 }
 
 export async function getMember(name: string) {
-  return await loadMember(name);
+  const member = await loadMember(name);
+  if (member?.status === "deleted") return undefined;
+  return member;
 }
 
 export async function createMember(data: any) {
@@ -29,7 +31,8 @@ export async function createMember(data: any) {
   const memberJson = {
     name: name,
     description: data.description || "",
-    agents: data.agents || ["gemini-2.5-flash"]
+    agents: data.agents || ["gemini-2.5-flash"],
+    status: "active"
   };
 
   await Promise.all([
@@ -40,12 +43,43 @@ export async function createMember(data: any) {
     writeFile(join(memberDir, "responses.json"), "[]", "utf-8"),
   ]);
 
+  if (data.cloneFrom) {
+    const sourceDir = join(__dirname, "../members", data.cloneFrom);
+    const vendorFolders = [".claude", ".gemini", ".agent"];
+
+    for (const vendor of vendorFolders) {
+      const sourceSkills = join(sourceDir, vendor, "skills");
+      const destSkills = join(memberDir, vendor, "skills");
+
+      try {
+        if (data.includeSkills && Array.isArray(data.includeSkills)) {
+          // Selective copy
+          for (const skillName of data.includeSkills) {
+            const src = join(sourceSkills, skillName);
+            const dst = join(destSkills, skillName);
+            await mkdir(dirname(dst), { recursive: true });
+            try {
+              await cp(src, dst, { recursive: true });
+            } catch {
+              // specific skill might not exist in this vendor folder, ignore
+            }
+          }
+        } else {
+          // Copy all
+          await cp(sourceSkills, destSkills, { recursive: true });
+        }
+      } catch (e) {
+        // Source skills folder might not exist, which is fine
+      }
+    }
+  }
+
   return await getMemberDetails(name);
 }
 
 export async function getMemberDetails(name: string) {
   const member = await loadMember(name);
-  if (!member) return undefined;
+  if (!member || member.status === "deleted") return undefined;
 
   const charPath = join(__dirname, "../members", name, "CHARACTER.md");
   const memPath = join(__dirname, "../members", name, "MEMORY.md");
@@ -93,6 +127,21 @@ export async function updateMemberDetails(name: string, data: any) {
   }
 
   return await getMemberDetails(name);
+}
+
+export async function deleteMember(name: string) {
+  const memberJsonPath = join(__dirname, "../members", name, "member.json");
+  try {
+    const member = await loadMember(name);
+    if (!member) return false;
+    
+    const updated = { ...member, status: "deleted" };
+    const { id, ...rest } = updated as any;
+    await writeFile(memberJsonPath, JSON.stringify(rest, null, 2), "utf-8");
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 async function loadMember(name: string) {

@@ -39,3 +39,233 @@ GET /api/members
 Found 2 members
 GET /api/members
 Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+12:54:23 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T08:54:23.799Z
+12:54:31 AM [tsx] change in ./memberService.ts Restarting...
+c1:14:26 AM [tsx] change in ./memberService.ts Rerunning...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:14:26.683Z
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+1:37:32 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:37:33.560Z
+1:37:39 AM [tsx] change in ./server.ts Restarting...
+c1:37:47 AM [tsx] change in ./server.ts Rerunning...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:37:48.463Z
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+DELETE /api/members/Bob Admin
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+1:41:34 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:41:34.687Z
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+1:41:41 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:41:42.005Z
+1:41:49 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:41:50.643Z
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+1:42:07 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:42:07.863Z
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+1:42:15 AM [tsx] change in ./memberService.ts Restarting...
+c[server] Team AI server started on port 8699 at 2026-02-18T09:42:15.869Z
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members
+Found 2 members
+GET /api/members
+Found 2 members
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+GET /api/members/Bob Admin/chat
+Returning 0 messages
+DELETE /api/members/Bob Admin
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members
+Found 1 members
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages
+GET /api/members/Ava Admin/chat
+Returning 24 messages

@@ -203,31 +203,62 @@
   }
 
   .FormActions {
-    margin-top: 8px;
+    margin-top: 24px;
     display: flex;
-  }
+    flex-direction: column;
+    gap: 12px;
+    border-top: 1px solid #1c1f23;
+    padding-top: 24px;
 
-  .SubmitButton {
-    flex: 1;
-    background-color: #0abab5;
-    color: #08090a;
-    border: none;
-    border-radius: 12px;
-    padding: 16px;
-    font-weight: 800;
-    font-size: 14px;
-    letter-spacing: 0.05em;
-    cursor: pointer;
-    transition: 0.2s;
-
-    &:hover {
-      background-color: #0cd4cf;
-      transform: translateY(-1px);
-      box-shadow: 0 4px 20px #0abab544;
+    button {
+      width: 100%;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: 0.2s;
     }
 
-    &:active {
-      transform: translateY(0);
+    .SubmitButton {
+      background-color: #0abab5;
+      color: #08090a;
+
+      &:hover {
+        background-color: #0cd4cf;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px #0abab544;
+      }
+
+      &:active { transform: translateY(0); }
+    }
+
+    .CloneButton {
+      background-color: #16191d;
+      color: #0abab5;
+      border: 1px solid #0abab544;
+
+      &:hover {
+        background-color: #0abab511;
+        border-color: #0abab5;
+      }
+    }
+
+    .DeleteButton {
+      background-color: #16191d;
+      color: #f87171;
+      border: 1px solid #f8717144;
+
+      &:hover {
+        background-color: #f8717111;
+        border-color: #f87171;
+      }
     }
   }
 }

@@ -1,7 +1,7 @@
 import { randomUUID } from "crypto";
 import express from "express";
 import cors from "cors";
-import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember } from "./memberService.ts";
+import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse } from "./chatService.ts";
 import { runAgent } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
@@ -41,6 +41,12 @@ app.post("/api/members/:id/details", async (req, res) => {
   }
   const details = await updateMemberDetails(req.params.id, req.body);
   res.json(details);
+});
+
+app.delete("/api/members/:id", async (req, res) => {
+  console.log(`DELETE /api/members/${req.params.id}`);
+  await deleteMember(req.params.id);
+  res.json({ ok: true });
 });
 
 app.get("/api/members/:id", async (req, res) => {

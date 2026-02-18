@@ -5,6 +5,7 @@ import { MemberList } from "./MemberList";
 import { Chat } from "./Chat";
 import { MemberEdit } from "./MemberEdit";
 import { MemberNew } from "./MemberNew";
+import { MemberDelete } from "./MemberDelete";
 import { TextEdit } from "./TextEdit";
 import { SkillList } from "./SkillList";
 import { SkillEdit } from "./SkillEdit";
@@ -47,6 +48,7 @@ function AppContent() {
           <Route path="/new" element={<MemberNew />} />
           <Route path="/:id" element={<Chat onBack={() => navigate("/")} />} />
           <Route path="/:id/edit" element={<MemberEdit />} />
+          <Route path="/:id/delete" element={<MemberDelete />} />
           <Route path="/:id/edit/skills" element={<SkillList />} />
           <Route path="/:id/edit/skills/:skillName" element={<SkillEdit />} />
           <Route path="/:id/edit/skills/:skillName/:fileName" element={<SkillFileEdit />} />

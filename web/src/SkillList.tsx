@@ -19,6 +19,7 @@ export function SkillList() {
   const [syncMap, setSyncMap] = useState<Record<string, SyncStatus>>({});
   const [newName, setNewName] = useState("");
   const [showNew, setShowNew] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadSkills();
@@ -26,6 +27,7 @@ export function SkillList() {
 
   async function loadSkills() {
     if (!id) return;
+    setLoading(true);
     // List skill folders from all 3 vendors and compare
     Promise.all([
       fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
@@ -54,7 +56,7 @@ export function SkillList() {
         };
       }
       setSyncMap(sync);
-    });
+    }).finally(() => setLoading(false));
   }
 
   async function handleCreate() {
@@ -111,27 +113,33 @@ export function SkillList() {
           </div>
         )}
         <div className="SkillItems">
-          {skills.map(skill => (
-            <div
-              key={skill.name}
-              className="SkillItem"
-              onClick={() => navigate(`/${id}/edit/skills/${skill.name}`)}
-            >
-              <FiFolder className="FolderIcon" />
-              <span className="SkillName">{skill.name}</span>
-              {getMissing(skill.name).length > 0 && (
-                <FiAlertTriangle className="WarnIcon" title={`Missing from: ${getMissing(skill.name).join(", ")}`} />
+          {loading ? (
+            <div className="EmptyState">Loading skills...</div>
+          ) : (
+            <>
+              {skills.map(skill => (
+                <div
+                  key={skill.name}
+                  className="SkillItem"
+                  onClick={() => navigate(`/${id}/edit/skills/${skill.name}`)}
+                >
+                  <FiFolder className="FolderIcon" />
+                  <span className="SkillName">{skill.name}</span>
+                  {getMissing(skill.name).length > 0 && (
+                    <FiAlertTriangle className="WarnIcon" title={`Missing from: ${getMissing(skill.name).join(", ")}`} />
+                  )}
+                  <button
+                    className="ItemDeleteBtn"
+                    onClick={e => handleDelete(skill.name, e)}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
+              ))}
+              {skills.length === 0 && !showNew && (
+                <div className="EmptyState">No skills yet</div>
               )}
-              <button
-                className="ItemDeleteBtn"
-                onClick={e => handleDelete(skill.name, e)}
-              >
-                <FiTrash2 />
-              </button>
-            </div>
-          ))}
-          {skills.length === 0 && !showNew && (
-            <div className="EmptyState">No skills yet</div>
+            </>
           )}
         </div>
       </div>

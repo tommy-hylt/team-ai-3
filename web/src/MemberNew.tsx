@@ -11,6 +11,9 @@ export function MemberNew() {
   const { setMembers } = useContext(MemberContext);
   
   const [availableAgents, setAvailableAgents] = useState<string[]>([]);
+  const [availableSkills, setAvailableSkills] = useState<string[]>([]);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  
   const [data, setData] = useState({
     name: "",
     description: "",
@@ -42,6 +45,20 @@ export function MemberNew() {
           character: cData.character,
           memory: cData.memory
         });
+
+        // Fetch skills to clone
+        Promise.all([
+          fetch(`/api/members/${cloneId}/files?path=.claude/skills`).then(r => r.json()),
+          fetch(`/api/members/${cloneId}/files?path=.gemini/skills`).then(r => r.json()),
+          fetch(`/api/members/${cloneId}/files?path=.agent/skills`).then(r => r.json()),
+        ]).then(([claude, gemini, agent]) => {
+          const getDirs = (entries: any[]) =>
+            (Array.isArray(entries) ? entries : []).filter((e: any) => e.type === "directory").map((e: any) => e.name);
+          const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini), ...getDirs(agent)])];
+          allNames.sort();
+          setAvailableSkills(allNames);
+          setSelectedSkills(allNames); // Default select all
+        });
       }
     };
     fetchInitial();
@@ -50,10 +67,12 @@ export function MemberNew() {
   async function handleSave() {
     if (!data.name.trim()) return alert("Name is required");
 
+    const payload = { ...data, cloneFrom: cloneId, includeSkills: cloneId ? selectedSkills : undefined };
+
     const res = await fetch("/api/members", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(payload),
     });
     
     if (res.ok) {
@@ -74,6 +93,14 @@ export function MemberNew() {
     }
   }
 
+  function toggleSkill(skillName: string) {
+    if (selectedSkills.includes(skillName)) {
+      setSelectedSkills(prev => prev.filter(s => s !== skillName));
+    } else {
+      setSelectedSkills(prev => [...prev, skillName]);
+    }
+  }
+
   const sortedAvailable = [...availableAgents].sort((a, b) => {
     const aIdx = data.agents.indexOf(a);
     const bIdx = data.agents.indexOf(b);
@@ -88,7 +115,7 @@ export function MemberNew() {
   return (
     <div className="MemberEdit">
       <div className="Header">
-        <button className="BackButton" onClick={() => navigate(-1)}>
+        <button className="BackButton" onClick={() => navigate("/")}>
           <FiChevronLeft />
         </button>
         <h2>{cloneId ? "Clone Agent" : "New Agent"}</h2>
@@ -125,6 +152,25 @@ export function MemberNew() {
               </div>
             </div>
           </div>
+
+          {availableSkills.length > 0 && (
+            <div className="Field editing">
+              <div className="FieldHeader"><label>Skills to Clone</label></div>
+              <div className="FieldContent">
+                <div className="AgentTags editing">
+                  {availableSkills.map(skill => (
+                    <span 
+                      key={skill} 
+                      className={`AgentTag toggle ${selectedSkills.includes(skill) ? "active" : ""}`}
+                      onClick={() => toggleSkill(skill)}
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="Field editing">
             <div className="FieldHeader"><label>Character (CHARACTER.md)</label></div>

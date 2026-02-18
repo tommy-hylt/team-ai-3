@@ -15,6 +15,7 @@ export function SkillEdit() {
   const [syncMap, setSyncMap] = useState<Record<string, boolean>>({});
   const [newName, setNewName] = useState("");
   const [showNew, setShowNew] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadFiles();
@@ -22,24 +23,29 @@ export function SkillEdit() {
 
   async function loadFiles() {
     if (!id || !skillName) return;
-    const res = await fetch(`/api/members/${id}/files?path=.claude/skills/${skillName}`);
-    const entries: FileEntry[] = await res.json();
-    const fileEntries = entries.filter(e => e.type === "file");
-    setFiles(fileEntries);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/members/${id}/files?path=.claude/skills/${skillName}`);
+      const entries: FileEntry[] = await res.json();
+      const fileEntries = entries.filter(e => e.type === "file");
+      setFiles(fileEntries);
 
-    // Check sync per file
-    for (const file of fileEntries) {
-      const [gemini, agent] = await Promise.all([
-        fetch(`/api/members/${id}/files/.gemini/skills/${skillName}/${file.name}`).then(r => r.ok ? r.json() : null),
-        fetch(`/api/members/${id}/files/.agent/skills/${skillName}/${file.name}`).then(r => r.ok ? r.json() : null),
-      ]);
-      const claudeRes = await fetch(`/api/members/${id}/files/.claude/skills/${skillName}/${file.name}`);
-      const claude = claudeRes.ok ? await claudeRes.json() : null;
+      // Check sync per file
+      for (const file of fileEntries) {
+        const [gemini, agent] = await Promise.all([
+          fetch(`/api/members/${id}/files/.gemini/skills/${skillName}/${file.name}`).then(r => r.ok ? r.json() : null),
+          fetch(`/api/members/${id}/files/.agent/skills/${skillName}/${file.name}`).then(r => r.ok ? r.json() : null),
+        ]);
+        const claudeRes = await fetch(`/api/members/${id}/files/.claude/skills/${skillName}/${file.name}`);
+        const claude = claudeRes.ok ? await claudeRes.json() : null;
 
-      const allMatch = claude && gemini && agent &&
-        claude.content === gemini.content && claude.content === agent.content;
+        const allMatch = claude && gemini && agent &&
+          claude.content === gemini.content && claude.content === agent.content;
 
-      setSyncMap(prev => ({ ...prev, [file.name]: !!allMatch }));
+        setSyncMap(prev => ({ ...prev, [file.name]: !!allMatch }));
+      }
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -91,27 +97,33 @@ export function SkillEdit() {
           </div>
         )}
         <div className="FileItems">
-          {files.map(file => (
-            <div
-              key={file.name}
-              className="FileItem"
-              onClick={() => navigate(`/${id}/edit/skills/${skillName}/${file.name}`)}
-            >
-              <FiFile className="FileIcon" />
-              <span className="FileName">{file.name}</span>
-              {syncMap[file.name] === false && (
-                <FiAlertTriangle className="WarnIcon" title="Out of sync across vendor folders" />
+          {loading ? (
+            <div className="EmptyState">Loading files...</div>
+          ) : (
+            <>
+              {files.map(file => (
+                <div
+                  key={file.name}
+                  className="FileItem"
+                  onClick={() => navigate(`/${id}/edit/skills/${skillName}/${file.name}`)}
+                >
+                  <FiFile className="FileIcon" />
+                  <span className="FileName">{file.name}</span>
+                  {syncMap[file.name] === false && (
+                    <FiAlertTriangle className="WarnIcon" title="Out of sync across vendor folders" />
+                  )}
+                  <button
+                    className="ItemDeleteBtn"
+                    onClick={e => handleDeleteFile(file.name, e)}
+                  >
+                    <FiTrash2 />
+                  </button>
+                </div>
+              ))}
+              {files.length === 0 && !showNew && (
+                <div className="EmptyState">No files in this skill</div>
               )}
-              <button
-                className="ItemDeleteBtn"
-                onClick={e => handleDeleteFile(file.name, e)}
-              >
-                <FiTrash2 />
-              </button>
-            </div>
-          ))}
-          {files.length === 0 && !showNew && (
-            <div className="EmptyState">No files in this skill</div>
+            </>
           )}
         </div>
       </div>
