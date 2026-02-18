@@ -3,7 +3,7 @@
   "executable": "claude",
   "args": [
     { "type": "basic", "parts": ["--model", "sonnet", "--dangerously-skip-permissions", "--output-format", "json"] },
-    { "type": "resume", "parts": ["-c"] },
-    { "type": "basic", "parts": ["-p"] }
-  ]
+    { "type": "resume", "parts": ["-c"] }
+  ],
+  "resume_with_id": ["--session-id"]
 }

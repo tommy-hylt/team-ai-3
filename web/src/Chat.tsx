@@ -3,13 +3,14 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiEdit2, FiCopy } from "react-icons/fi";
 import { MessageTime } from "./MessageTime";
+import { MessageType, RequestMessage } from "./types";
 import "./Chat.css";
 
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const { members } = useContext(MemberContext);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -37,7 +38,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
     const text = input;
     setInput("");
 
-    const newRequest = { type: "request", text, requestTime: new Date() };
+    const newRequest: RequestMessage = { type: "request", text, requestTime: new Date() };
     setMessages(prev => [...prev, newRequest]);
 
     try {
@@ -85,14 +86,17 @@ export function Chat({ onBack }: { onBack: () => void }) {
         {messages.map((m, i) => (
           <div key={i} className={`Message ${m.type}`}>
             <div className="Text">{m.text}</div>
-            <MessageTime date={m.time || m.requestTime} />
+            <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
           </div>
         ))}
         {loading && (
-          <div className="TypingIndicator">
-            <span></span>
-            <span></span>
-            <span></span>
+          <div className="Message response">
+            <div className="TypingIndicator">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <MessageTime date={new Date()} live />
           </div>
         )}
       </div>

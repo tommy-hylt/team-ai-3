@@ -1,0 +1,16 @@
+[
+  {
+    "agent": "gemini-2.5-flash",
+    "status": "expired",
+    "sessionId": "b70d0284-b5a9-4caf-9e6c-195e6b212a62",
+    "startTime": "2026-02-18T01:49:41.194Z",
+    "lastTime": "2026-02-18T01:52:54.818Z"
+  },
+  {
+    "agent": "gemini-2.5-flash",
+    "status": "active",
+    "sessionId": "5ca12c5a-0a28-4a60-96a4-b1f208d8c2ae",
+    "startTime": "2026-02-18T01:53:27.481Z",
+    "lastTime": "2026-02-18T02:08:35.387Z"
+  }
+]

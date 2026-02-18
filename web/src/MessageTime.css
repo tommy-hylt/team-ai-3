@@ -7,7 +7,6 @@
   user-select: none;
   transition: 0.2s;
   font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: 0.02em;
 
   &:hover {

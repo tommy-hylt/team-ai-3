@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiCheck, FiX } from "react-icons/fi";
+import { FiChevronLeft } from "react-icons/fi";
 import "./MemberEdit.css";
 
 export function MemberNew() {
@@ -127,7 +127,7 @@ export function MemberNew() {
           </div>
 
           <div className="Field editing">
-            <div className="FieldHeader"><label>Background (CHARACTER.md)</label></div>
+            <div className="FieldHeader"><label>Character (CHARACTER.md)</label></div>
             <div className="FieldContent">
               <textarea value={data.character} onChange={e => setData({ ...data, character: e.target.value })} />
             </div>

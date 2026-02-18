@@ -1,12 +1,10 @@
-# TeamAI2 / agents
+# Team AI / agents
 
-This folder contains **agent templates**.
+This folder contains AI agent templates, defining how different models are invoked by the system.
 
-An agent template is a folder under `agents/` that defines:
-
-- how to start the agent (a `.cmd` wrapper)
-- default flags / model selection
-- a short description of when to choose it
+An agent template is a directory under `agents/` containing:
+- `agent.json`: Configuration for the executable and its arguments.
+- `DESCRIPTION.md`: A human-readable description of the agent.
 
 ## Template structure
 
@@ -14,7 +12,6 @@ An agent template is a folder under `agents/` that defines:
 agents/<agentName>/
   agent.json
   DESCRIPTION.md
-  start-agent.cmd
 ```
 
 ### agent.json
@@ -28,30 +25,20 @@ Minimal schema:
   "args": [
     { "type": "basic", "parts": ["-m", "gemini-2.5-flash", "-y"] },
     { "type": "resume", "parts": ["-r"] },
-    { "type": "basic", "parts": ["-p"] }
-  ]
+    { "type": "resume", "parts": ["-r"] }
+  ],
+  "resume_with_id": ["-r"]
 }
 ```
 
-- `executable` is the command to run.
-- `args` is an array of parts that are conditionally included based on session history.
+- `executable`: The command-line tool to run (e.g., `claude`, `gemini`).
+- `args`: An array of parts conditionally included based on session history.
+    - `type: "basic"`: Always included.
+    - `type: "resume"`: Included when a stored session ID exists.
+- `resume_with_id`: Args to pass for session resume (e.g., `["--session-id"]` for Claude, `["-r"]` for Gemini).
+- Prompt is delivered via stdin pipe (no `-p` flag needed).
 
-## Agents (9)
+## Available Agent Families (6)
 
-### Claude Code (3)
-
-- `claude-haiku/`
-- `claude-sonnet/`
-- `claude-opus/`
-
-### Gemini CLI (3)
-
-- `gemini-2.0-flash/`
-- `gemini-2.5-flash/`
-- `gemini-2.5-pro/`
-
-### Codex CLI (3)
-
-- `codex-o3-mini/`
-- `codex-gpt-4.1-mini/`
-- `codex-gpt-4.1/`
+- **Claude**: `claude-haiku`, `claude-sonnet`, `claude-opus`
+- **Gemini**: `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-2.5-pro`

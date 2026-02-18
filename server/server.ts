@@ -4,9 +4,10 @@ import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse } from "./chatService.ts";
 import { runAgent } from "./agentService.ts";
+import { expireAllSessions } from "./sessionService.ts";
 
 const app = express();
-const port = 8698;
+const port = 8699;
 
 app.use(cors());
 app.use(express.json());
@@ -34,6 +35,9 @@ app.get("/api/members/:id/details", async (req, res) => {
 });
 
 app.post("/api/members/:id/details", async (req, res) => {
+  if (req.body.character !== undefined || req.body.memory !== undefined) {
+    await expireAllSessions(req.params.id);
+  }
   const details = await updateMemberDetails(req.params.id, req.body);
   res.json(details);
 });
@@ -100,5 +104,5 @@ app.post("/api/members/:id/request", async (req, res) => {
 });
 
 app.listen(port, () => {
-  // Server started
+  console.log(`[server] Team AI server started on port ${port} at ${new Date().toISOString()}`);
 });

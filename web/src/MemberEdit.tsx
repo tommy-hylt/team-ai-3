@@ -303,7 +303,7 @@ export function MemberEdit() {
           {/* Character */}
           <div className={`Field ${editingField === "character" ? "editing" : ""}`}>
             <div className="FieldHeader">
-              <label>Background (CHARACTER.md)</label>
+              <label>Character (CHARACTER.md)</label>
               {editingField !== "character" ? (
                 <button className="EditButton" onClick={() => startEditing("character", details.character)}>
                   <FiEdit2 />

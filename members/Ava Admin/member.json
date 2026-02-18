@@ -2,7 +2,7 @@
   "name": "Ava Admin",
   "description": "Lead Administrator",
   "agents": [
-    "claude-haiku",
-    "gemini-2.5-flash"
+    "gemini-2.5-flash",
+    "claude-haiku"
   ]
 }

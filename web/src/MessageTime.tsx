@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import "./MessageTime.css";
 
 type TimeMode = "short" | "long";
@@ -11,10 +11,27 @@ function toggleGlobalMode() {
   listeners.forEach((l) => l(globalMode));
 }
 
-export function MessageTime({ date }: { date: Date | string }) {
+function formatPrecise(diffInSeconds: number): string {
+  if (diffInSeconds < 60) return `${diffInSeconds}s`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ${diffInSeconds % 60}s`;
+  const h = Math.floor(diffInSeconds / 3600);
+  const m = Math.floor((diffInSeconds % 3600) / 60);
+  return `${h}h ${m}m`;
+}
+
+function formatShort(diffInSeconds: number): string {
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 2592000) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  if (diffInSeconds < 31536000) return `${Math.floor(diffInSeconds / 2592000)}mo ago`;
+  return `${Math.floor(diffInSeconds / 31536000)}y ago`;
+}
+
+export function MessageTime({ date, live }: { date: Date | string; live?: boolean }) {
   const [mode, setMode] = useState<TimeMode>(globalMode);
   const [display, setDisplay] = useState("");
-  const targetDate = new Date(date);
+  const startRef = useRef(live ? new Date() : null);
 
   useEffect(() => {
     const listener = (newMode: TimeMode) => setMode(newMode);
@@ -26,6 +43,8 @@ export function MessageTime({ date }: { date: Date | string }) {
   }, []);
 
   useEffect(() => {
+    const targetDate = live ? startRef.current! : new Date(date);
+
     function update() {
       if (mode === "long") {
         const y = targetDate.getFullYear();
@@ -40,27 +59,13 @@ export function MessageTime({ date }: { date: Date | string }) {
 
       const now = new Date();
       const diffInSeconds = Math.floor((now.getTime() - targetDate.getTime()) / 1000);
-
-      if (diffInSeconds < 60) {
-        setDisplay("just now");
-      } else if (diffInSeconds < 3600) {
-        const mins = Math.floor(diffInSeconds / 60);
-        setDisplay(`${mins} minute${mins > 1 ? "s" : ""} ago`);
-      } else if (diffInSeconds < 86400) {
-        const hours = Math.floor(diffInSeconds / 3600);
-        setDisplay(`${hours} hour${hours > 1 ? "s" : ""} ago`);
-      } else if (diffInSeconds < 172800) {
-        setDisplay("yesterday");
-      } else {
-        const days = Math.floor(diffInSeconds / 86400);
-        setDisplay(`${days} days ago`);
-      }
+      setDisplay(live ? formatPrecise(diffInSeconds) : formatShort(diffInSeconds));
     }
 
     update();
-    const interval = setInterval(update, mode === "short" ? 10000 : 1000);
+    const interval = setInterval(update, live ? 1000 : 10000);
     return () => clearInterval(interval);
-  }, [mode, targetDate]);
+  }, [mode, date, live]);
 
   return (
     <div className="MessageTime" onClick={(e) => {

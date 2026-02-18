@@ -3,7 +3,7 @@
   "executable": "gemini",
   "args": [
     { "type": "basic", "parts": ["-m", "gemini-2.0-flash", "-y", "-o", "json"] },
-    { "type": "resume", "parts": ["-r"] },
-    { "type": "basic", "parts": ["-p"] }
-  ]
+    { "type": "resume", "parts": ["-r"] }
+  ],
+  "resume_with_id": ["-r"]
 }
