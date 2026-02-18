@@ -141,6 +141,23 @@
       }
     }
 
+    &.clickable {
+      cursor: pointer;
+
+      &:hover .FieldContent {
+        border-color: #4b5563;
+      }
+
+      .EditIcon {
+        color: #6b7280;
+        transition: 0.2s;
+      }
+
+      &:hover .EditIcon {
+        color: #0abab5;
+      }
+    }
+
     &.editing .FieldContent {
       border-color: #0abab5;
       background-color: #16191d;

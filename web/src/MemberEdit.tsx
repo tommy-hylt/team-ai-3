@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiEdit2, FiCheck, FiX } from "react-icons/fi";
+import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder } from "react-icons/fi";
 import "./MemberEdit.css";
 
 interface MemberDetails {
@@ -28,6 +28,8 @@ export function MemberEdit() {
 
   const [editValue, setEditValue] = useState<any>("");
 
+  const [skillNames, setSkillNames] = useState<string[]>([]);
+
 
 
   useEffect(() => {
@@ -39,6 +41,18 @@ export function MemberEdit() {
         .then(res => res.json())
 
         .then(setDetails);
+
+      Promise.all([
+        fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
+        fetch(`/api/members/${id}/files?path=.gemini/skills`).then(r => r.json()),
+        fetch(`/api/members/${id}/files?path=.agent/skills`).then(r => r.json()),
+      ]).then(([claude, gemini, agent]) => {
+        const getDirs = (entries: any[]) =>
+          (Array.isArray(entries) ? entries : []).filter((e: any) => e.type === "directory").map((e: any) => e.name);
+        const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini), ...getDirs(agent)])];
+        allNames.sort();
+        setSkillNames(allNames);
+      });
 
     }
 
@@ -301,57 +315,45 @@ export function MemberEdit() {
           </div>
 
           {/* Character */}
-          <div className={`Field ${editingField === "character" ? "editing" : ""}`}>
+          <div className="Field clickable" onClick={() => navigate(`/${id}/edit/character`)}>
             <div className="FieldHeader">
               <label>Character (CHARACTER.md)</label>
-              {editingField !== "character" ? (
-                <button className="EditButton" onClick={() => startEditing("character", details.character)}>
-                  <FiEdit2 />
-                </button>
-              ) : (
-                <div className="EditActions">
-                  <button className="SaveButton" onClick={() => handleSave("character")}><FiCheck /></button>
-                  <button className="CancelButton" onClick={() => setEditingField(null)}><FiX /></button>
-                </div>
-              )}
+              <FiEdit2 className="EditIcon" />
             </div>
             <div className="FieldContent">
-              {editingField === "character" ? (
-                <textarea 
-                  value={editValue} 
-                  onChange={e => setEditValue(e.target.value)}
-                  autoFocus
-                />
-              ) : (
-                <pre>{details.character || "(Empty)"}</pre>
-              )}
+              <pre>{details.character || "(Empty)"}</pre>
             </div>
           </div>
 
           {/* Memory */}
-          <div className={`Field ${editingField === "memory" ? "editing" : ""}`}>
+          <div className="Field clickable" onClick={() => navigate(`/${id}/edit/memory`)}>
             <div className="FieldHeader">
               <label>Memory (MEMORY.md)</label>
-              {editingField !== "memory" ? (
-                <button className="EditButton" onClick={() => startEditing("memory", details.memory)}>
-                  <FiEdit2 />
-                </button>
-              ) : (
-                <div className="EditActions">
-                  <button className="SaveButton" onClick={() => handleSave("memory")}><FiCheck /></button>
-                  <button className="CancelButton" onClick={() => setEditingField(null)}><FiX /></button>
-                </div>
-              )}
+              <FiEdit2 className="EditIcon" />
             </div>
             <div className="FieldContent">
-              {editingField === "memory" ? (
-                <textarea 
-                  value={editValue} 
-                  onChange={e => setEditValue(e.target.value)}
-                  autoFocus
-                />
+              <pre>{details.memory || "(Empty)"}</pre>
+            </div>
+          </div>
+
+          {/* Skills */}
+          <div className="Field clickable" onClick={() => navigate(`/${id}/edit/skills`)}>
+            <div className="FieldHeader">
+              <label>Skills</label>
+              <FiEdit2 className="EditIcon" />
+            </div>
+            <div className="FieldContent">
+              {skillNames.length > 0 ? (
+                <div className="AgentTags">
+                  {skillNames.map(name => (
+                    <span key={name} className="AgentTag">
+                      <FiFolder style={{ marginRight: 6, fontSize: 12 }} />
+                      {name}
+                    </span>
+                  ))}
+                </div>
               ) : (
-                <pre>{details.memory || "(Empty)"}</pre>
+                <pre>(No skills)</pre>
               )}
             </div>
           </div>

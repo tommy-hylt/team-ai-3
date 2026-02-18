@@ -1,5 +1,5 @@
 import { PropsWithChildren, useEffect, useMemo, useState } from "react";
-import { Member } from "../../server/member";
+import Member from "../../server/member";
 import { MemberContext } from "./MemberContext";
 
 export function MemberProvider({ children }: PropsWithChildren) {

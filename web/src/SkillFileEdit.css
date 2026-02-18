@@ -1,0 +1,138 @@
+.SkillFileEdit {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #08090a;
+  height: 100%;
+
+  .Header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    border-bottom: 1px solid #1c1f23;
+    background-color: #08090aaa;
+    backdrop-filter: blur(12px);
+    z-index: 10;
+
+    & h2 {
+      font-size: 16px;
+      font-weight: 700;
+      margin: 0;
+      color: #ebecf0;
+      flex: 1;
+
+      .SkillPath {
+        font-size: 12px;
+        font-weight: 500;
+        color: #4b5563;
+        margin-left: 8px;
+      }
+    }
+
+    .BackButton {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 20px;
+      padding: 4px;
+      margin-left: -8px;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+
+      &:hover {
+        color: #0abab5;
+        background-color: #16191d;
+      }
+    }
+
+    .DeleteButton {
+      background: none;
+      border: none;
+      color: #9ca3af;
+      font-size: 18px;
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+
+      &:hover {
+        color: #f87171;
+        background-color: #f8717122;
+      }
+    }
+  }
+
+  .EditorArea {
+    flex: 1;
+    display: flex;
+    padding: 16px;
+    overflow: hidden;
+
+    & textarea {
+      flex: 1;
+      background-color: #0f1113;
+      border: 1px solid #1c1f23;
+      border-radius: 12px;
+      padding: 16px;
+      color: #e0e6ed;
+      font-family: "JetBrains Mono", monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+
+      &:focus {
+        border-color: #0abab5;
+        box-shadow: 0 0 0 4px #0abab511;
+      }
+
+      &::placeholder {
+        color: #4b5563;
+      }
+    }
+  }
+
+  .SaveBar {
+    padding: 16px;
+    border-top: 1px solid #1c1f23;
+
+    & .SaveButton {
+      width: 100%;
+      background-color: #0abab5;
+      color: #08090a;
+      border: none;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 800;
+      font-size: 14px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: 0.2s;
+
+      &:hover:not(:disabled) {
+        background-color: #0cd4cf;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 20px #0abab544;
+      }
+
+      &:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      &:disabled {
+        background-color: #1c1f23;
+        color: #4b5563;
+        cursor: not-allowed;
+      }
+    }
+  }
+}

@@ -7,7 +7,7 @@ export default defineConfig({
     allowedHosts: ["vitedefault.rubbishnetworkgoaway.uk"],
     proxy: {
       "/api": {
-        target: "http://localhost:8698",
+        target: "http://localhost:8699",
         changeOrigin: true,
       },
     },

@@ -5,6 +5,7 @@ import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMe
 import { getChatHistory, addRequest, addResponse } from "./chatService.ts";
 import { runAgent } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
+import { listFiles, getFile, saveFile, deleteFile } from "./fileService.ts";
 
 const app = express();
 const port = 8699;
@@ -101,6 +102,33 @@ app.post("/api/members/:id/request", async (req, res) => {
     console.error("Error handling request:", error);
     res.status(500).json({ error: "Internal server error", details: (error as any).message });
   }
+});
+
+// File APIs
+app.get("/api/members/:id/files", async (req, res) => {
+  const path = (req.query.path as string) || "";
+  const entries = await listFiles(req.params.id, path);
+  res.json(entries);
+});
+
+app.get("/api/members/:id/files/*", async (req, res) => {
+  const relativePath = (req.params as any)[0];
+  const content = await getFile(req.params.id, relativePath);
+  if (content === undefined) return res.status(404).json({ error: "File not found" });
+  res.json({ content });
+});
+
+app.post("/api/members/:id/files", async (req, res) => {
+  const { path, content } = req.body;
+  if (!path) return res.status(400).json({ error: "path is required" });
+  await saveFile(req.params.id, path, content || "");
+  res.json({ ok: true });
+});
+
+app.delete("/api/members/:id/files/*", async (req, res) => {
+  const relativePath = (req.params as any)[0];
+  await deleteFile(req.params.id, relativePath);
+  res.json({ ok: true });
 });
 
 app.listen(port, () => {

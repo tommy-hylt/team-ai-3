@@ -5,6 +5,10 @@ import { MemberList } from "./MemberList";
 import { Chat } from "./Chat";
 import { MemberEdit } from "./MemberEdit";
 import { MemberNew } from "./MemberNew";
+import { TextEdit } from "./TextEdit";
+import { SkillList } from "./SkillList";
+import { SkillEdit } from "./SkillEdit";
+import { SkillFileEdit } from "./SkillFileEdit";
 import { useContext, useEffect } from "react";
 import { MemberContext } from "./MemberContext";
 
@@ -17,7 +21,6 @@ function AppContent() {
   useEffect(() => {
     const parts = location.pathname.split("/");
     const id = parts[1];
-    const isEdit = parts[2] === "edit";
     const isNew = id === "new";
 
     if (id && !isNew && members.length > 0) {
@@ -44,6 +47,10 @@ function AppContent() {
           <Route path="/new" element={<MemberNew />} />
           <Route path="/:id" element={<Chat onBack={() => navigate("/")} />} />
           <Route path="/:id/edit" element={<MemberEdit />} />
+          <Route path="/:id/edit/skills" element={<SkillList />} />
+          <Route path="/:id/edit/skills/:skillName" element={<SkillEdit />} />
+          <Route path="/:id/edit/skills/:skillName/:fileName" element={<SkillFileEdit />} />
+          <Route path="/:id/edit/:field" element={<TextEdit />} />
         </Routes>
       </div>
     </div>

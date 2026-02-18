@@ -1,5 +1,5 @@
 import { createContext, Dispatch, SetStateAction } from "react";
-import { Member } from "../../server/member";
+import Member from "../../server/member";
 
 export const MemberContext = createContext<{
   members: Member[];
