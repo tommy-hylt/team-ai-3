@@ -42,6 +42,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isSending = useRef(false);
 
   const selectedMember = members.find(m => m.id === id);
 
@@ -61,29 +62,35 @@ export function Chat({ onBack }: { onBack: () => void }) {
     const evtSource = new EventSource(`/api/members/${id}/events`);
     
     evtSource.addEventListener("request", (e) => {
-      const req = JSON.parse(e.data);
-      setMessages(prev => {
-        if (prev.some(m => m.type === "request" && m.id === req.id)) return prev;
-        return [...prev, { ...req, type: "request" }].sort((a, b) => 
-          new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
-          new Date(b.type === "request" ? b.requestTime : b.time).getTime()
-        );
-      });
+      try {
+        const req = JSON.parse(e.data);
+        setMessages(prev => {
+          if (prev.some(m => m.type === "request" && m.id === req.id)) return prev;
+          return [...prev, { ...req, type: "request" }].sort((a, b) => 
+            new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+            new Date(b.type === "request" ? b.requestTime : b.time).getTime()
+          );
+        });
+      } catch (err) { console.error("SSE Request Error", err); }
     });
 
     evtSource.addEventListener("response", (e) => {
-      const res = JSON.parse(e.data);
-      setMessages(prev => [...prev, { ...res, type: "response" }].sort((a, b) => 
-        new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
-        new Date(b.type === "request" ? b.requestTime : b.time).getTime()
-      ));
+      try {
+        const res = JSON.parse(e.data);
+        setMessages(prev => [...prev, { ...res, type: "response" }].sort((a, b) => 
+          new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+          new Date(b.type === "request" ? b.requestTime : b.time).getTime()
+        ));
+      } catch (err) { console.error("SSE Response Error", err); }
     });
 
     evtSource.addEventListener("status_update", (e) => {
-      const { id, status } = JSON.parse(e.data);
-      setMessages(prev => prev.map(m => 
-        (m.type === "request" && m.id === id) ? { ...m, status } : m
-      ));
+      try {
+        const { id, status } = JSON.parse(e.data);
+        setMessages(prev => prev.map(m => 
+          (m.type === "request" && m.id === id) ? { ...m, status } : m
+        ));
+      } catch (err) { console.error("SSE Status Error", err); }
     });
 
     return () => {
@@ -104,16 +111,23 @@ export function Chat({ onBack }: { onBack: () => void }) {
   };
 
   async function handleSend() {
-    if (!selectedMember || !input) return;
-    const text = input;
-    setInput("");
-    if (id) saveDraft(id, "");
+    if (!selectedMember || !input || isSending.current) return;
+    isSending.current = true;
+    try {
+      const text = input;
+      setInput("");
+      if (id) saveDraft(id, "");
 
-    await fetch(`/api/members/${selectedMember.id}/request`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text, requester: "User" }),
-    });
+      await fetch(`/api/members/${selectedMember.id}/request`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, requester: "User" }),
+      });
+    } catch (e) {
+      console.error(e);
+    } finally {
+      isSending.current = false;
+    }
   }
 
   async function handleCancel(requestId: string) {
@@ -182,7 +196,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
             rows={3}
             onChange={handleInputChange} 
             onKeyDown={(e) => {
-              if (e.key === "Enter" && !e.shiftKey) {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 handleSend();
               }

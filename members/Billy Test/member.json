@@ -1,0 +1,8 @@
+{
+  "name": "Billy Test",
+  "description": "Simple member for testing bugs",
+  "agents": [
+    "gemini-2.5-flash"
+  ],
+  "status": "active"
+}

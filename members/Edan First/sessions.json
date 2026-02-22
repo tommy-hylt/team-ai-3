@@ -1,0 +1,30 @@
+[
+  {
+    "agent": "claude-sonnet",
+    "status": "expired",
+    "sessionId": "7661914a-4704-4f98-a4dc-193a4346cf73",
+    "startTime": "2026-02-22T08:14:44.490Z",
+    "lastTime": "2026-02-22T08:16:37.285Z"
+  },
+  {
+    "agent": "claude-sonnet",
+    "status": "expired",
+    "sessionId": "989c119f-77ab-4e90-8eab-20269001ffb0",
+    "startTime": "2026-02-22T08:17:22.996Z",
+    "lastTime": "2026-02-22T08:17:27.417Z"
+  },
+  {
+    "agent": "claude-sonnet",
+    "status": "expired",
+    "sessionId": "c36f6cf5-694a-4423-a1a5-a17996f8760f",
+    "startTime": "2026-02-22T08:18:29.401Z",
+    "lastTime": "2026-02-22T08:57:38.797Z"
+  },
+  {
+    "agent": "claude-sonnet",
+    "status": "active",
+    "sessionId": "b56be914-1127-4425-ad8a-b5639c31ae90",
+    "startTime": "2026-02-22T08:57:56.160Z",
+    "lastTime": "2026-02-22T08:57:56.160Z"
+  }
+]
