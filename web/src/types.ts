@@ -1,7 +1,9 @@
 export interface RequestMessage {
+  id?: string;
   type: "request";
   text: string;
   requestTime: Date;
+  status?: "pending" | "running" | "completed" | "aborted";
 }
 
 export interface ResponseMessage {

@@ -1,10 +1,39 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiX, FiSend } from "react-icons/fi";
 import { MessageTime } from "./MessageTime";
-import { MessageType, RequestMessage } from "./types";
+import { MessageType } from "./types";
 import "./Chat.css";
+
+interface Drafts {
+  [memberId: string]: { text: string; timestamp: number };
+}
+
+function getDrafts(): Drafts {
+  try {
+    return JSON.parse(localStorage.getItem("chat_drafts") || "{}");
+  } catch {
+    return {};
+  }
+}
+
+function saveDraft(memberId: string, text: string) {
+  const drafts = getDrafts();
+  if (!text) {
+    delete drafts[memberId];
+  } else {
+    drafts[memberId] = { text, timestamp: Date.now() };
+  }
+
+  // Prune to last 5
+  const sortedKeys = Object.keys(drafts).sort((a, b) => drafts[b].timestamp - drafts[a].timestamp);
+  if (sortedKeys.length > 5) {
+    sortedKeys.slice(5).forEach(k => delete drafts[k]);
+  }
+
+  localStorage.setItem("chat_drafts", JSON.stringify(drafts));
+}
 
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
@@ -12,7 +41,6 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const { members } = useContext(MemberContext);
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
-  const [loading, setLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const selectedMember = members.find(m => m.id === id);
@@ -20,9 +48,47 @@ export function Chat({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     if (!id) return;
     
+    // Load draft
+    const drafts = getDrafts();
+    setInput(drafts[id]?.text || "");
+
+    // Load initial history
     fetch(`/api/members/${id}/chat`)
       .then((res) => res.json())
       .then(setMessages);
+
+    // Subscribe to events
+    const evtSource = new EventSource(`/api/members/${id}/events`);
+    
+    evtSource.addEventListener("request", (e) => {
+      const req = JSON.parse(e.data);
+      setMessages(prev => {
+        if (prev.some(m => m.type === "request" && m.id === req.id)) return prev;
+        return [...prev, { ...req, type: "request" }].sort((a, b) => 
+          new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+          new Date(b.type === "request" ? b.requestTime : b.time).getTime()
+        );
+      });
+    });
+
+    evtSource.addEventListener("response", (e) => {
+      const res = JSON.parse(e.data);
+      setMessages(prev => [...prev, { ...res, type: "response" }].sort((a, b) => 
+        new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+        new Date(b.type === "request" ? b.requestTime : b.time).getTime()
+      ));
+    });
+
+    evtSource.addEventListener("status_update", (e) => {
+      const { id, status } = JSON.parse(e.data);
+      setMessages(prev => prev.map(m => 
+        (m.type === "request" && m.id === id) ? { ...m, status } : m
+      ));
+    });
+
+    return () => {
+      evtSource.close();
+    };
   }, [id]);
 
   useEffect(() => {
@@ -31,29 +97,32 @@ export function Chat({ onBack }: { onBack: () => void }) {
     }
   }, [messages]);
 
-  async function handleSend() {
-    if (!selectedMember || !input || loading) return;
+  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setInput(val);
+    if (id) saveDraft(id, val);
+  };
 
-    setLoading(true);
+  async function handleSend() {
+    if (!selectedMember || !input) return;
     const text = input;
     setInput("");
+    if (id) saveDraft(id, "");
 
-    const newRequest: RequestMessage = { type: "request", text, requestTime: new Date() };
-    setMessages(prev => [...prev, newRequest]);
+    await fetch(`/api/members/${selectedMember.id}/request`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, requester: "User" }),
+    });
+  }
 
-    try {
-      const res = await fetch(`/api/members/${selectedMember.id}/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, requester: "User" }),
-      });
-      const response = await res.json();
-      setMessages(prev => [...prev, { ...response, type: "response" }]);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
+  async function handleCancel(requestId: string) {
+    if (!id) return;
+    await fetch(`/api/requests/${requestId}/cancel`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ memberId: id }),
+    });
   }
 
   if (!selectedMember) {
@@ -81,33 +150,47 @@ export function Chat({ onBack }: { onBack: () => void }) {
       </div>
       <div className="MessageList" ref={scrollRef}>
         {messages.map((m, i) => (
-          <div key={i} className={`Message ${m.type}`}>
-            <div className="Text">{m.text}</div>
-            <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
+          <div key={i} className={`MessageWrapper ${m.type}`}>
+            <div className={`Message ${m.type} ${m.type === "request" && m.status === "aborted" ? "aborted" : ""}`}>
+              <div className="Text">
+                {m.text}
+              </div>
+              <div className="MetaRow">
+                <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
+                {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
+              </div>
+            </div>
+            {m.type === "request" && m.status === "running" && (
+              <div className="LoadingContainer">
+                <div className="TypingIndicator">
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
+                <button className="CancelButton" onClick={() => m.id && handleCancel(m.id)}>
+                  <FiX /> Cancel
+                </button>
+              </div>
+            )}
           </div>
         ))}
-        {loading && (
-          <div className="Message response">
-            <div className="TypingIndicator">
-              <span></span>
-              <span></span>
-              <span></span>
-            </div>
-            <MessageTime date={new Date()} live />
-          </div>
-        )}
       </div>
       <div className="InputArea">
         <div className="InputWrapper">
-          <input 
+          <textarea 
             value={input} 
-            onChange={(e) => setInput(e.target.value)} 
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
+            rows={3}
+            onChange={handleInputChange} 
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                handleSend();
+              }
+            }}
             placeholder={`Message ${selectedMember.name}...`}
-            disabled={loading}
           />
-          <button onClick={handleSend} disabled={loading || !input.trim()}>
-            {loading ? "..." : "Send"}
+          <button onClick={handleSend} disabled={!input.trim()}>
+            <FiSend />
           </button>
         </div>
       </div>

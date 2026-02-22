@@ -250,6 +250,17 @@
       }
     }
 
+    .ClearButton {
+      background-color: #16191d;
+      color: #f59e0b;
+      border: 1px solid #f59e0b44;
+
+      &:hover {
+        background-color: #f59e0b11;
+        border-color: #f59e0b;
+      }
+    }
+
     .DeleteButton {
       background-color: #16191d;
       color: #f87171;

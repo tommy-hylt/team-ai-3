@@ -86,6 +86,13 @@
     }
   }
 
+  .MessageWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+
   .Message {
     max-width: 80%;
     display: flex;
@@ -104,6 +111,12 @@
         font-weight: 500;
         border-radius: 18px 18px 2px 18px;
         box-shadow: 0 4px 15px #0abab533;
+      }
+
+      &.aborted .Text {
+        background-color: #2a2e35;
+        color: #94a3b8;
+        box-shadow: none;
       }
     }
 
@@ -124,28 +137,70 @@
       white-space: pre-wrap;
       word-break: break-word;
     }
+
+    .AbortedLabel {
+      font-size: 11px;
+      color: #94a3b8;
+      opacity: 0.7;
+    }
+
+    .MetaRow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+
+      .MessageTime {
+        margin-top: 0;
+      }
+    }
   }
 
-  .TypingIndicator {
+  .LoadingContainer {
     align-self: flex-start;
-    padding: 12px 20px;
-    background-color: #16191d;
-    border-radius: 18px 18px 18px 2px;
     display: flex;
-    gap: 5px;
-    border: 1px solid #1c1f23;
-    width: fit-content;
+    align-items: center;
+    gap: 12px;
+    animation: Chat-message-fade 0.4s;
 
-    span {
-      width: 5px;
-      height: 5px;
-      background-color: #0abab5;
-      border-radius: 50%;
-      opacity: 0.4;
-      animation: Chat-typing 1.4s infinite ease-in-out;
+    .TypingIndicator {
+      padding: 12px 20px;
+      background-color: #16191d;
+      border-radius: 18px 18px 18px 2px;
+      display: flex;
+      gap: 5px;
+      border: 1px solid #1c1f23;
+      width: fit-content;
 
-      &:nth-child(2) { animation-delay: 0.2s; }
-      &:nth-child(3) { animation-delay: 0.4s; }
+      span {
+        width: 5px;
+        height: 5px;
+        background-color: #0abab5;
+        border-radius: 50%;
+        opacity: 0.4;
+        animation: Chat-typing 1.4s infinite ease-in-out;
+
+        &:nth-child(2) { animation-delay: 0.2s; }
+        &:nth-child(3) { animation-delay: 0.4s; }
+      }
+    }
+
+    .CancelButton {
+      background: none;
+      border: none;
+      color: #6b7280;
+      padding: 4px 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+
+      &:hover {
+        color: #ef4444;
+      }
     }
   }
 
@@ -163,6 +218,7 @@
     .InputWrapper {
       flex: 1;
       display: flex;
+      align-items: stretch;
       background-color: #0f1113;
       border: 1px solid #1c1f23;
       border-radius: 16px;
@@ -175,7 +231,7 @@
       }
     }
 
-    input {
+    textarea {
       flex: 1;
       background: none;
       border: none;
@@ -183,6 +239,9 @@
       color: #e0e6ed;
       outline: none;
       font-size: 15px;
+      resize: none;
+      font-family: inherit;
+      line-height: 1.5;
 
       &::placeholder { color: #4b5563; }
       &:disabled { opacity: 0.5; }
@@ -193,11 +252,12 @@
       color: #08090a;
       border: none;
       border-radius: 12px;
-      padding: 0 24px;
-      font-weight: 700;
-      font-size: 13px;
-
-      letter-spacing: 0.05em;
+      width: 48px;
+      padding: 0;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       cursor: pointer;
       transition: 0.2s;
 

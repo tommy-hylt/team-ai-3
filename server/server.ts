@@ -2,10 +2,11 @@ import { randomUUID } from "crypto";
 import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
-import { getChatHistory, addRequest, addResponse } from "./chatService.ts";
-import { runAgent } from "./agentService.ts";
+import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory } from "./chatService.ts";
+import { runAgent, cancelRequest, cancelAllRequests } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile } from "./fileService.ts";
+import { subscribe, broadcast } from "./notificationService.ts";
 
 const app = express();
 const port = 8699;
@@ -43,9 +44,37 @@ app.post("/api/members/:id/details", async (req, res) => {
   res.json(details);
 });
 
+app.get("/api/members/:id/events", (req, res) => {
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  res.flushHeaders();
+
+  subscribe(req.params.id, res);
+});
+
+app.post("/api/requests/:id/cancel", async (req, res) => {
+  const { memberId } = req.body;
+  if (!memberId) return res.status(400).json({ error: "memberId is required" });
+
+  const success = cancelRequest(req.params.id);
+  if (success) {
+    await updateRequestStatus(memberId, req.params.id, "aborted");
+    broadcast(memberId, "status_update", { id: req.params.id, status: "aborted" });
+  }
+  res.json({ ok: success });
+});
+
 app.delete("/api/members/:id", async (req, res) => {
   console.log(`DELETE /api/members/${req.params.id}`);
   await deleteMember(req.params.id);
+  res.json({ ok: true });
+});
+
+app.post("/api/members/:id/chat/clear", async (req, res) => {
+  console.log(`POST /api/members/${req.params.id}/chat/clear`);
+  cancelAllRequests(req.params.id);
+  await clearChatHistory(req.params.id);
   res.json({ ok: true });
 });
 
@@ -85,14 +114,24 @@ app.post("/api/members/:id/request", async (req, res) => {
       text,
       requester,
       requestTime: new Date(),
-      status: "pending" as const,
+      status: "running" as const,
     };
 
     await addRequest(memberId, request);
+    broadcast(memberId, "request", request);
 
     console.log(`Running agent for ${memberId}...`);
     // Trigger agent
-    const responseText = await runAgent(member, request.text);
+    const responseText = await runAgent(member, request.text, request.id);
+    
+    // Check if aborted
+    const currentStatus = await getRequestStatus(memberId, request.id);
+    if (currentStatus === "aborted") {
+      console.log(`Request ${request.id} was aborted, skipping response`);
+      res.json({ status: "aborted" });
+      return;
+    }
+
     console.log(`Agent response for ${memberId}: ${responseText}`);
     
     const response = {
@@ -102,6 +141,9 @@ app.post("/api/members/:id/request", async (req, res) => {
     };
 
     await addResponse(memberId, response);
+    await updateRequestStatus(memberId, request.id, "completed");
+    broadcast(memberId, "response", response);
+    broadcast(memberId, "status_update", { id: request.id, status: "completed" });
 
     res.json(response);
   } catch (error) {

@@ -4,7 +4,7 @@ export interface Request {
   requester: string;
   requestTime: Date;
 
-  status: "pending" | "running" | "completed";
+  status: "pending" | "running" | "completed" | "aborted";
   startTime?: Date;
   endTime?: Date;
 }

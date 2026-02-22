@@ -2,7 +2,8 @@
   "name": "Edan First",
   "description": "First of the kind",
   "agents": [
-    "gemini-2.5-flash"
+    "claude-sonnet",
+    "gemini-2.5-pro"
   ],
   "status": "active"
 }

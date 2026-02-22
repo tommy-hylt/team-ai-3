@@ -1,4 +1,4 @@
-import { spawn } from "child_process";
+import { spawn, ChildProcess } from "child_process";
 import { readFile } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -6,6 +6,30 @@ import { Member } from "./member.ts";
 import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const activeProcesses = new Map<string, { process: ChildProcess; memberId: string }>();
+
+export function cancelRequest(requestId: string): boolean {
+  const entry = activeProcesses.get(requestId);
+  if (entry) {
+    console.log(`[cancelRequest] Killing process ${entry.process.pid} for request ${requestId}`);
+    entry.process.kill();
+    activeProcesses.delete(requestId);
+    return true;
+  }
+  return false;
+}
+
+export function cancelAllRequests(memberId: string) {
+  console.log(`[cancelAllRequests] Cancelling all requests for member ${memberId}`);
+  for (const [requestId, entry] of activeProcesses.entries()) {
+    if (entry.memberId === memberId) {
+      console.log(`[cancelAllRequests] Killing process ${entry.process.pid} for request ${requestId}`);
+      entry.process.kill();
+      activeProcesses.delete(requestId);
+    }
+  }
+}
 
 interface AgentArgPart {
   type: "basic" | "resume";
@@ -18,7 +42,7 @@ interface AgentConfig {
   resume_with_id?: string[];    // e.g. ["--session-id"] for claude, ["-r"] for gemini
 }
 
-export async function runAgent(member: Member, requestText: string) {
+export async function runAgent(member: Member, requestText: string, requestId: string) {
   if (!member.agents.length) {
     console.log(`[runAgent] No agents configured for "${member.id}"`);
     return "Error: No agent configured for this member.";
@@ -38,7 +62,7 @@ export async function runAgent(member: Member, requestText: string) {
       continue;
     }
 
-    const result = await tryAgent(member.id, agentName, agentConfig, memberDir, requestText);
+    const result = await tryAgent(member.id, agentName, agentConfig, memberDir, requestText, requestId);
     if (result) return result;
   }
 
@@ -51,13 +75,14 @@ async function tryAgent(
   config: AgentConfig,
   memberDir: string,
   requestText: string,
+  requestId: string,
 ): Promise<string | undefined> {
   const sessionId = await getSessionId(memberId, agentName);
 
   // Try resume if we have a session
   if (sessionId) {
     console.log(`[tryAgent] Attempting resume for "${agentName}" with sessionId=${sessionId}`);
-    const result = await invokeAgent(config, memberDir, requestText, sessionId);
+    const result = await invokeAgent(config, memberDir, requestText, requestId, memberId, sessionId);
     if (!result.failed) {
       if (result.sessionId) {
         await saveSessionId(memberId, agentName, result.sessionId);
@@ -71,7 +96,7 @@ async function tryAgent(
   // Fresh invocation
   const freshPrompt = `Please read CHARACTER.md and MEMORY.md first.\n\n${requestText}`;
   console.log(`[tryAgent] Fresh invocation for "${agentName}"`);
-  const result = await invokeAgent(config, memberDir, freshPrompt);
+  const result = await invokeAgent(config, memberDir, freshPrompt, requestId, memberId);
   if (!result.failed) {
     if (result.sessionId) {
       console.log(`[tryAgent] Saving session ID for "${agentName}": ${result.sessionId}`);
@@ -92,6 +117,8 @@ async function invokeAgent(
   config: AgentConfig,
   cwd: string,
   prompt: string,
+  requestId: string,
+  memberId: string,
   sessionId?: string,
 ): Promise<InvokeResult> {
   const finalArgs: string[] = [];
@@ -111,7 +138,7 @@ async function invokeAgent(
   console.log(`[invokeAgent] prompt length=${prompt.length} chars, resume=${!!sessionId}`);
 
   const startTime = Date.now();
-  const result = await executeAgent(config.executable, finalArgs, cwd, prompt);
+  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, prompt);
   const elapsed = Date.now() - startTime;
   console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result.text.length}`);
 
@@ -137,12 +164,16 @@ interface AgentResult {
   sessionId?: string;
 }
 
-function executeAgent(executable: string, args: string[], cwd: string, stdinData?: string): Promise<AgentResult> {
+function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, stdinData?: string): Promise<AgentResult> {
   return new Promise((resolve) => {
     console.log(`[executeAgent] Spawning: ${executable} ${args.join(' ')} (cwd: ${cwd})`);
     const env = { ...process.env };
     delete env.CLAUDECODE;
     const proc = spawn(executable, args, { shell: true, env, cwd });
+    
+    // Register process
+    activeProcesses.set(requestId, { process: proc, memberId });
+
     let stdout = "";
     let stderr = "";
 
@@ -167,10 +198,12 @@ function executeAgent(executable: string, args: string[], cwd: string, stdinData
 
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
+      activeProcesses.delete(requestId);
       resolve({ text: `Agent process error: ${err.message}` });
     });
 
     proc.on("close", (code) => {
+      activeProcesses.delete(requestId);
       console.log(`[executeAgent] Process closed with code ${code}`);
       console.log(`[executeAgent] Total stdout: ${stdout.length} chars`);
       console.log(`[executeAgent] Total stderr: ${stderr.length} chars`);
