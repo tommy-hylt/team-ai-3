@@ -11,13 +11,24 @@ import { TextEdit } from "./TextEdit";
 import { SkillList } from "./SkillList";
 import { SkillEdit } from "./SkillEdit";
 import { SkillFileEdit } from "./SkillFileEdit";
-import { useContext, useEffect } from "react";
+import { useContext, useEffect, useState } from "react";
 import { MemberContext } from "./MemberContext";
+import { subscribeToPush, checkSubscription } from "./pushManager";
 
 function AppContent() {
   const { members, setSelectedMember } = useContext(MemberContext);
   const navigate = useNavigate();
   const location = useLocation();
+  const [subscribed, setSubscribed] = useState(true); // Default true to avoid flicker
+
+  useEffect(() => {
+    checkSubscription().then(setSubscribed);
+  }, []);
+
+  async function handleSubscribe() {
+    const success = await subscribeToPush();
+    if (success) setSubscribed(true);
+  }
 
   // Sync route ID with selectedMember
   useEffect(() => {
@@ -45,7 +56,19 @@ function AppContent() {
       <div className={`Layout ${isChatView ? "view-chat" : "view-menu"}`}>
         <MemberList onSelect={(id) => navigate(`/${id}`)} />
         <Routes>
-          <Route path="/" element={<div className="Chat Empty"><div className="EmptyState">Select an agent to start chatting</div></div>} />
+          <Route path="/" element={
+            <div className="Chat Empty">
+              <div className="EmptyState">
+                <p>Select an agent to start chatting</p>
+                {!subscribed && (
+                  <div className="PushPrompt">
+                    <p>Enable notifications to get updates when agents reply.</p>
+                    <button onClick={handleSubscribe}>Enable Notifications</button>
+                  </div>
+                )}
+              </div>
+            </div>
+          } />
           <Route path="/new" element={<MemberNew />} />
           <Route path="/:id" element={<Chat onBack={() => navigate("/")} />} />
           <Route path="/:id/edit" element={<MemberEdit />} />

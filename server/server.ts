@@ -7,12 +7,24 @@ import { runAgent, cancelRequest, cancelAllRequests } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
+import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 
 const app = express();
 const port = 8699;
 
+initPush().then(() => console.log("[server] Push notifications initialized"));
+
 app.use(cors());
 app.use(express.json());
+
+app.get("/api/push/public-key", (req, res) => {
+  res.json({ publicKey: getPublicKey() });
+});
+
+app.post("/api/push/subscribe", async (req, res) => {
+  await saveSubscription(req.body);
+  res.json({ ok: true });
+});
 
 app.get("/api/members", async (req, res) => {
   console.log("GET /api/members");
@@ -144,6 +156,8 @@ app.post("/api/members/:id/request", async (req, res) => {
     await updateRequestStatus(memberId, request.id, "completed");
     broadcast(memberId, "response", response);
     broadcast(memberId, "status_update", { id: request.id, status: "completed" });
+    
+    sendNotification(`New message from ${member.name}`, responseText.substring(0, 100), `/${memberId}`);
 
     res.json(response);
   } catch (error) {

@@ -6,3 +6,5 @@ dist
 server.log
 server/out.log
 server/err.log
+server/vapid.json
+server/subscriptions.json

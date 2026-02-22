@@ -26,5 +26,26 @@
     "requester": "User",
     "requestTime": "2026-02-22T08:57:38.026Z",
     "status": "completed"
+  },
+  {
+    "id": "eb7c5085-2949-46ed-a2e9-8ed2e9c9278e",
+    "text": "Please list all nested folder and files",
+    "requester": "User",
+    "requestTime": "2026-02-22T13:14:20.152Z",
+    "status": "completed"
+  },
+  {
+    "id": "3056deb5-1898-46e4-addc-719aaf5e1c66",
+    "text": "Cool. I would like you to try to use /browser-adaptor and find out my Google account email.",
+    "requester": "User",
+    "requestTime": "2026-02-22T13:17:22.842Z",
+    "status": "completed"
+  },
+  {
+    "id": "a7b0ce07-1a87-414b-89eb-9a25badb69f9",
+    "text": "Nice.",
+    "requester": "User",
+    "requestTime": "2026-02-22T13:21:51.640Z",
+    "status": "completed"
   }
 ]
