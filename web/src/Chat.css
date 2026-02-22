@@ -113,6 +113,11 @@
         box-shadow: 0 4px 15px #0abab533;
       }
 
+      .RequesterName {
+        align-self: flex-end;
+        color: #94a3b8;
+      }
+
       &.aborted .Text {
         background-color: #2a2e35;
         color: #94a3b8;
@@ -128,6 +133,14 @@
         border: 1px solid #1c1f23;
         border-radius: 18px 18px 18px 2px;
       }
+    }
+
+    .RequesterName {
+      font-size: 10px;
+      font-weight: 700;
+      color: #6b7280;
+      margin-bottom: 4px;
+      margin-left: 2px;
     }
 
     .Text {

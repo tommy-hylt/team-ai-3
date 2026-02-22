@@ -166,6 +166,9 @@ export function Chat({ onBack }: { onBack: () => void }) {
         {messages.map((m, i) => (
           <div key={i} className={`MessageWrapper ${m.type}`}>
             <div className={`Message ${m.type} ${m.type === "request" && m.status === "aborted" ? "aborted" : ""}`}>
+              {m.type === "request" && m.requester && (
+                <div className="RequesterName">{m.requester}</div>
+              )}
               <div className="Text">
                 {m.text}
               </div>

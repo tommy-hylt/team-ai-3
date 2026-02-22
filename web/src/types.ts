@@ -2,6 +2,7 @@ export interface RequestMessage {
   id?: string;
   type: "request";
   text: string;
+  requester?: string;
   requestTime: Date;
   status?: "pending" | "running" | "completed" | "aborted";
 }
