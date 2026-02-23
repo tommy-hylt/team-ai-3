@@ -38,7 +38,7 @@ function saveDraft(memberId: string, text: string) {
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { members } = useContext(MemberContext);
+  const { members, loading } = useContext(MemberContext);
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -173,10 +173,18 @@ export function Chat({ onBack }: { onBack: () => void }) {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="Chat">
+        <div className="EmptyState">Loading chat...</div>
+      </div>
+    );
+  }
+
   if (!selectedMember) {
     return (
       <div className="Chat">
-        <div className="EmptyState">Agent not found</div>
+        <div className="EmptyState">Member not found</div>
       </div>
     );
   }
