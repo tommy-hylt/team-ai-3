@@ -101,13 +101,19 @@ export async function checkSkillSync(memberId: string, skillName: string) {
 /** Check if a file exists in all 3 vendor skill folders and content matches */
 export async function checkFileSync(memberId: string, skillName: string, fileName: string) {
   const base = memberDir(memberId);
-  const results: Record<string, { exists: boolean; content?: string }> = {};
+  const results: Record<string, { exists: boolean; content?: string; mtime?: number; size?: number }> = {};
 
   for (const vendor of VENDOR_FOLDERS) {
     const filePath = join(base, vendor, "skills", skillName, fileName);
     try {
+      const s = await stat(filePath);
       const content = await readFile(filePath, "utf-8");
-      results[vendor] = { exists: true, content };
+      results[vendor] = { 
+        exists: true, 
+        content,
+        mtime: s.mtimeMs,
+        size: s.size
+      };
     } catch {
       results[vendor] = { exists: false };
     }

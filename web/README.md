@@ -12,11 +12,13 @@ This project strictly follows "Tommy's Rules":
 
 ## Features
 
-- **Member List**: Sidebar to browse available AI members.
-- **Chat Interface**: Real-time interaction with members, capturing and displaying agent responses.
-- **Member Creation & Editing**: Interface to create new members or edit existing ones.
-- **Skills Management**: Browse, create, edit, and delete skills. Compares `.claude`, `.gemini`, and `.agent` vendor folders and shows sync warnings when skills or files are missing.
-- **Optimistic Updates**: Immediate UI feedback when sending messages.
+- **Member List**: Sidebar to browse available AI members with notification subscription prompts.
+- **Chat Interface**: Real-time interaction via Server-Sent Events (SSE), supporting multiline input and Ctrl+Enter to send.
+- **Member Creation & Cloning**: Interface to create new members or selectively clone existing ones (including skills).
+- **Skills Management**: Browse, create, edit, and delete skills. Compares vendor folders and shows detailed sync warnings (newest/longest file).
+- **Request Control**: Ability to cancel running agent requests.
+- **Web Push Notifications**: Background notifications for new messages.
+- **Drafts**: Auto-saving of chat inputs to `localStorage`.
 
 ## Getting Started
 

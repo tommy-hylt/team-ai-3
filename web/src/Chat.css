@@ -94,6 +94,7 @@
 
   .Message {
     max-width: 80%;
+    width: fit-content;
     display: flex;
     flex-direction: column;
     animation: Chat-message-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -104,6 +105,7 @@
 
     &.request {
       align-self: flex-end;
+      align-items: flex-end;
       .Text {
         background-color: #0abab5;
         color: #08090a;
@@ -113,8 +115,11 @@
       }
 
       .RequesterName {
-        align-self: flex-end;
         color: #94a3b8;
+      }
+
+      .MetaRow {
+        justify-content: flex-end;
       }
 
       &.aborted .Text {
@@ -126,6 +131,7 @@
 
     &.response {
       align-self: flex-start;
+      align-items: flex-start;
       .Text {
         background-color: #16191d;
         color: #e0e6ed;
@@ -140,6 +146,7 @@
       color: #6b7280;
       margin-bottom: 4px;
       margin-left: 2px;
+      margin-right: 2px;
     }
 
     .Text {
@@ -171,6 +178,7 @@
       align-items: center;
       gap: 8px;
       margin-top: 6px;
+      width: 100%;
 
       .MessageTime {
         margin-top: 0;

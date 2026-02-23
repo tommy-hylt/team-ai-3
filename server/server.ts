@@ -5,7 +5,7 @@ import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMe
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
-import { listFiles, getFile, saveFile, deleteFile } from "./fileService.ts";
+import { listFiles, getFile, saveFile, deleteFile, checkFileSync } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 
@@ -185,6 +185,12 @@ app.get("/api/members/:id/files", async (req, res) => {
   const path = (req.query.path as string) || "";
   const entries = await listFiles(req.params.id, path);
   res.json(entries);
+});
+
+app.get("/api/members/:id/skills/:skillName/files/:fileName/sync", async (req, res) => {
+  const { id, skillName, fileName } = req.params;
+  const results = await checkFileSync(id, skillName, fileName);
+  res.json(results);
 });
 
 app.get("/api/members/:id/files/*", async (req, res) => {

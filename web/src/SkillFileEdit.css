@@ -73,7 +73,9 @@
   .EditorArea {
     flex: 1;
     display: flex;
+    flex-direction: column;
     padding: 16px;
+    gap: 16px;
     overflow: hidden;
 
     & textarea {
@@ -97,6 +99,48 @@
 
       &::placeholder {
         color: #4b5563;
+      }
+    }
+
+    .SyncWarning {
+      background-color: #f59e0b11;
+      border: 1px solid #f59e0b44;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+
+      .WarningIcon {
+        color: #f59e0b;
+        font-size: 20px;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .WarningContent {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .WarningTitle {
+        font-size: 13px;
+        font-weight: 700;
+        color: #ebecf0;
+      }
+
+      .WarningDetails {
+        font-size: 12px;
+        color: #94a3b8;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+
+        strong {
+          color: #f59e0b;
+        }
       }
     }
   }

@@ -11,6 +11,7 @@ Each member has their own subfolder (e.g., `Ava Admin`).
   - `name`: Display name.
   - `description`: A short biography.
   - `agents`: A list of compatible agent template names (from the `agents/` folder).
+  - `status`: "active" or "deleted" (supports soft delete).
 - **`CHARACTER.md`**: Defines the foundational persona, tone, and behavior.
 - **`MEMORY.md`**: Stores long-term context, history, and evolving knowledge.
 
