@@ -47,5 +47,12 @@
     "requester": "User",
     "requestTime": "2026-02-23T10:51:21.616Z",
     "status": "completed"
+  },
+  {
+    "id": "c4c5ec35-e146-4818-a5b8-132b047b7137",
+    "text": "What settings should I add so that you can break this directory restriction?",
+    "requester": "User",
+    "requestTime": "2026-02-23T10:53:41.612Z",
+    "status": "completed"
   }
 ]

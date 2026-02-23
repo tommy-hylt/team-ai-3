@@ -71,7 +71,6 @@
     flex-direction: column;
     gap: 32px;
     padding: 32px 40px;
-    scroll-behavior: smooth;
 
     @media (max-width: 768px) {
       padding: 24px 20px;
