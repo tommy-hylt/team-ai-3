@@ -8,11 +8,29 @@ import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts"
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const activeProcesses = new Map<string, { process: ChildProcess; memberId: string }>();
+const memberLocks = new Map<string, Promise<void>>();
+
+async function acquireLock(memberId: string): Promise<() => void> {
+  const existing = memberLocks.get(memberId) || Promise.resolve();
+  let release: () => void;
+  const next = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  memberLocks.set(memberId, next);
+  await existing;
+  return () => {
+    if (memberLocks.get(memberId) === next) {
+      memberLocks.delete(memberId);
+    }
+    release();
+  };
+}
 
 export function cancelRequest(requestId: string): boolean {
   const entry = activeProcesses.get(requestId);
   if (entry) {
     console.log(`[cancelRequest] Killing process ${entry.process.pid} for request ${requestId}`);
+    // On Windows, killing without shell:true might be more direct
     entry.process.kill();
     activeProcesses.delete(requestId);
     return true;
@@ -43,30 +61,35 @@ interface AgentConfig {
 }
 
 export async function runAgent(member: Member, requestText: string, requestId: string) {
-  if (!member.agents.length) {
-    console.log(`[runAgent] No agents configured for "${member.id}"`);
-    return { text: "Error: No agent configured for this member.", agentName: "system" };
-  }
-
-  const memberDir = join(__dirname, "../members", member.id);
-
-  // Try each agent in order, falling back to the next on failure
-  for (let i = 0; i < member.agents.length; i++) {
-    const agentName = member.agents[i];
-    const isFallback = i > 0;
-    console.log(`[runAgent] ${isFallback ? "Fallback" : "Starting"} for member="${member.id}", agent="${agentName}"`);
-
-    const agentConfig = await loadAgentConfig(agentName);
-    if (!agentConfig) {
-      console.log(`[runAgent] Agent config not found for "${agentName}", skipping`);
-      continue;
+  const release = await acquireLock(member.id);
+  try {
+    if (!member.agents.length) {
+      console.log(`[runAgent] No agents configured for "${member.id}"`);
+      return { text: "Error: No agent configured for this member.", agentName: "system" };
     }
 
-    const result = await tryAgent(member.id, agentName, agentConfig, memberDir, requestText, requestId);
-    if (result) return result;
-  }
+    const memberDir = join(__dirname, "../members", member.id);
 
-  return { text: "Error: All agents failed. Please try again later.", agentName: "system" };
+    // Try each agent in order, falling back to the next on failure
+    for (let i = 0; i < member.agents.length; i++) {
+      const agentName = member.agents[i];
+      const isFallback = i > 0;
+      console.log(`[runAgent] ${isFallback ? "Fallback" : "Starting"} for member="${member.id}", agent="${agentName}"`);
+
+      const agentConfig = await loadAgentConfig(agentName);
+      if (!agentConfig) {
+        console.log(`[runAgent] Agent config not found for "${agentName}", skipping`);
+        continue;
+      }
+
+      const result = await tryAgent(member.id, agentName, agentConfig, memberDir, requestText, requestId);
+      if (result) return result;
+    }
+
+    return { text: "Error: All agents failed. Please try again later.", agentName: "system" };
+  } finally {
+    release();
+  }
 }
 
 async function tryAgent(
@@ -125,11 +148,17 @@ async function invokeAgent(
   for (const argPart of config.args) {
     if (argPart.type === "basic") {
       finalArgs.push(...argPart.parts);
-    } else if (argPart.type === "resume" && sessionId && config.resume_with_id) {
-      finalArgs.push(...config.resume_with_id);
-      // Claude: --session-id <id>  |  Gemini: -r (no ID value)
-      if (config.resume_with_id[0] !== "-r") {
-        finalArgs.push(sessionId);
+    } else if (argPart.type === "resume" && sessionId) {
+      // Add the standard resume flags from args definition (e.g. -c for claude, -r for gemini)
+      finalArgs.push(...argPart.parts);
+
+      // If we have a specific flag to pass the session ID, add it if not already present
+      if (config.resume_with_id && config.resume_with_id.length > 0) {
+        const idFlag = config.resume_with_id[0];
+        if (!argPart.parts.includes(idFlag)) {
+          finalArgs.push(...config.resume_with_id);
+          finalArgs.push(sessionId);
+        }
       }
     }
   }
@@ -169,7 +198,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     console.log(`[executeAgent] Spawning: ${executable} ${args.join(' ')} (cwd: ${cwd})`);
     const env = { ...process.env };
     delete env.CLAUDECODE;
-    const proc = spawn(executable, args, { shell: true, env, cwd });
+    // Disable shell for more reliable process control
+    const proc = spawn(executable, args, { shell: false, env, cwd });
     
     // Register process
     activeProcesses.set(requestId, { process: proc, memberId });

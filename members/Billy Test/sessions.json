@@ -8,9 +8,16 @@
   },
   {
     "agent": "claude-sonnet",
-    "status": "active",
+    "status": "expired",
     "sessionId": "93eccaa2-d8a5-4b58-92e3-16e582d8d53a",
     "startTime": "2026-02-23T06:59:21.494Z",
-    "lastTime": "2026-02-23T06:59:21.494Z"
+    "lastTime": "2026-02-23T07:00:09.341Z"
+  },
+  {
+    "agent": "claude-sonnet",
+    "status": "active",
+    "sessionId": "5200a67b-5415-40b4-8493-aab75329db1c",
+    "startTime": "2026-02-23T07:00:22.847Z",
+    "lastTime": "2026-02-23T07:28:29.455Z"
   }
 ]
