@@ -8,7 +8,20 @@ self.addEventListener('push', function(event) {
     data: { url: data.url || '/' }
   };
 
-  event.waitUntil(self.registration.showNotification(title, options));
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      const isVisible = clientList.some(function(client) {
+        return client.url.includes(options.data.url) && client.visibilityState === 'visible';
+      });
+
+      if (isVisible) {
+        console.log('Suppressing notification as chat is already visible');
+        return;
+      }
+
+      return self.registration.showNotification(title, options);
+    })
+  );
 });
 
 self.addEventListener('notificationclick', function(event) {

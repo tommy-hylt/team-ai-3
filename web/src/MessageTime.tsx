@@ -12,6 +12,7 @@ function toggleGlobalMode() {
 }
 
 function formatPrecise(diffInSeconds: number): string {
+  if (diffInSeconds <= 0) return "now";
   if (diffInSeconds < 60) return `${diffInSeconds}s`;
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ${diffInSeconds % 60}s`;
   const h = Math.floor(diffInSeconds / 3600);
@@ -20,6 +21,7 @@ function formatPrecise(diffInSeconds: number): string {
 }
 
 function formatShort(diffInSeconds: number): string {
+  if (diffInSeconds <= 0) return "now";
   if (diffInSeconds < 60) return `${diffInSeconds}s ago`;
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
