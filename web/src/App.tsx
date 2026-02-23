@@ -11,6 +11,8 @@ import { TextEdit } from "./TextEdit";
 import { SkillList } from "./SkillList";
 import { SkillEdit } from "./SkillEdit";
 import { SkillFileEdit } from "./SkillFileEdit";
+import { MemberFileBrowser } from "./MemberFileBrowser";
+import { MemberFileEdit } from "./MemberFileEdit";
 import { useContext, useEffect, useState } from "react";
 import { MemberContext } from "./MemberContext";
 import { subscribeToPush, checkSubscription } from "./pushManager";
@@ -72,6 +74,8 @@ function AppContent() {
           <Route path="/:id/edit" element={<MemberEdit />} />
           <Route path="/:id/delete" element={<MemberDelete />} />
           <Route path="/:id/chat/clear" element={<ChatClear />} />
+          <Route path="/:id/files" element={<MemberFileBrowser />} />
+          <Route path="/:id/files/edit" element={<MemberFileEdit />} />
           <Route path="/:id/edit/skills" element={<SkillList />} />
           <Route path="/:id/edit/skills/:skillName" element={<SkillEdit />} />
           <Route path="/:id/edit/skills/:skillName/:fileName" element={<SkillFileEdit />} />

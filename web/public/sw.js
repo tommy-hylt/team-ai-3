@@ -18,8 +18,11 @@ self.addEventListener('push', function(event) {
 
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      const targetPath = decodeURIComponent(options.data.url);
+
       const isVisible = clientList.some(function(client) {
-        return client.url.includes(options.data.url) && client.visibilityState === 'visible';
+        const clientPath = decodeURIComponent(new URL(client.url).pathname);
+        return clientPath.includes(targetPath) && client.visibilityState === 'visible';
       });
 
       if (isVisible) {
@@ -31,7 +34,8 @@ self.addEventListener('push', function(event) {
       return new Promise(resolve => setTimeout(resolve, 5000)).then(() => {
         return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(finalClientList) {
           const isStillVisible = finalClientList.some(function(client) {
-            return client.url.includes(options.data.url) && client.visibilityState === 'visible';
+            const finalPath = decodeURIComponent(new URL(client.url).pathname);
+            return finalPath.includes(targetPath) && client.visibilityState === 'visible';
           });
 
           if (isStillVisible) {

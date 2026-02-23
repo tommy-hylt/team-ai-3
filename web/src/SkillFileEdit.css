@@ -50,6 +50,25 @@
       }
     }
 
+    .ActionButton {
+      background: none;
+      border: none;
+      color: #6b7280;
+      font-size: 18px;
+      padding: 6px;
+      cursor: pointer;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.2s;
+
+      &:hover {
+        color: #0abab5;
+        background-color: #0abab511;
+      }
+    }
+
     .DeleteButton {
       background: none;
       border: none;
@@ -102,6 +121,25 @@
       }
     }
 
+    .ReadMode {
+      flex: 1;
+      background-color: #0f1113;
+      border: 1px solid #1c1f23;
+      border-radius: 12px;
+      padding: 16px;
+      overflow-y: auto;
+
+      pre {
+        margin: 0;
+        color: #94a3b8;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    }
+
     .SyncWarning {
       background-color: #f59e0b11;
       border: 1px solid #f59e0b44;
@@ -148,9 +186,11 @@
   .SaveBar {
     padding: 16px;
     border-top: 1px solid #1c1f23;
+    display: flex;
+    gap: 12px;
 
-    & .SaveButton {
-      width: 100%;
+    .SaveButton {
+      flex: 1;
       background-color: #0abab5;
       color: #08090a;
       border: none;
@@ -176,6 +216,24 @@
         background-color: #1c1f23;
         color: #4b5563;
         cursor: not-allowed;
+      }
+    }
+
+    .CancelButton {
+      flex: 1;
+      background-color: #16191d;
+      color: #6b7280;
+      border: 1px solid #1c1f23;
+      border-radius: 12px;
+      padding: 14px;
+      font-weight: 700;
+      font-size: 14px;
+      cursor: pointer;
+      transition: 0.2s;
+
+      &:hover {
+        color: #94a3b8;
+        border-color: #4b5563;
       }
     }
   }

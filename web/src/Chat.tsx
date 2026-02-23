@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiX, FiSend } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiX, FiSend, FiFolder } from "react-icons/fi";
 import { MessageTime } from "./MessageTime";
 import { MessageType } from "./types";
 import "./Chat.css";
@@ -199,6 +199,9 @@ export function Chat({ onBack }: { onBack: () => void }) {
           <h2>{selectedMember.name}</h2>
         </div>
         <div className="HeaderActions">
+          <button className="ActionButton" onClick={() => navigate(`/${id}/files`)}>
+            <FiFolder />
+          </button>
           <button className="ActionButton" onClick={() => navigate(`/${id}/edit`)}>
             <FiSettings />
           </button>
