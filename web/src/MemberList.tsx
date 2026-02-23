@@ -1,10 +1,16 @@
 import { useContext } from "react";
 import { MemberContext } from "./MemberContext";
 import { useNavigate } from "react-router-dom";
-import { FiPlus } from "react-icons/fi";
+import { FiPlus, FiBell } from "react-icons/fi";
 import "./MemberList.css";
 
-export function MemberList({ onSelect }: { onSelect: (id: string) => void }) {
+interface MemberListProps {
+  onSelect: (id: string) => void;
+  subscribed?: boolean;
+  onSubscribe?: () => void;
+}
+
+export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberListProps) {
   const { members, selectedMember } = useContext(MemberContext);
   const navigate = useNavigate();
 
@@ -16,6 +22,17 @@ export function MemberList({ onSelect }: { onSelect: (id: string) => void }) {
           <FiPlus />
         </button>
       </div>
+      {!subscribed && onSubscribe && (
+        <div className="NotificationBanner">
+          <div className="BannerText">
+            <FiBell className="BannerIcon" />
+            Get notified when agents reply.
+          </div>
+          <button className="SubscribeButton" onClick={onSubscribe}>
+            Enable Notifications
+          </button>
+        </div>
+      )}
       <div className="Content">
         {members.map((member) => (
           <div

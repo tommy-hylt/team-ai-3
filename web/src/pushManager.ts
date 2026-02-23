@@ -35,7 +35,9 @@ export async function subscribeToPush() {
 
 export async function checkSubscription() {
   if (!('serviceWorker' in navigator)) return false;
-  const registration = await navigator.serviceWorker.ready;
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) return false;
+  
   const subscription = await registration.pushManager.getSubscription();
   return !!subscription;
 }

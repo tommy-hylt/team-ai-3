@@ -54,18 +54,16 @@ function AppContent() {
   return (
     <div className="App">
       <div className={`Layout ${isChatView ? "view-chat" : "view-menu"}`}>
-        <MemberList onSelect={(id) => navigate(`/${id}`)} />
+        <MemberList 
+          onSelect={(id) => navigate(`/${id}`)} 
+          subscribed={subscribed}
+          onSubscribe={handleSubscribe}
+        />
         <Routes>
           <Route path="/" element={
             <div className="Chat Empty">
               <div className="EmptyState">
                 <p>Select an agent to start chatting</p>
-                {!subscribed && (
-                  <div className="PushPrompt">
-                    <p>Enable notifications to get updates when agents reply.</p>
-                    <button onClick={handleSubscribe}>Enable Notifications</button>
-                  </div>
-                )}
               </div>
             </div>
           } />
