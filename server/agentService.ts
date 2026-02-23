@@ -198,8 +198,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     console.log(`[executeAgent] Spawning: ${executable} ${args.join(' ')} (cwd: ${cwd})`);
     const env = { ...process.env };
     delete env.CLAUDECODE;
-    // Disable shell for more reliable process control
-    const proc = spawn(executable, args, { shell: false, env, cwd });
+    // Re-enable shell for command discovery (especially for .cmd files on Windows like gemini)
+    const proc = spawn(executable, args, { shell: true, env, cwd });
     
     // Register process
     activeProcesses.set(requestId, { process: proc, memberId });

@@ -10,5 +10,11 @@
     "time": "2026-02-23T07:28:29.456Z",
     "requestId": "df8e7594-6f4d-43c3-9adc-60e8962dc055",
     "agent": "claude-sonnet"
+  },
+  {
+    "text": "Error: All agents failed. Please try again later.",
+    "time": "2026-02-23T10:39:06.699Z",
+    "requestId": "6dcadaa5-04f6-4342-b3de-672a81d2b75e",
+    "agent": "system"
   }
 ]

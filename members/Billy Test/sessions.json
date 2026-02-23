@@ -1,10 +1,10 @@
 [
   {
     "agent": "gemini-2.5-flash",
-    "status": "active",
+    "status": "expired",
     "sessionId": "3d06e4bf-0de8-4990-8f3e-24eb61b97735",
     "startTime": "2026-02-22T08:57:12.663Z",
-    "lastTime": "2026-02-23T06:58:04.883Z"
+    "lastTime": "2026-02-23T10:39:06.694Z"
   },
   {
     "agent": "claude-sonnet",

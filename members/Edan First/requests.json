@@ -1,37 +1,16 @@
 [
   {
-    "id": "8d7bc721-72f1-4f3b-aecc-12ba0faf7b30",
-    "text": "/browser-adaptor create a GitHub repo named \"team-ai-3\"",
+    "id": "f0296a76-c745-4b27-8f6f-f99c19289234",
+    "text": "Use /browser-adaptor to find my \"team-ai-3\" repo in GitHub. And find out the Git clone URL",
     "requester": "User",
-    "requestTime": "2026-02-23T01:27:38.887Z",
-    "status": "aborted"
-  },
-  {
-    "id": "dae9285f-349b-41a6-b1b9-6c84441723d6",
-    "text": "Can you give me the git checkout URL of team-ai-3 repo, which you have created previously.",
-    "requester": "User",
-    "requestTime": "2026-02-23T05:54:09.054Z",
+    "requestTime": "2026-02-23T10:37:32.663Z",
     "status": "completed"
   },
   {
-    "id": "f6920965-b51d-457a-a93d-c5bbbf8f6742",
-    "text": "Can you give me the git checkout URL of team-ai-3 repo, which you have created previously.",
+    "id": "71fa0afa-c822-468e-9729-3618a57e33cc",
+    "text": "No need",
     "requester": "User",
-    "requestTime": "2026-02-23T05:54:34.974Z",
-    "status": "aborted"
-  },
-  {
-    "id": "d01067ed-5ffe-406c-8484-3b629006eb2a",
-    "text": "No, search from my GitHub",
-    "requester": "User",
-    "requestTime": "2026-02-23T06:45:12.379Z",
-    "status": "completed"
-  },
-  {
-    "id": "0a6bcd7c-c4c5-4f3e-bdb9-bc496ffc74c9",
-    "text": "Search the Git clone URL of team-ai-3",
-    "requester": "User",
-    "requestTime": "2026-02-23T06:53:15.799Z",
+    "requestTime": "2026-02-23T10:39:46.597Z",
     "status": "completed"
   }
 ]

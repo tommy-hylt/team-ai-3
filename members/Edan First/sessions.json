@@ -71,9 +71,16 @@
   },
   {
     "agent": "claude-sonnet",
-    "status": "active",
+    "status": "expired",
     "sessionId": "5f971463-9815-429b-8f3a-ecf89e3c66d6",
     "startTime": "2026-02-23T06:53:47.101Z",
-    "lastTime": "2026-02-23T06:53:47.101Z"
+    "lastTime": "2026-02-23T10:35:33.470Z"
+  },
+  {
+    "agent": "claude-sonnet",
+    "status": "active",
+    "sessionId": "e310e28d-ee72-4241-bdd3-617dbe7c84e1",
+    "startTime": "2026-02-23T10:39:02.869Z",
+    "lastTime": "2026-02-23T10:39:55.368Z"
   }
 ]
