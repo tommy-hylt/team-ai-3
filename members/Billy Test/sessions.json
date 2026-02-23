@@ -4,6 +4,13 @@
     "status": "active",
     "sessionId": "3d06e4bf-0de8-4990-8f3e-24eb61b97735",
     "startTime": "2026-02-22T08:57:12.663Z",
-    "lastTime": "2026-02-22T08:57:12.663Z"
+    "lastTime": "2026-02-23T06:58:04.883Z"
+  },
+  {
+    "agent": "claude-sonnet",
+    "status": "active",
+    "sessionId": "93eccaa2-d8a5-4b58-92e3-16e582d8d53a",
+    "startTime": "2026-02-23T06:59:21.494Z",
+    "lastTime": "2026-02-23T06:59:21.494Z"
   }
 ]

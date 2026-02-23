@@ -12,6 +12,7 @@ export interface ResponseMessage {
   text: string;
   time: Date;
   requestId: string;
+  agent?: string;
 }
 
 export type MessageType = RequestMessage | ResponseMessage;

@@ -45,7 +45,7 @@ interface AgentConfig {
 export async function runAgent(member: Member, requestText: string, requestId: string) {
   if (!member.agents.length) {
     console.log(`[runAgent] No agents configured for "${member.id}"`);
-    return "Error: No agent configured for this member.";
+    return { text: "Error: No agent configured for this member.", agentName: "system" };
   }
 
   const memberDir = join(__dirname, "../members", member.id);
@@ -66,7 +66,7 @@ export async function runAgent(member: Member, requestText: string, requestId: s
     if (result) return result;
   }
 
-  return "Error: All agents failed. Please try again later.";
+  return { text: "Error: All agents failed. Please try again later.", agentName: "system" };
 }
 
 async function tryAgent(
@@ -76,7 +76,7 @@ async function tryAgent(
   memberDir: string,
   requestText: string,
   requestId: string,
-): Promise<string | undefined> {
+): Promise<{ text: string, agentName: string } | undefined> {
   const sessionId = await getSessionId(memberId, agentName);
 
   // Try resume if we have a session
@@ -87,7 +87,7 @@ async function tryAgent(
       if (result.sessionId) {
         await saveSessionId(memberId, agentName, result.sessionId);
       }
-      return result.text;
+      return { text: result.text, agentName };
     }
     console.log(`[tryAgent] Resume failed for "${agentName}", expiring session`);
     await expireSession(memberId, agentName);
@@ -102,7 +102,7 @@ async function tryAgent(
       console.log(`[tryAgent] Saving session ID for "${agentName}": ${result.sessionId}`);
       await saveSessionId(memberId, agentName, result.sessionId);
     }
-    return result.text;
+    return { text: result.text, agentName };
   }
 
   console.log(`[tryAgent] Agent "${agentName}" failed`);

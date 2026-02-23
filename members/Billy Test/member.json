@@ -2,6 +2,7 @@
   "name": "Billy Test",
   "description": "Simple member for testing bugs",
   "agents": [
+    "claude-sonnet",
     "gemini-2.5-flash"
   ],
   "status": "active"

@@ -69,12 +69,17 @@ app.post("/api/requests/:id/cancel", async (req, res) => {
   const { memberId } = req.body;
   if (!memberId) return res.status(400).json({ error: "memberId is required" });
 
-  const success = cancelRequest(req.params.id);
-  if (success) {
-    await updateRequestStatus(memberId, req.params.id, "aborted");
-    broadcast(memberId, "status_update", { id: req.params.id, status: "aborted" });
-  }
-  res.json({ ok: success });
+  const killed = cancelRequest(req.params.id);
+  
+  // Always update status to aborted even if no process was found (e.g. server restarted)
+  await updateRequestStatus(memberId, req.params.id, "aborted");
+  broadcast(memberId, "status_update", { id: req.params.id, status: "aborted" });
+  
+  res.json({ 
+    ok: true, 
+    killed, 
+    message: killed ? "Process terminated" : "Request marked as aborted (no active process found)" 
+  });
 });
 
 app.delete("/api/members/:id", async (req, res) => {
@@ -132,37 +137,46 @@ app.post("/api/members/:id/request", async (req, res) => {
     await addRequest(memberId, request);
     broadcast(memberId, "request", request);
 
-    console.log(`Running agent for ${memberId}...`);
-    // Trigger agent
-    const responseText = await runAgent(member, request.text, request.id);
-    
-    // Check if aborted
-    const currentStatus = await getRequestStatus(memberId, request.id);
-    if (currentStatus === "aborted") {
-      console.log(`Request ${request.id} was aborted, skipping response`);
-      res.json({ status: "aborted" });
-      return;
-    }
+    // Respond immediately so the client isn't hanging
+    res.json({ ok: true, requestId: request.id });
 
-    console.log(`Agent response for ${memberId}: ${responseText}`);
-    
-    const response = {
-      text: responseText,
-      time: new Date(),
-      requestId: request.id,
-    };
+    // Run agent in the background
+    (async () => {
+      try {
+        console.log(`Running agent for ${memberId} in background...`);
+        const agentResult = await runAgent(member, request.text, request.id);
+        
+        // Check if aborted
+        const currentStatus = await getRequestStatus(memberId, request.id);
+        if (currentStatus === "aborted") {
+          console.log(`Request ${request.id} was aborted, skipping response`);
+          return;
+        }
 
-    await addResponse(memberId, response);
-    await updateRequestStatus(memberId, request.id, "completed");
-    broadcast(memberId, "response", response);
-    broadcast(memberId, "status_update", { id: request.id, status: "completed" });
-    
-    sendNotification(`New message from ${member.name}`, responseText.substring(0, 100), `/${memberId}`);
+        console.log(`Agent response for ${memberId}: ${agentResult.text}`);
+        
+        const response = {
+          text: agentResult.text,
+          time: new Date(),
+          requestId: request.id,
+          agent: agentResult.agentName,
+        };
 
-    res.json(response);
+        await addResponse(memberId, response);
+        await updateRequestStatus(memberId, request.id, "completed");
+        broadcast(memberId, "response", response);
+        broadcast(memberId, "status_update", { id: request.id, status: "completed" });
+        
+        sendNotification(`New message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+      } catch (e) {
+        console.error(`Background agent error for ${memberId}:`, e);
+      }
+    })();
   } catch (error) {
     console.error("Error handling request:", error);
-    res.status(500).json({ error: "Internal server error", details: (error as any).message });
+    if (!res.headersSent) {
+      res.status(500).json({ error: "Internal server error", details: (error as any).message });
+    }
   }
 });
 

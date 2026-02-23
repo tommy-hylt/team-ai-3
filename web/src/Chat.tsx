@@ -43,20 +43,39 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [input, setInput] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const isSending = useRef(false);
+  const clientId = useRef(Math.random().toString(36).substring(7));
 
   const selectedMember = members.find(m => m.id === id);
 
   useEffect(() => {
     if (!id) return;
     
-    // Load draft
-    const drafts = getDrafts();
-    setInput(drafts[id]?.text || "");
+    // Reset state for new ID
+    setMessages([]);
+    setInput("");
 
     // Load initial history
     fetch(`/api/members/${id}/chat`)
       .then((res) => res.json())
-      .then(setMessages);
+      .then((data: MessageType[]) => {
+        setMessages(data);
+        
+        // After history is loaded, check for drafts
+        const drafts = getDrafts();
+        const draftText = drafts[id]?.text || "";
+        
+        if (draftText) {
+          // Avoid restoring draft if it matches the very last request (prevents re-sending on refresh/resume)
+          const lastRequest = [...data].reverse().find(m => m.type === "request");
+          if (lastRequest && lastRequest.text === draftText) {
+            console.log(`[Chat ${clientId.current}] Draft matches last request, clearing redundant draft.`);
+            saveDraft(id, "");
+          } else {
+            console.log(`[Chat ${clientId.current}] Restoring draft for ${id}`);
+            setInput(draftText);
+          }
+        }
+      });
 
     // Subscribe to events
     const evtSource = new EventSource(`/api/members/${id}/events`);
@@ -111,20 +130,27 @@ export function Chat({ onBack }: { onBack: () => void }) {
   };
 
   async function handleSend() {
-    if (!selectedMember || !input || isSending.current) return;
+    if (!selectedMember || !input.trim() || isSending.current) return;
+    
+    const text = input.trim();
+    console.log(`[Chat ${clientId.current}] handleSend triggered for "${text.substring(0, 20)}..."`);
+    
     isSending.current = true;
     try {
-      const text = input;
       setInput("");
       if (id) saveDraft(id, "");
 
-      await fetch(`/api/members/${selectedMember.id}/request`, {
+      const res = await fetch(`/api/members/${selectedMember.id}/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, requester: "User" }),
       });
+      
+      if (!res.ok) {
+        console.error(`[Chat ${clientId.current}] POST failed with status ${res.status}`);
+      }
     } catch (e) {
-      console.error(e);
+      console.error(`[Chat ${clientId.current}] handleSend error:`, e);
     } finally {
       isSending.current = false;
     }
@@ -132,11 +158,19 @@ export function Chat({ onBack }: { onBack: () => void }) {
 
   async function handleCancel(requestId: string) {
     if (!id) return;
-    await fetch(`/api/requests/${requestId}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ memberId: id }),
-    });
+    try {
+      const res = await fetch(`/api/requests/${requestId}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memberId: id }),
+      });
+      const data = await res.json();
+      if (data.ok && !data.killed) {
+        alert("Request marked as aborted, but no active process was found to kill (it may have already finished or the server was restarted).");
+      }
+    } catch (err) {
+      console.error("Failed to cancel request:", err);
+    }
   }
 
   if (!selectedMember) {
@@ -174,6 +208,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
               </div>
               <div className="MetaRow">
                 <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
+                {m.type === "response" && m.agent && <span className="AgentLabel">{m.agent}</span>}
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
               </div>
             </div>
