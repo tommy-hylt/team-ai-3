@@ -19,7 +19,21 @@ self.addEventListener('push', function(event) {
         return;
       }
 
-      return self.registration.showNotification(title, options);
+      // Delay 5 seconds to handle race conditions where SSE might have just arrived
+      return new Promise(resolve => setTimeout(resolve, 5000)).then(() => {
+        return clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(finalClientList) {
+          const isStillVisible = finalClientList.some(function(client) {
+            return client.url.includes(options.data.url) && client.visibilityState === 'visible';
+          });
+
+          if (isStillVisible) {
+            console.log('Suppressing notification after 5s delay (chat became visible)');
+            return;
+          }
+
+          return self.registration.showNotification(title, options);
+        });
+      });
     })
   );
 });

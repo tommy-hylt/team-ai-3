@@ -19,5 +19,12 @@
     "sessionId": "5200a67b-5415-40b4-8493-aab75329db1c",
     "startTime": "2026-02-23T07:00:22.847Z",
     "lastTime": "2026-02-23T07:28:29.455Z"
+  },
+  {
+    "agent": "gemini-2.5-flash",
+    "status": "active",
+    "sessionId": "1e6e9473-100f-4070-a9d3-593558e68c65",
+    "startTime": "2026-02-23T10:46:14.255Z",
+    "lastTime": "2026-02-23T10:51:45.969Z"
   }
 ]
