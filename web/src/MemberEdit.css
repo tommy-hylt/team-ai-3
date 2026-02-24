@@ -171,11 +171,9 @@
     }
 
     .RoutineRow {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
       padding-bottom: 8px;
       border-bottom: 1px dashed #1c1f23;
+      line-height: 1.5;
       &:last-child {
         border-bottom: none;
         padding-bottom: 0;
@@ -186,8 +184,10 @@
       font-family: "JetBrains Mono", monospace;
       font-size: 11px;
       color: #0abab5;
-      display: flex;
+      display: inline-flex;
       align-items: center;
+      margin-right: 8px;
+      vertical-align: baseline;
     }
 
     .RoutineText {
