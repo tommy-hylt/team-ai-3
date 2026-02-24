@@ -203,12 +203,13 @@
 
     .RoutineEditRow {
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
       gap: 8px;
-      padding: 8px;
+      padding: 12px;
       background-color: #08090a;
       border-radius: 6px;
       border: 1px solid #1c1f23;
+      position: relative;
 
       input, textarea {
         background: none;
@@ -225,17 +226,22 @@
       }
 
       .RoutineCronInput {
-        width: 140px;
+        width: 100%;
         font-family: "JetBrains Mono", monospace;
         color: #0abab5;
-        border-right: 1px solid #1c1f23;
+        border-bottom: 1px dashed #1c1f23;
+        padding-bottom: 8px;
+        padding-right: 24px;
       }
 
       .RoutineTextInput {
-        flex: 1;
+        width: 100%;
       }
 
       .RemoveRoutineButton {
+        position: absolute;
+        top: 8px;
+        right: 8px;
         background: none;
         border: none;
         color: #6b7280;
