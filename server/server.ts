@@ -1,9 +1,11 @@
 import { randomUUID } from "crypto";
+import path from "path";
+import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory } from "./chatService.ts";
-import { runAgent, cancelRequest, cancelAllRequests } from "./agentService.ts";
+import { runAgent, cancelRequest, cancelAllRequests, getServerId } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile, checkFileSync } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
@@ -24,6 +26,10 @@ app.get("/api/push/public-key", (req, res) => {
 app.post("/api/push/subscribe", async (req, res) => {
   await saveSubscription(req.body);
   res.json({ ok: true });
+});
+
+app.get("/api/server/id", (req, res) => {
+  res.json({ serverId: getServerId() });
 });
 
 app.get("/api/members", async (req, res) => {
@@ -211,6 +217,21 @@ app.delete("/api/members/:id/files/*", async (req, res) => {
   const relativePath = (req.params as any)[0];
   await deleteFile(req.params.id, relativePath);
   res.json({ ok: true });
+});
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const webDistPath = path.join(__dirname, "../web/dist");
+
+console.log(`[server] Serving static files from: ${webDistPath}`);
+
+app.use(express.static(webDistPath));
+
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/api/")) {
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  res.sendFile(path.join(webDistPath, "index.html"));
 });
 
 app.listen(port, () => {

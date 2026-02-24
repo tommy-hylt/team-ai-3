@@ -8,3 +8,4 @@ server/out.log
 server/err.log
 server/vapid.json
 server/subscriptions.json
+server/processes.json

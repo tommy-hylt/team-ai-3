@@ -1,13 +1,35 @@
 import { spawn, ChildProcess } from "child_process";
-import { readFile } from "fs/promises";
+import { readFile, writeFile } from "fs/promises";
+import { randomBytes } from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
+import treeKill from "tree-kill";
 import { Member } from "./member.ts";
 import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const PROCESS_FILE = join(__dirname, "processes.json");
 
-const activeProcesses = new Map<string, { process: ChildProcess; memberId: string }>();
+function generateUUIDv7(): string {
+  const now = BigInt(Date.now());
+  const bytes = Buffer.alloc(16);
+  bytes.writeBigUInt64BE(now << 16n, 0);
+  randomBytes(10).copy(bytes, 6);
+  bytes[6] = (bytes[6] & 0x0f) | 0x70;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = bytes.toString("hex");
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20)}`;
+}
+
+const serverId = generateUUIDv7();
+console.log(`[agentService] Server instance ID: ${serverId}`);
+
+export function getServerId(): string {
+  return serverId;
+}
+
+const activeProcesses = new Map<string, { process: ChildProcess; memberId: string; pid: number; executable: string; startTime: string; server: string }>();
+const cancelledRequests = new Set<string>();
 const memberLocks = new Map<string, Promise<void>>();
 
 async function acquireLock(memberId: string): Promise<() => void> {
@@ -26,13 +48,34 @@ async function acquireLock(memberId: string): Promise<() => void> {
   };
 }
 
+function syncProcessFile() {
+  const entries = Array.from(activeProcesses.entries()).map(([requestId, entry]) => ({
+    requestId,
+    memberId: entry.memberId,
+    pid: entry.pid,
+    executable: entry.executable,
+    startTime: entry.startTime,
+    server: entry.server,
+  }));
+  writeFile(PROCESS_FILE, JSON.stringify(entries, null, 2)).catch((err) => {
+    console.error("[syncProcessFile] Failed to write processes.json:", err.message);
+  });
+}
+
 export function cancelRequest(requestId: string): boolean {
+  cancelledRequests.add(requestId);
   const entry = activeProcesses.get(requestId);
   if (entry) {
-    console.log(`[cancelRequest] Killing process ${entry.process.pid} for request ${requestId}`);
-    // On Windows, killing without shell:true might be more direct
-    entry.process.kill();
+    const pid = entry.process.pid;
+    console.log(`[cancelRequest] Killing process tree for PID ${pid}, request ${requestId}`);
     activeProcesses.delete(requestId);
+    syncProcessFile();
+    if (pid) {
+      treeKill(pid, "SIGTERM", (err) => {
+        if (err) console.error(`[cancelRequest] tree-kill error for PID ${pid}:`, err.message);
+        else console.log(`[cancelRequest] Process tree for PID ${pid} killed successfully`);
+      });
+    }
     return true;
   }
   return false;
@@ -42,11 +85,19 @@ export function cancelAllRequests(memberId: string) {
   console.log(`[cancelAllRequests] Cancelling all requests for member ${memberId}`);
   for (const [requestId, entry] of activeProcesses.entries()) {
     if (entry.memberId === memberId) {
-      console.log(`[cancelAllRequests] Killing process ${entry.process.pid} for request ${requestId}`);
-      entry.process.kill();
+      cancelledRequests.add(requestId);
+      const pid = entry.process.pid;
+      console.log(`[cancelAllRequests] Killing process tree for PID ${pid}, request ${requestId}`);
       activeProcesses.delete(requestId);
+      if (pid) {
+        treeKill(pid, "SIGTERM", (err) => {
+          if (err) console.error(`[cancelAllRequests] tree-kill error for PID ${pid}:`, err.message);
+          else console.log(`[cancelAllRequests] Process tree for PID ${pid} killed successfully`);
+        });
+      }
     }
   }
+  syncProcessFile();
 }
 
 interface AgentArgPart {
@@ -72,6 +123,12 @@ export async function runAgent(member: Member, requestText: string, requestId: s
 
     // Try each agent in order, falling back to the next on failure
     for (let i = 0; i < member.agents.length; i++) {
+      if (cancelledRequests.has(requestId)) {
+        console.log(`[runAgent] Request ${requestId} was cancelled, stopping`);
+        cancelledRequests.delete(requestId);
+        return { text: "Request cancelled.", agentName: "system" };
+      }
+
       const agentName = member.agents[i];
       const isFallback = i > 0;
       console.log(`[runAgent] ${isFallback ? "Fallback" : "Starting"} for member="${member.id}", agent="${agentName}"`);
@@ -88,6 +145,7 @@ export async function runAgent(member: Member, requestText: string, requestId: s
 
     return { text: "Error: All agents failed. Please try again later.", agentName: "system" };
   } finally {
+    cancelledRequests.delete(requestId);
     release();
   }
 }
@@ -112,8 +170,19 @@ async function tryAgent(
       }
       return { text: result.text, agentName };
     }
+    // If cancelled, don't retry with fresh invocation
+    if (cancelledRequests.has(requestId)) {
+      console.log(`[tryAgent] Request ${requestId} was cancelled, not retrying`);
+      return undefined;
+    }
     console.log(`[tryAgent] Resume failed for "${agentName}", expiring session`);
     await expireSession(memberId, agentName);
+  }
+
+  // If cancelled, don't start fresh invocation
+  if (cancelledRequests.has(requestId)) {
+    console.log(`[tryAgent] Request ${requestId} was cancelled, skipping fresh invocation`);
+    return undefined;
   }
 
   // Fresh invocation
@@ -202,7 +271,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     const proc = spawn(executable, args, { shell: true, env, cwd });
     
     // Register process
-    activeProcesses.set(requestId, { process: proc, memberId });
+    activeProcesses.set(requestId, { process: proc, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId });
+    syncProcessFile();
 
     let stdout = "";
     let stderr = "";
@@ -229,11 +299,13 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
       activeProcesses.delete(requestId);
+      syncProcessFile();
       resolve({ text: `Agent process error: ${err.message}` });
     });
 
     proc.on("close", (code) => {
       activeProcesses.delete(requestId);
+      syncProcessFile();
       console.log(`[executeAgent] Process closed with code ${code}`);
       console.log(`[executeAgent] Total stdout: ${stdout.length} chars`);
       console.log(`[executeAgent] Total stderr: ${stderr.length} chars`);

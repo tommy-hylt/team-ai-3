@@ -32,3 +32,22 @@ dev.cmd
 
 - Server: http://localhost:8699
 - Web UI: http://localhost:5173
+
+## Cleaning Up Stray Agent Processes
+
+When the server crashes or is killed, spawned agent processes (Claude, Gemini) can become orphans. The server tracks all active agent PIDs in `server/processes.json` at runtime. Each record includes a `server` field — a UUIDv7 that identifies the server instance that spawned it.
+
+To kill orphaned processes from a previous server instance, run:
+
+```cmd
+server\killProcesses.cmd
+```
+
+The script will:
+
+1. Read `server/processes.json`
+2. Query `GET /api/server/id` on the running server to get the current instance ID
+3. Kill only processes whose `server` field does not match the current instance (orphans from an old server)
+4. If the server is not running, kill all tracked processes (they are all orphans)
+
+The `processes.json` file is git-ignored and maintained automatically by the server.
