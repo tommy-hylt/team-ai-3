@@ -203,20 +203,25 @@
 
     .RoutineEditRow {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 8px;
       padding: 8px;
       background-color: #08090a;
       border-radius: 6px;
       border: 1px solid #1c1f23;
 
-      input {
+      input, textarea {
         background: none;
         border: none;
         color: #e0e6ed;
         font-size: 13px;
         padding: 4px;
         outline: none;
+      }
+
+      textarea {
+        min-height: 40px; /* Override the default 150px */
+        font-family: inherit; /* Inherit the system font instead of monospace */
       }
 
       .RoutineCronInput {

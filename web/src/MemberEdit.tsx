@@ -424,12 +424,12 @@ export function MemberEdit() {
                         onChange={(e) => updateRoutine(i, "cronPattern", e.target.value)} 
                         placeholder="Cron (e.g. */5 * * * *)" 
                       />
-                      <input 
-                        type="text" 
+                      <textarea
                         className="RoutineTextInput"
                         value={routine.requestText} 
                         onChange={(e) => updateRoutine(i, "requestText", e.target.value)} 
                         placeholder="Request text" 
+                        rows={2}
                       />
                       <button className="RemoveRoutineButton" onClick={() => deleteRoutine(i)}><FiX /></button>
                     </div>
