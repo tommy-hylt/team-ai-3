@@ -13,6 +13,7 @@ if (members.length === 0) {
 }
 
 for (const member of members) {
+  if (!member) continue;
   console.log(`${member.name}`);
   console.log(`  Description: ${member.description || "(none)"}`);
   console.log(`  Agents: ${member.agents.join(", ")}`);

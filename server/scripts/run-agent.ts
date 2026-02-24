@@ -22,6 +22,6 @@ if (!member) {
 console.log(`Running agent for "${member.id}" (agent: ${member.agents[0]})...`);
 console.log(`Request: ${requestText}\n`);
 
-const response = await runAgent(member, requestText);
+const response = await runAgent(member, requestText, Date.now().toString());
 console.log("--- Response ---");
 console.log(response);

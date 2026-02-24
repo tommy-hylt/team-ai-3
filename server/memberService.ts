@@ -41,6 +41,7 @@ export async function createMember(data: any) {
     writeFile(join(memberDir, "MEMORY.md"), data.memory || "", "utf-8"),
     writeFile(join(memberDir, "requests.json"), "[]", "utf-8"),
     writeFile(join(memberDir, "responses.json"), "[]", "utf-8"),
+    writeFile(join(memberDir, "routines.json"), "[]", "utf-8"),
   ]);
 
   if (data.cloneFrom) {

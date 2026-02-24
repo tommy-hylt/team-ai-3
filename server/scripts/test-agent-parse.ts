@@ -6,6 +6,7 @@
  */
 
 // Read all stdin
+export {};
 const chunks: Buffer[] = [];
 for await (const chunk of process.stdin) {
   chunks.push(chunk);

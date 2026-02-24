@@ -15,7 +15,7 @@ export async function getChatHistory(memberName: string) {
     ...responses.map((r) => ({ ...r, type: "response" as const })),
   ];
   
-  return history.sort((a, b) => new Date(a.time || (a as any).requestTime).getTime() - new Date(b.time || (b as any).requestTime).getTime());
+  return history.sort((a: any, b: any) => new Date(a.time || a.requestTime).getTime() - new Date(b.time || b.requestTime).getTime());
 }
 
 export async function addRequest(memberName: string, request: Request) {

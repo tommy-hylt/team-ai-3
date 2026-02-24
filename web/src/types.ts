@@ -16,3 +16,11 @@ export interface ResponseMessage {
 }
 
 export type MessageType = RequestMessage | ResponseMessage;
+
+export interface Routine {
+  id: string;
+  cronPattern: string;
+  requestText: string;
+  startTime: string;
+  lastTime: string;
+}

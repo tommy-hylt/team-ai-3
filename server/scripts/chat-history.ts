@@ -22,7 +22,7 @@ if (history.length === 0) {
 console.log(`Chat history for "${memberName}" (${history.length} messages):\n`);
 
 for (const entry of history) {
-  const time = new Date(entry.time || (entry as any).requestTime).toLocaleString();
+  const time = new Date((entry as any).time || (entry as any).requestTime).toLocaleString();
   if (entry.type === "request") {
     const req = entry as any;
     console.log(`[${time}] REQUEST from ${req.requester}:`);

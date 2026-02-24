@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import treeKill from "tree-kill";
-import { Member } from "./member.ts";
+import Member from "./member.ts";
 import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -98,6 +98,13 @@ export function cancelAllRequests(memberId: string) {
     }
   }
   syncProcessFile();
+}
+
+export function isMemberOccupied(memberId: string): boolean {
+  for (const entry of activeProcesses.values()) {
+    if (entry.memberId === memberId) return true;
+  }
+  return false;
 }
 
 interface AgentArgPart {

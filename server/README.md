@@ -33,10 +33,14 @@ A Node.js Express server that manages AI team members and executes agents.
 - `GET /api/members/:id/details`: Get full details (character, memory, agents) for a member.
   - **Returns:** Member details object `{ character: "...", memory: "...", agents: [...] }`.
 - `POST /api/members/:id/details`: Update details for a member.
-  - **Body:** Partial member details object `{ character?: "...", memory?: "...", agents?: [...] }`.
+  - **Body:** Partial member details object `{ character?: "...", memory?: "...", agents?: [...] }`.     
   - **Returns:** The updated member details object.
-- `DELETE /api/members/:id`: Soft delete a member.
+- `GET /api/members/:id/routines`: Get the routines configured for a member.
+  - **Returns:** Array of routine objects `{ id: "...", cronPattern: "...", requestText: "...", startTime: "...", lastTime: "..." }`.
+- `POST /api/members/:id/routines`: Update the routines for a member.
+  - **Body:** Array of routine objects.
   - **Returns:** `{ ok: true }`
+- `DELETE /api/members/:id`: Soft delete a member.  - **Returns:** `{ ok: true }`
 
 ### Chat
 - `GET /api/members/:id/chat`: Retrieve chat history.

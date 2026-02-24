@@ -164,6 +164,104 @@
       box-shadow: 0 0 0 4px #0abab511;
     }
 
+    .RoutinesList {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .RoutineRow {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed #1c1f23;
+      &:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+    }
+
+    .RoutineCron {
+      font-family: "JetBrains Mono", monospace;
+      font-size: 11px;
+      color: #0abab5;
+      display: flex;
+      align-items: center;
+    }
+
+    .RoutineText {
+      font-size: 13px;
+      color: #e0e6ed;
+    }
+
+    .RoutinesEditor {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .RoutineEditRow {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px;
+      background-color: #08090a;
+      border-radius: 6px;
+      border: 1px solid #1c1f23;
+
+      input {
+        background: none;
+        border: none;
+        color: #e0e6ed;
+        font-size: 13px;
+        padding: 4px;
+        outline: none;
+      }
+
+      .RoutineCronInput {
+        width: 140px;
+        font-family: "JetBrains Mono", monospace;
+        color: #0abab5;
+        border-right: 1px solid #1c1f23;
+      }
+
+      .RoutineTextInput {
+        flex: 1;
+      }
+
+      .RemoveRoutineButton {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        &:hover {
+          color: #f87171;
+        }
+      }
+    }
+
+    .AddRoutineButton {
+      background: none;
+      border: 1px dashed #4b5563;
+      color: #94a3b8;
+      border-radius: 6px;
+      padding: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      font-size: 12px;
+      transition: 0.2s;
+      &:hover {
+        border-color: #0abab5;
+        color: #0abab5;
+      }
+    }
+
     .AgentTags {
       display: flex;
       flex-wrap: wrap;

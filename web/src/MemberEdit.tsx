@@ -1,7 +1,8 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare } from "react-icons/fi";
+import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare, FiPlus, FiClock } from "react-icons/fi";
+import { Routine } from "./types";
 import "./MemberEdit.css";
 
 interface MemberDetails {
@@ -30,7 +31,9 @@ export function MemberEdit() {
 
   const [skillNames, setSkillNames] = useState<string[]>([]);
 
-
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [editingRoutines, setEditingRoutines] = useState(false);
+  const [tempRoutines, setTempRoutines] = useState<Routine[]>([]);
 
   useEffect(() => {
 
@@ -41,6 +44,10 @@ export function MemberEdit() {
         .then(res => res.json())
 
         .then(setDetails);
+        
+      fetch(`/api/members/${id}/routines`)
+        .then(res => res.json())
+        .then(setRoutines);
 
       Promise.all([
         fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
@@ -130,7 +137,39 @@ export function MemberEdit() {
 
   }
 
+  async function handleSaveRoutines() {
+    if (!id) return;
+    const res = await fetch(`/api/members/${id}/routines`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tempRoutines)
+    });
+    if (res.ok) {
+      setRoutines(tempRoutines);
+      setEditingRoutines(false);
+    }
+  }
 
+  function startEditingRoutines() {
+    setTempRoutines([...routines]);
+    setEditingRoutines(true);
+  }
+
+  function addRoutine() {
+    setTempRoutines([...tempRoutines, { id: crypto.randomUUID?.() || Date.now().toString(), cronPattern: "*/5 * * * *", requestText: "Check system status", startTime: new Date().toISOString(), lastTime: "" }]);
+  }
+
+  function updateRoutine(index: number, key: keyof Routine, value: string) {
+    const updated = [...tempRoutines];
+    updated[index] = { ...updated[index], [key]: value };
+    setTempRoutines(updated);
+  }
+
+  function deleteRoutine(index: number) {
+    const updated = [...tempRoutines];
+    updated.splice(index, 1);
+    setTempRoutines(updated);
+  }
 
   if (!details) return <div className="MemberEdit">Loading...</div>;
 
@@ -354,6 +393,64 @@ export function MemberEdit() {
                 </div>
               ) : (
                 <pre>(No skills)</pre>
+              )}
+            </div>
+          </div>
+
+          {/* Routines */}
+          <div className={`Field ${editingRoutines ? "editing" : ""}`}>
+            <div className="FieldHeader">
+              <label>Routines</label>
+              {!editingRoutines ? (
+                <button className="EditButton" onClick={startEditingRoutines}>
+                  <FiEdit2 />
+                </button>
+              ) : (
+                <div className="EditActions">
+                  <button className="SaveButton" onClick={handleSaveRoutines}><FiCheck /></button>
+                  <button className="CancelButton" onClick={() => setEditingRoutines(false)}><FiX /></button>
+                </div>
+              )}
+            </div>
+            <div className="FieldContent">
+              {editingRoutines ? (
+                <div className="RoutinesEditor">
+                  {tempRoutines.map((routine, i) => (
+                    <div key={routine.id} className="RoutineEditRow">
+                      <input 
+                        type="text" 
+                        className="RoutineCronInput"
+                        value={routine.cronPattern} 
+                        onChange={(e) => updateRoutine(i, "cronPattern", e.target.value)} 
+                        placeholder="Cron (e.g. */5 * * * *)" 
+                      />
+                      <input 
+                        type="text" 
+                        className="RoutineTextInput"
+                        value={routine.requestText} 
+                        onChange={(e) => updateRoutine(i, "requestText", e.target.value)} 
+                        placeholder="Request text" 
+                      />
+                      <button className="RemoveRoutineButton" onClick={() => deleteRoutine(i)}><FiX /></button>
+                    </div>
+                  ))}
+                  <button className="AddRoutineButton" onClick={addRoutine}>
+                    <FiPlus /> Add Routine
+                  </button>
+                </div>
+              ) : (
+                <div className="RoutinesList">
+                  {routines.length > 0 ? (
+                    routines.map(routine => (
+                      <div key={routine.id} className="RoutineRow">
+                        <span className="RoutineCron"><FiClock style={{marginRight: 6}}/> {routine.cronPattern}</span>
+                        <span className="RoutineText">{routine.requestText}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <pre>(No routines)</pre>
+                  )}
+                </div>
               )}
             </div>
           </div>

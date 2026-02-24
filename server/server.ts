@@ -10,11 +10,13 @@ import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile, checkFileSync } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
+import { getRoutines, saveRoutines, startRoutineLoop } from "./routineService.ts";
 
 const app = express();
 const port = 8699;
 
 initPush().then(() => console.log("[server] Push notifications initialized"));
+startRoutineLoop();
 
 app.use(cors());
 app.use(express.json());
@@ -52,6 +54,20 @@ app.get("/api/members/:id/details", async (req, res) => {
   const details = await getMemberDetails(req.params.id);
   if (!details) return res.status(404).json({ error: "Member not found" });
   res.json(details);
+});
+
+app.get("/api/members/:id/routines", async (req, res) => {
+  const routines = await getRoutines(req.params.id);
+  res.json(routines);
+});
+
+app.post("/api/members/:id/routines", async (req, res) => {
+  try {
+    await saveRoutines(req.params.id, req.body);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as any).message });
+  }
 });
 
 app.post("/api/members/:id/details", async (req, res) => {
