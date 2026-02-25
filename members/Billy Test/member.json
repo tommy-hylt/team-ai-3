@@ -1,9 +1,0 @@
-{
-  "name": "Billy Test",
-  "description": "Simple member for testing bugs",
-  "agents": [
-    "gemini-2.0-flash",
-    "claude-haiku"
-  ],
-  "status": "active"
-}

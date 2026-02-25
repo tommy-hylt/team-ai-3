@@ -13,6 +13,12 @@ server/vapid.json
 server/subscriptions.json
 server/processes.json
 
+/members/*
+!/members/Ava Admin/
+!/members/Edan First/
+!/members/Emi Secretary/
+!/members/Wendy Housekeeper/
+
 /members/*/*
 !/members/*/CHARACTER.md
 !/members/*/member.json

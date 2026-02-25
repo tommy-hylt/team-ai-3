@@ -1,9 +1,0 @@
-{
-  "name": "Bob Admin",
-  "description": "Lead Administrator",
-  "agents": [
-    "claude-haiku",
-    "gemini-2.5-flash"
-  ],
-  "status": "deleted"
-}
