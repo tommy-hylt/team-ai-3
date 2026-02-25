@@ -1,5 +1,6 @@
 .Chat {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background-color: #08090a;
@@ -67,6 +68,7 @@
   .MessageList {
     flex: 1;
     overflow-y: auto;
+    overflow-x: hidden;
     display: flex;
     flex-direction: column;
     gap: 32px;
@@ -98,6 +100,7 @@
     display: flex;
     flex-direction: column;
     animation: Chat-message-fade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    min-width: 0;
 
     @media (max-width: 768px) {
       max-width: 92%;
@@ -155,6 +158,68 @@
       line-height: 1.6;
       white-space: pre-wrap;
       word-break: break-word;
+      min-width: 0;
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      overflow-x: auto;
+
+      &.markdown-enabled {
+        white-space: normal;
+        
+        p {
+          margin-top: 0;
+          margin-bottom: 12px;
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+        
+        pre {
+          background-color: #08090a;
+          padding: 12px;
+          border-radius: 8px;
+          overflow-x: auto;
+          font-family: "JetBrains Mono", monospace;
+          font-size: 13px;
+          margin: 12px 0;
+        }
+
+        code {
+          font-family: "JetBrains Mono", monospace;
+          background-color: #08090a44;
+          padding: 2px 4px;
+          border-radius: 4px;
+          font-size: 0.9em;
+        }
+
+        ul, ol {
+          margin-top: 0;
+          margin-bottom: 12px;
+          padding-left: 24px;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 12px;
+          font-size: 13px;
+          display: block;
+          overflow-x: auto;
+          white-space: nowrap;
+
+          th, td {
+            border: 1px solid #4b5563;
+            padding: 8px 12px;
+            text-align: left;
+          }
+
+          th {
+            background-color: #1c1f23;
+            font-weight: 700;
+          }
+        }
+      }
     }
 
     .AbortedLabel {
@@ -182,6 +247,29 @@
 
       .MessageTime {
         margin-top: 0;
+      }
+
+      .MarkdownToggle {
+        background: none;
+        border: none;
+        color: #6b7280;
+        cursor: pointer;
+        padding: 2px 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        transition: 0.2s;
+        margin-left: auto;
+
+        &:hover {
+          color: #e0e6ed;
+          background-color: #1c1f23;
+        }
+
+        &.active {
+          color: #4b5563;
+        }
       }
     }
   }

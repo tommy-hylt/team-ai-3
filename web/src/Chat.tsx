@@ -2,6 +2,9 @@ import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiSettings, FiX, FiSend, FiFolder } from "react-icons/fi";
+import { SiMarkdown } from "react-icons/si";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { MessageTime } from "./MessageTime";
 import { MessageType } from "./types";
 import "./Chat.css";
@@ -41,6 +44,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const { members, loading } = useContext(MemberContext);
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
+  const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const isSending = useRef(false);
   const clientId = useRef(Math.random().toString(36).substring(7));
@@ -214,13 +218,20 @@ export function Chat({ onBack }: { onBack: () => void }) {
               {m.type === "request" && m.requester && (
                 <div className="RequesterName">{m.requester}</div>
               )}
-              <div className="Text">
-                {m.text}
+              <div className={`Text ${renderMd[i] !== false ? "markdown-enabled" : ""}`}>
+                {renderMd[i] !== false ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown> : m.text}
               </div>
               <div className="MetaRow">
                 <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
                 {m.type === "response" && m.agent && <span className="AgentLabel">{m.agent}</span>}
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
+                <button 
+                  className={`MarkdownToggle ${renderMd[i] !== false ? "active" : ""}`} 
+                  onClick={() => setRenderMd(prev => ({ ...prev, [i]: prev[i] === false ? true : false }))}
+                  title="Toggle Markdown"
+                >
+                  <SiMarkdown />
+                </button>
               </div>
             </div>
             {m.type === "request" && m.status === "running" && (

@@ -18,20 +18,16 @@ server/processes.json
 !/members/Edan First/
 !/members/Emi Secretary/
 !/members/Wendy Housekeeper/
-
 /members/*/*
 !/members/*/CHARACTER.md
 !/members/*/member.json
 !/members/*/MEMORY.md
-
 !/members/*/.agent/
 !/members/*/.claude/
 !/members/*/.gemini/
-
 /members/*/.agent/*
 /members/*/.claude/*
 /members/*/.gemini/*
-
 !/members/*/.agent/skills/
 !/members/*/.claude/skills/
 !/members/*/.gemini/skills/
