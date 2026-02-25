@@ -2,7 +2,7 @@ import { readFile, writeFile } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
-import parser from "cron-parser";
+import { CronExpressionParser } from "cron-parser";
 import { listMembers, getMember } from "./memberService.ts";
 import { addRequest, getRequestStatus, updateRequestStatus, addResponse } from "./chatService.ts";
 import { isMemberOccupied, runAgent } from "./agentService.ts";
@@ -46,7 +46,10 @@ export async function saveRoutines(memberId: string, routines: Routine[]) {
 
 export function startRoutineLoop() {
   if (!loopInterval) {
-    loopInterval = setInterval(processRoutines, 5000);
+    console.log("[routineService] Starting routine loop...");
+    loopInterval = setInterval(() => {
+      processRoutines().catch(err => console.error("[routineService] Loop Error:", err));
+    }, 5000);
   }
 }
 
@@ -80,12 +83,11 @@ async function processRoutines() {
     // Process each routine to see if it should fire
     for (const routine of routines) {
       try {
-        const interval = parser.parse(routine.cronPattern, {
-          currentDate: new Date(routine.lastTime || routine.startTime || now.toISOString()),
+        const currentDate = new Date(routine.lastTime || routine.startTime || now.toISOString());
+        const interval = CronExpressionParser.parse(routine.cronPattern, {
+          currentDate,
         });
         
-        // Cron parser calculates next date strictly greater than currentDate
-        // So if lastTime was 5 minutes ago, next() might be 4 minutes ago, which is <= now.
         const nextTime = interval.next().toDate();
 
         if (nextTime <= now) {
@@ -104,7 +106,7 @@ async function processRoutines() {
         }
       } catch (err) {
         // Invalid cron pattern, ignore
-        console.error(`[routineService] Invalid cron pattern for member ${member.id}: ${routine.cronPattern}`);
+        console.error(`[routineService] Invalid cron pattern for member ${member.id}: "${routine.cronPattern}". Error: ${(err as any).message}`);
       }
     }
 
