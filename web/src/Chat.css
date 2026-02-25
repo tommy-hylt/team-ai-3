@@ -261,6 +261,7 @@
         border-radius: 4px;
         transition: 0.2s;
         margin-left: auto;
+        font-size: 16px;
 
         &:hover {
           color: #e0e6ed;

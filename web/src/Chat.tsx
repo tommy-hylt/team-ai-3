@@ -2,7 +2,7 @@ import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiSettings, FiX, FiSend, FiFolder } from "react-icons/fi";
-import { SiMarkdown } from "react-icons/si";
+import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MessageTime } from "./MessageTime";
@@ -230,7 +230,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
                   onClick={() => setRenderMd(prev => ({ ...prev, [i]: prev[i] === false ? true : false }))}
                   title="Toggle Markdown"
                 >
-                  <SiMarkdown />
+                  {renderMd[i] !== false ? <TbMarkdown /> : <TbMarkdownOff />}
                 </button>
               </div>
             </div>
