@@ -13,13 +13,11 @@ export async function listMembers() {
     .filter((entry) => entry.isDirectory())
     .map((entry) => loadMember(entry.name));
     
-  return (await Promise.all(memberPromises)).filter((member) => !!member && member.status !== "deleted");
+  return (await Promise.all(memberPromises)).filter((member) => !!member);
 }
 
 export async function getMember(name: string) {
-  const member = await loadMember(name);
-  if (member?.status === "deleted") return undefined;
-  return member;
+  return await loadMember(name);
 }
 
 export async function createMember(data: any) {
@@ -31,8 +29,7 @@ export async function createMember(data: any) {
   const memberJson = {
     name: name,
     description: data.description || "",
-    agents: data.agents || ["gemini-2.5-flash"],
-    status: "active"
+    agents: data.agents || ["gemini-2.5-flash"]
   };
 
   await Promise.all([
@@ -80,7 +77,7 @@ export async function createMember(data: any) {
 
 export async function getMemberDetails(name: string) {
   const member = await loadMember(name);
-  if (!member || member.status === "deleted") return undefined;
+  if (!member) return undefined;
 
   const charPath = join(__dirname, "../members", name, "CHARACTER.md");
   const memPath = join(__dirname, "../members", name, "MEMORY.md");
