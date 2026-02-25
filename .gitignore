@@ -23,6 +23,15 @@ server/processes.json
 !/members/*/CHARACTER.md
 !/members/*/member.json
 !/members/*/MEMORY.md
+
+!/members/*/.agent/
+!/members/*/.claude/
+!/members/*/.gemini/
+
+/members/*/.agent/*
+/members/*/.claude/*
+/members/*/.gemini/*
+
 !/members/*/.agent/skills/
 !/members/*/.claude/skills/
 !/members/*/.gemini/skills/
