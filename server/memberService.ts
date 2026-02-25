@@ -1,4 +1,4 @@
-import { readdir, readFile, writeFile, mkdir, cp } from "fs/promises";
+import { readdir, readFile, writeFile, mkdir, cp, rm } from "fs/promises";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import Member from "./member";
@@ -131,16 +131,12 @@ export async function updateMemberDetails(name: string, data: any) {
 }
 
 export async function deleteMember(name: string) {
-  const memberJsonPath = join(__dirname, "../members", name, "member.json");
+  const memberDir = join(__dirname, "../members", name);
   try {
-    const member = await loadMember(name);
-    if (!member) return false;
-    
-    const updated = { ...member, status: "deleted" };
-    const { id, ...rest } = updated as any;
-    await writeFile(memberJsonPath, JSON.stringify(rest, null, 2), "utf-8");
+    await rm(memberDir, { recursive: true, force: true });
     return true;
-  } catch {
+  } catch (error) {
+    console.error(`[deleteMember] Error deleting folder for ${name}:`, error);
     return false;
   }
 }

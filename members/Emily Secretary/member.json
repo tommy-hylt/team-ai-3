@@ -1,0 +1,9 @@
+{
+  "name": "Emily Secretary",
+  "description": "Primay secretary of this team",
+  "agents": [
+    "claude-sonnet",
+    "gemini-2.5-pro"
+  ],
+  "status": "active"
+}
