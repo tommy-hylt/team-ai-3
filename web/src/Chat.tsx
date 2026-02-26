@@ -46,6 +46,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [input, setInput] = useState("");
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const isSending = useRef(false);
   const clientId = useRef(Math.random().toString(36).substring(7));
 
@@ -122,9 +123,11 @@ export function Chat({ onBack }: { onBack: () => void }) {
   }, [id]);
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-    }
+    // Slight delay to allow React to render the new messages to the DOM
+    const timer = setTimeout(() => {
+      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 50);
+    return () => clearTimeout(timer);
   }, [messages]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -248,6 +251,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
             )}
           </div>
         ))}
+        <div ref={messagesEndRef} />
       </div>
       <div className="InputArea">
         <div className="InputWrapper">
