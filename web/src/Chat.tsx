@@ -47,6 +47,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const isFirstLoad = useRef(true);
   const isSending = useRef(false);
   const clientId = useRef(Math.random().toString(36).substring(7));
 
@@ -125,7 +126,10 @@ export function Chat({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     // Slight delay to allow React to render the new messages to the DOM
     const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      messagesEndRef.current?.scrollIntoView({ 
+        behavior: isFirstLoad.current ? "auto" : "smooth" 
+      });
+      isFirstLoad.current = false;
     }, 50);
     return () => clearTimeout(timer);
   }, [messages]);
