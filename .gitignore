@@ -9,6 +9,7 @@ dist
 server.log
 server/out.log
 server/err.log
+server/agent_raw_output.log
 server/vapid.json
 server/subscriptions.json
 server/processes.json

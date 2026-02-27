@@ -1,5 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
-import { readFile, writeFile } from "fs/promises";
+import { readFile, writeFile, appendFile } from "fs/promises";
 import { randomBytes } from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -314,6 +314,19 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
       activeProcesses.delete(requestId);
       syncProcessFile();
       console.log(`[executeAgent] Process closed with code ${code}`);
+      
+      // Dump full raw output to a dedicated log file for debugging multiple messages
+      const debugLog = `\n=========================================\n` +
+        `Time: ${new Date().toISOString()}\n` +
+        `Member: ${memberId}\n` +
+        `Request: ${requestId}\n` +
+        `Exit: ${code}\n` +
+        `--- STDOUT ---\n${stdout}\n` +
+        `--- STDERR ---\n${stderr}\n`;
+      appendFile(join(__dirname, "agent_raw_output.log"), debugLog, "utf-8").catch(err => 
+        console.error("[executeAgent] Failed to write raw log:", err)
+      );
+
       console.log(`[executeAgent] Total stdout: ${stdout.length} chars`);
       console.log(`[executeAgent] Total stderr: ${stderr.length} chars`);
       if (stdout.length > 0) {
