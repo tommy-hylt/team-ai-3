@@ -4,7 +4,7 @@ export interface Request {
   requester: string;
   requestTime: Date;
   notify: boolean;
-  echo?: boolean;
+  echo: boolean;
 
   status: "pending" | "running" | "completed" | "aborted";
   startTime?: Date;
