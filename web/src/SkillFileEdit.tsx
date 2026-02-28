@@ -116,22 +116,23 @@ export function SkillFileEdit() {
                     <span>Longest: <strong>{longest[0]}</strong> ({longest[1].size} bytes)</span>
                   </>
                 )}
-                <div className="VendorSelector">
-                  <span>View version: </span>
-                  <select 
-                    value={selectedVendor} 
-                    onChange={e => {
-                      const v = e.target.value;
-                      setSelectedVendor(v);
-                      setValue(syncData[v]?.content || "");
-                    }}
-                  >
-                    {entries.map(([v, info]) => (
-                      <option key={v} value={v}>
+                <div className="VendorList">
+                  {entries.map(([v, info]) => {
+                    const isSelected = v === selectedVendor;
+                    return (
+                      <span 
+                        key={v} 
+                        className={`VendorLink ${isSelected ? 'active' : ''} ${!info.exists ? 'missing' : ''}`}
+                        onClick={() => {
+                          setSelectedVendor(v);
+                          setValue(syncData[v]?.content || "");
+                        }}
+                      >
+                        {isSelected && <span className="CurrentIndicator">▶</span>}
                         {v} {info.exists ? `(${info.content?.length || 0} chars)` : "(missing)"}
-                      </option>
-                    ))}
-                  </select>
+                      </span>
+                    );
+                  })}
                 </div>
               </div>
             </div>

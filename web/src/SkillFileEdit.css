@@ -180,24 +180,40 @@
           color: #f59e0b;
         }
 
-        .VendorSelector {
+        .VendorList {
           margin-top: 8px;
           display: flex;
-          align-items: center;
-          gap: 8px;
+          flex-direction: column;
+          gap: 6px;
 
-          select {
-            background-color: #16191d;
-            color: #e0e6ed;
-            border: 1px solid #4b5563;
-            border-radius: 6px;
-            padding: 4px 8px;
-            font-size: 12px;
-            outline: none;
+          .VendorLink {
             cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            width: fit-content;
+            transition: background-color 0.2s, color 0.2s;
 
-            &:focus {
-              border-color: #0abab5;
+            &:hover {
+              background-color: #16191d;
+              color: #e0e6ed;
+            }
+
+            &.active {
+              color: #0abab5;
+              background-color: #0abab511;
+            }
+
+            &.missing {
+              opacity: 0.6;
+              text-decoration: line-through;
+            }
+
+            .CurrentIndicator {
+              font-size: 10px;
+              margin-right: 6px;
+              color: #0abab5;
             }
           }
         }
