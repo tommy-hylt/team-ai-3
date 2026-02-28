@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare, FiPlus, FiClock } from "react-icons/fi";
+import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare, FiPlus, FiClock, FiBell, FiBellOff } from "react-icons/fi";
 import { Routine } from "./types";
 import "./MemberEdit.css";
 
@@ -156,10 +156,10 @@ export function MemberEdit() {
   }
 
   function addRoutine() {
-    setTempRoutines([...tempRoutines, { id: crypto.randomUUID?.() || Date.now().toString(), cronPattern: "*/5 * * * *", requestText: "Check system status", startTime: new Date().toISOString(), lastTime: "" }]);
+    setTempRoutines([...tempRoutines, { id: crypto.randomUUID?.() || Date.now().toString(), cronPattern: "*/5 * * * *", requestText: "Check system status", startTime: new Date().toISOString(), lastTime: "", notify: true }]);
   }
 
-  function updateRoutine(index: number, key: keyof Routine, value: string) {
+  function updateRoutine(index: number, key: keyof Routine, value: any) {
     const updated = [...tempRoutines];
     updated[index] = { ...updated[index], [key]: value };
     setTempRoutines(updated);
@@ -417,13 +417,23 @@ export function MemberEdit() {
                 <div className="RoutinesEditor">
                   {tempRoutines.map((routine, i) => (
                     <div key={routine.id} className="RoutineEditRow">
-                      <input 
-                        type="text" 
-                        className="RoutineCronInput"
-                        value={routine.cronPattern} 
-                        onChange={(e) => updateRoutine(i, "cronPattern", e.target.value)} 
-                        placeholder="Cron (e.g. */5 * * * *)" 
-                      />
+                      <div className="RoutineEditRowHeader">
+                        <input 
+                          type="text" 
+                          className="RoutineCronInput"
+                          value={routine.cronPattern} 
+                          onChange={(e) => updateRoutine(i, "cronPattern", e.target.value)} 
+                          placeholder="Cron (e.g. */5 * * * *)" 
+                        />
+                        <button
+                          className={`NotifyToggle ${routine.notify !== false ? "on" : "off"}`}
+                          onClick={() => updateRoutine(i, "notify", routine.notify === false ? true : false)}
+                          title="Toggle notifications"
+                        >
+                          {routine.notify !== false ? <FiBell /> : <FiBellOff />}
+                        </button>
+                        <button className="RemoveRoutineButton" onClick={() => deleteRoutine(i)}><FiX /></button>
+                      </div>
                       <textarea
                         className="RoutineTextInput"
                         value={routine.requestText} 
@@ -431,7 +441,6 @@ export function MemberEdit() {
                         placeholder="Request text" 
                         rows={2}
                       />
-                      <button className="RemoveRoutineButton" onClick={() => deleteRoutine(i)}><FiX /></button>
                     </div>
                   ))}
                   <button className="AddRoutineButton" onClick={addRoutine}>
@@ -443,7 +452,10 @@ export function MemberEdit() {
                   {routines.length > 0 ? (
                     routines.map(routine => (
                       <div key={routine.id} className="RoutineRow">
-                        <span className="RoutineCron"><FiClock style={{marginRight: 6}}/> {routine.cronPattern}</span>
+                        <span className="RoutineCron">
+                          <FiClock style={{marginRight: 6}}/> {routine.cronPattern}
+                          {routine.notify === false ? <FiBellOff style={{marginLeft: 8, color: '#6b7280'}} title="Notifications disabled" /> : <FiBell style={{marginLeft: 8}} title="Notifications enabled" />}
+                        </span>
                         <span className="RoutineText">{routine.requestText}</span>
                       </div>
                     ))

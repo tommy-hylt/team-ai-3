@@ -211,6 +211,15 @@
       border: 1px solid #1c1f23;
       position: relative;
 
+      .RoutineEditRowHeader {
+        display: flex;
+        align-items: center;
+        width: 100%;
+        gap: 8px;
+        border-bottom: 1px dashed #1c1f23;
+        padding-bottom: 8px;
+      }
+
       input, textarea {
         background: none;
         border: none;
@@ -226,22 +235,37 @@
       }
 
       .RoutineCronInput {
-        width: 100%;
+        flex: 1;
+        min-width: 0;
         font-family: "JetBrains Mono", monospace;
         color: #0abab5;
-        border-bottom: 1px dashed #1c1f23;
-        padding-bottom: 8px;
-        padding-right: 24px;
       }
 
       .RoutineTextInput {
         width: 100%;
       }
 
+      .NotifyToggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        font-size: 14px;
+        transition: 0.2s;
+
+        &.on {
+          color: #0abab5;
+        }
+        &.off {
+          color: #4b5563;
+        }
+        &:hover {
+          color: #e0e6ed;
+        }
+      }
+
       .RemoveRoutineButton {
-        position: absolute;
-        top: 8px;
-        right: 8px;
         background: none;
         border: none;
         color: #6b7280;

@@ -4,6 +4,7 @@ export interface RequestMessage {
   text: string;
   requester?: string;
   requestTime: Date;
+  notify?: boolean;
   status?: "pending" | "running" | "completed" | "aborted";
 }
 
@@ -13,6 +14,7 @@ export interface ResponseMessage {
   time: Date;
   requestId: string;
   agent?: string;
+  notify?: boolean;
 }
 
 export type MessageType = RequestMessage | ResponseMessage;
@@ -23,4 +25,5 @@ export interface Routine {
   requestText: string;
   startTime: string;
   lastTime: string;
+  notify?: boolean;
 }

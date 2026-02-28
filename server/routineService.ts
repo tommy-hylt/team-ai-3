@@ -17,12 +17,14 @@ export interface Routine {
   requestText: string;
   startTime: string;
   lastTime: string;
+  notify?: boolean;
 }
 
 interface QueuedRoutine {
   id: string; // The routine ID
   memberId: string;
   requestText: string;
+  notify?: boolean;
 }
 
 const routineQueue: QueuedRoutine[] = [];
@@ -101,6 +103,7 @@ async function processRoutines() {
               id: routine.id,
               memberId: member.id,
               requestText: routine.requestText,
+              notify: routine.notify !== undefined ? routine.notify : true, // Default to true for backward compatibility
             });
           }
         }
@@ -129,13 +132,13 @@ async function processRoutines() {
       // Dequeue and dispatch
       routineQueue.splice(i, 1);
       lastRoutineDispatchTime = Date.now();
-      dispatchRoutineRequest(queued.memberId, queued.requestText);
+      dispatchRoutineRequest(queued.memberId, queued.requestText, queued.notify);
       break; // Only dispatch 1 request globally per 5 seconds
     }
   }
 }
 
-async function dispatchRoutineRequest(memberId: string, text: string) {
+async function dispatchRoutineRequest(memberId: string, text: string, notify?: boolean) {
   const member = await getMember(memberId);
   if (!member) return;
 
@@ -144,6 +147,7 @@ async function dispatchRoutineRequest(memberId: string, text: string) {
     text,
     requester: "Routine",
     requestTime: new Date(),
+    notify: notify,
     status: "running" as const,
   };
 
@@ -163,6 +167,7 @@ async function dispatchRoutineRequest(memberId: string, text: string) {
       time: new Date(),
       requestId: request.id,
       agent: agentResult.agentName,
+      notify: request.notify,
     };
 
     await addResponse(memberId, response);
@@ -170,7 +175,9 @@ async function dispatchRoutineRequest(memberId: string, text: string) {
     broadcast(memberId, "response", response);
     broadcast(memberId, "status_update", { id: request.id, status: "completed" });
 
-    sendNotification(`Routine message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+    if (response.notify !== false) {
+      sendNotification(`Routine message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+    }
   } catch (e) {
     console.error(`[routineService] Routine agent error for ${memberId}:`, e);
   }

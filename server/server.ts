@@ -114,6 +114,7 @@ app.post("/api/members/:id/chat/clear", async (req, res) => {
   console.log(`POST /api/members/${req.params.id}/chat/clear`);
   cancelAllRequests(req.params.id);
   await clearChatHistory(req.params.id);
+  await expireAllSessions(req.params.id);
   res.json({ ok: true });
 });
 
@@ -138,7 +139,7 @@ app.get("/api/members/:id/chat", async (req, res) => {
 app.post("/api/members/:id/request", async (req, res) => {
   try {
     const memberId = req.params.id;
-    const { text, requester } = req.body;
+    const { text, requester, notify } = req.body;
     console.log(`POST /api/members/${memberId}/request from ${requester}: ${text}`);
     
     const member = await getMember(memberId);
@@ -148,11 +149,15 @@ app.post("/api/members/:id/request", async (req, res) => {
       return;
     }
 
+    // Default notify to true if from User, otherwise use provided value or default false
+    const shouldNotify = notify !== undefined ? Boolean(notify) : (requester === "User");
+
     const request = {
       id: randomUUID(),
       text,
       requester,
       requestTime: new Date(),
+      notify: shouldNotify,
       status: "running" as const,
     };
 
@@ -182,6 +187,7 @@ app.post("/api/members/:id/request", async (req, res) => {
           time: new Date(),
           requestId: request.id,
           agent: agentResult.agentName,
+          notify: request.notify,
         };
 
         await addResponse(memberId, response);
@@ -189,7 +195,9 @@ app.post("/api/members/:id/request", async (req, res) => {
         broadcast(memberId, "response", response);
         broadcast(memberId, "status_update", { id: request.id, status: "completed" });
         
-        sendNotification(`New message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+        if (response.notify) {
+          sendNotification(`New message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+        }
       } catch (e) {
         console.error(`Background agent error for ${memberId}:`, e);
       }
