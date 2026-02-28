@@ -16,7 +16,7 @@ export interface ResponseMessage {
   requestId: string;
   agent?: string;
   notify: boolean;
-  echo: string;
+  echo?: string;
 }
 
 export type MessageType = RequestMessage | ResponseMessage;

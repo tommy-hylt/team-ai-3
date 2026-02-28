@@ -3,5 +3,5 @@ export interface Response {
     time: Date;
     agent?: string;
     notify: boolean;
-    echo: string;
+    echo?: string;
 }

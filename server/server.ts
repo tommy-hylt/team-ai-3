@@ -171,7 +171,7 @@ async function handleAgentRequest(memberId: string, text: string, requester: str
       requestId: request.id,
       agent: agentResult.agentName,
       notify: request.notify,
-      echo: request.echo ? request.requester : "",
+      echo: request.echo ? request.requester : undefined,
     };
 
     await addResponse(memberId, response);
