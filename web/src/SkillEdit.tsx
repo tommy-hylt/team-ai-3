@@ -25,24 +25,46 @@ export function SkillEdit() {
     if (!id || !skillName) return;
     setLoading(true);
     try {
-      const res = await fetch(`/api/members/${id}/files?path=.claude/skills/${skillName}`);
-      const entries: FileEntry[] = await res.json();
-      const fileEntries = entries.filter(e => e.type === "file");
+      // Fetch entries from all 3 vendor folders to ensure we don't miss files that only exist in one
+      const [claudeRes, geminiRes, agentRes] = await Promise.all([
+        fetch(`/api/members/${id}/files?path=.claude/skills/${skillName}`),
+        fetch(`/api/members/${id}/files?path=.gemini/skills/${skillName}`),
+        fetch(`/api/members/${id}/files?path=.agent/skills/${skillName}`)
+      ]);
+
+      const claudeEntries: FileEntry[] = claudeRes.ok ? await claudeRes.json() : [];
+      const geminiEntries: FileEntry[] = geminiRes.ok ? await geminiRes.json() : [];
+      const agentEntries: FileEntry[] = agentRes.ok ? await agentRes.json() : [];
+
+      // Merge unique file names
+      const allFilesMap = new Map<string, FileEntry>();
+      [...claudeEntries, ...geminiEntries, ...agentEntries].forEach(e => {
+        if (e.type === "file") {
+          allFilesMap.set(e.name, e);
+        }
+      });
+      
+      const fileEntries = Array.from(allFilesMap.values());
       setFiles(fileEntries);
 
-      // Check sync per file
+      // Check sync per file using the dedicated sync endpoint
       for (const file of fileEntries) {
-        const [gemini, agent] = await Promise.all([
-          fetch(`/api/members/${id}/files/.gemini/skills/${skillName}/${file.name}`).then(r => r.ok ? r.json() : null),
-          fetch(`/api/members/${id}/files/.agent/skills/${skillName}/${file.name}`).then(r => r.ok ? r.json() : null),
-        ]);
-        const claudeRes = await fetch(`/api/members/${id}/files/.claude/skills/${skillName}/${file.name}`);
-        const claude = claudeRes.ok ? await claudeRes.json() : null;
-
-        const allMatch = claude && gemini && agent &&
-          claude.content === gemini.content && claude.content === agent.content;
-
-        setSyncMap(prev => ({ ...prev, [file.name]: !!allMatch }));
+        try {
+          const syncRes = await fetch(`/api/members/${id}/skills/${skillName}/files/${file.name}/sync`);
+          if (syncRes.ok) {
+            const syncData = await syncRes.json();
+            const entries = Object.values(syncData) as any[];
+            const existing = entries.filter(info => info.exists);
+            const firstContent = existing.length > 0 ? existing[0].content : null;
+            const allMatch = existing.every(info => info.content === firstContent);
+            
+            // It's in sync if it exists in all 3 folders AND all contents match exactly
+            const isFullySynced = entries.length === 3 && existing.length === 3 && allMatch;
+            setSyncMap(prev => ({ ...prev, [file.name]: isFullySynced }));
+          }
+        } catch {
+          setSyncMap(prev => ({ ...prev, [file.name]: false }));
+        }
       }
     } finally {
       setLoading(false);
