@@ -16,11 +16,11 @@ Team AI allows you to manage multiple AI agents, each with their own unique char
 ## Key Features
 
 - **Multi-Agent Architecture**: Support for Claude, Gemini, and other CLI-based AI agents.
-- **Real-time Chat**: Live updates via Server-Sent Events (SSE).
+- **Real-time Chat**: Live updates via Server-Sent Events (SSE) with Markdown rendering.
+- **Routines System**: Schedule automated background tasks and requests for members using cron patterns.
 - **Web Push Notifications**: Get notified when an agent replies even if the tab is closed.
 - **Skill System**: Shared skills synchronized across all supported AI vendor formats.
 - **Smart Drafts**: Chat inputs are automatically saved to local storage.
-- **Soft Delete**: Members can be marked as deleted without losing their data on disk.
 
 ## Getting Started
 
