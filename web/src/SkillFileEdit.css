@@ -143,24 +143,24 @@
     .SyncWarning {
       background-color: #f59e0b11;
       border: 1px solid #f59e0b44;
-      border-radius: 12px;
-      padding: 16px;
+      border-radius: 8px;
+      padding: 10px 12px;
       display: flex;
-      gap: 16px;
+      gap: 12px;
       align-items: flex-start;
 
       .WarningIcon {
         color: #f59e0b;
-        font-size: 20px;
+        font-size: 18px;
         flex-shrink: 0;
-        margin-top: 2px;
+        margin-top: 1px;
       }
 
       .WarningContent {
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
       }
 
       .WarningTitle {
@@ -174,21 +174,21 @@
         color: #94a3b8;
         display: flex;
         flex-direction: column;
-        gap: 4px;
+        gap: 2px;
 
         strong {
           color: #f59e0b;
         }
 
         .VendorList {
-          margin-top: 8px;
+          margin-top: 4px;
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 2px;
 
           .VendorLink {
             cursor: pointer;
-            padding: 4px 8px;
+            padding: 2px 6px;
             border-radius: 4px;
             display: inline-flex;
             align-items: center;
