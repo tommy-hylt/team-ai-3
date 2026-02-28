@@ -17,11 +17,11 @@ export function broadcast(memberId: string, event: string, data: any) {
   const list = clients.get(memberId);
   if (!list) return;
 
-  const message = `event: ${event}
-data: ${JSON.stringify(data)}
-
-`;
+  const message = `event: ${event}\ndata: ${JSON.stringify(data)}\n\n`;
   for (const client of list) {
     client.write(message);
+    if (typeof (client as any).flush === 'function') {
+      (client as any).flush();
+    }
   }
 }

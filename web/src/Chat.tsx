@@ -64,7 +64,21 @@ export function Chat({ onBack }: { onBack: () => void }) {
     fetch(`/api/members/${id}/chat`)
       .then((res) => res.json())
       .then((data: MessageType[]) => {
-        setMessages(data);
+        setMessages(prev => {
+          // Merge fetched history with any SSE events that arrived while fetching
+          const merged = [...data];
+          for (const msg of prev) {
+            if (msg.type === "request" && !merged.some(m => m.type === "request" && m.id === msg.id)) {
+              merged.push(msg);
+            } else if (msg.type === "response" && !merged.some(m => m.type === "response" && m.requestId === msg.requestId && m.time === msg.time)) {
+              merged.push(msg);
+            }
+          }
+          return merged.sort((a, b) => 
+            new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+            new Date(b.type === "request" ? b.requestTime : b.time).getTime()
+          );
+        });
         
         // After history is loaded, check for drafts
         const drafts = getDrafts();
