@@ -148,6 +148,7 @@ async function dispatchRoutineRequest(memberId: string, text: string, notify: bo
     requester: "Routine",
     requestTime: new Date(),
     notify: notify,
+    echo: false,
     status: "running" as const,
   };
 

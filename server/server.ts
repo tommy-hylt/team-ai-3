@@ -136,22 +136,9 @@ app.get("/api/members/:id/chat", async (req, res) => {
   res.json(history);
 });
 
-async function handleAgentRequest(memberId: string, text: string, requester: string, notify: boolean, echo: boolean, requestId: string) {
+async function handleAgentRequest(memberId: string, request: any) {
   const member = await getMember(memberId);
   if (!member) return;
-
-  const request = {
-    id: requestId,
-    text,
-    requester,
-    requestTime: new Date(),
-    notify,
-    echo,
-    status: "running" as const,
-  };
-
-  await addRequest(memberId, request);
-  broadcast(memberId, "request", request);
 
   try {
     console.log(`Running agent for ${memberId} in background...`);
@@ -188,8 +175,18 @@ async function handleAgentRequest(memberId: string, text: string, requester: str
       const targetMember = await getMember(request.requester);
       if (targetMember) {
         console.log(`Echoing response from ${member.name} to ${targetMember.name}`);
-        const echoRequestId = randomUUID();
-        handleAgentRequest(targetMember.id, response.text, member.name, true, false, echoRequestId).catch(e => {
+        const echoRequest = {
+          id: randomUUID(),
+          text: response.text,
+          requester: member.name,
+          requestTime: new Date(),
+          notify: true,
+          echo: false,
+          status: "running" as const,
+        };
+        await addRequest(targetMember.id, echoRequest);
+        broadcast(targetMember.id, "request", echoRequest);
+        handleAgentRequest(targetMember.id, echoRequest).catch(e => {
           console.error(`Echo agent error for ${targetMember.id}:`, e);
         });
       }
@@ -216,13 +213,25 @@ app.post("/api/members/:id/request", async (req, res) => {
     const shouldNotify = Boolean(notify);
     const shouldEcho = Boolean(echo);
 
-    const requestId = randomUUID();
+    const request = {
+      id: randomUUID(),
+      text,
+      requester,
+      requestTime: new Date(),
+      notify: shouldNotify,
+      echo: shouldEcho,
+      status: "running" as const,
+    };
+
+    // Guarantee storage and broadcast before responding to client
+    await addRequest(memberId, request);
+    broadcast(memberId, "request", request);
 
     // Respond immediately so the client isn't hanging
-    res.json({ ok: true, requestId });
+    res.json({ ok: true, requestId: request.id });
 
     // Run agent in the background
-    handleAgentRequest(memberId, text, requester, shouldNotify, shouldEcho, requestId).catch(e => {
+    handleAgentRequest(memberId, request).catch(e => {
       console.error(`Unhandled error in handleAgentRequest for ${memberId}:`, e);
     });
 
