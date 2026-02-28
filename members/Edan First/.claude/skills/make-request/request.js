@@ -3,7 +3,10 @@
  * request.js — Send a request to another team member via the team-ai server.
  * Requester name is read automatically from member.json.
  *
- * Usage: node request.js --member "<member-folder-name>" --text "<message>"
+ * Usage: node request.js --member "<member-folder-name>" --text "<message>" [--notify] [--echo]
+ *
+ *   --notify   Send a push notification to the user when the response is ready (default: off)
+ *   --echo     Return the response text in the server reply when ready (default: off)
  */
 const http = require('http');
 const fs   = require('fs');
@@ -16,11 +19,15 @@ function getArg(name) {
   return idx !== -1 ? rest[idx + 1] : null;
 }
 
+function hasFlag(name) {
+  return rest.includes(name);
+}
+
 const member = getArg('--member');
 const text   = getArg('--text');
 
 if (!member || !text) {
-  console.error('Usage: request.js --member "<member-folder-name>" --text "<message>"');
+  console.error('Usage: request.js --member "<member-folder-name>" --text "<message>" [--notify] [--echo]');
   process.exit(1);
 }
 
@@ -28,7 +35,10 @@ if (!member || !text) {
 const memberJsonPath = path.join(__dirname, '../../..', 'member.json');
 const { name: requester } = JSON.parse(fs.readFileSync(memberJsonPath, 'utf8'));
 
-const body = JSON.stringify({ text, requester });
+const notify = hasFlag('--notify');
+const echo   = hasFlag('--echo');
+
+const body = JSON.stringify({ text, requester, notify, echo });
 
 const req = http.request({
   hostname: 'localhost',
@@ -48,6 +58,8 @@ const req = http.request({
       console.log(`OK  requestId: ${result.requestId}`);
       console.log(`    from:      ${requester}`);
       console.log(`    to:        ${member}`);
+      console.log(`    notify:    ${notify}`);
+      console.log(`    echo:      ${echo}`);
     } else {
       console.error(`Error ${res.statusCode}: ${raw}`);
       process.exit(1);

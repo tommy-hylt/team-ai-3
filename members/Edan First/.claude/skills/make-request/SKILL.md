@@ -12,6 +12,8 @@ Send a text request to another member. The server runs the target member's agent
 Extract from the user's message:
 - **target member** — who to send to (e.g. `Ava`)
 - **message text** — what to ask or tell them
+- **notify** — whether the user should receive a push notification when the response is ready
+- **echo** — whether the response should be returned for follow-up processing
 
 ### 2. Resolve the target member's folder name
 
@@ -19,11 +21,18 @@ List the members directory (`../` relative to your working directory) and find t
 
 ### 3. Send the request
 
-```
-node ".claude/skills/make-request/request.js" --member "<target-folder-name>" --text "<message>"
-```
+Decide on the flags based on context, then run the script:
 
-The script auto-reads your name from `member.json` and URL-encodes the member name. Returns the `requestId` on success.
+| Flag | Default | Use when |
+|---|---|---|
+| `--notify` | off | The **user** should be alerted when the response arrives (e.g. user is waiting for an answer) |
+| `--echo` | off | You need the response back for **follow-up** (e.g. chaining requests, summarising replies) |
+
+For routine member-to-member communication where no follow-up is needed, omit both flags.
+
+```
+node ".claude/skills/make-request/request.js" --member "<target-folder-name>" --text "<message>" [--notify] [--echo]
+```
 
 ### 4. Report to user
 
