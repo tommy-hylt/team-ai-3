@@ -17,14 +17,14 @@ export interface Routine {
   requestText: string;
   startTime: string;
   lastTime: string;
-  notify?: boolean;
+  notify: boolean;
 }
 
 interface QueuedRoutine {
   id: string; // The routine ID
   memberId: string;
   requestText: string;
-  notify?: boolean;
+  notify: boolean;
 }
 
 const routineQueue: QueuedRoutine[] = [];
@@ -103,7 +103,7 @@ async function processRoutines() {
               id: routine.id,
               memberId: member.id,
               requestText: routine.requestText,
-              notify: routine.notify !== undefined ? routine.notify : true, // Default to true for backward compatibility
+              notify: routine.notify,
             });
           }
         }
@@ -138,7 +138,7 @@ async function processRoutines() {
   }
 }
 
-async function dispatchRoutineRequest(memberId: string, text: string, notify?: boolean) {
+async function dispatchRoutineRequest(memberId: string, text: string, notify: boolean) {
   const member = await getMember(memberId);
   if (!member) return;
 
@@ -175,7 +175,7 @@ async function dispatchRoutineRequest(memberId: string, text: string, notify?: b
     broadcast(memberId, "response", response);
     broadcast(memberId, "status_update", { id: request.id, status: "completed" });
 
-    if (response.notify !== false) {
+    if (response.notify) {
       sendNotification(`Routine message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
     }
   } catch (e) {

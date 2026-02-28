@@ -426,11 +426,11 @@ export function MemberEdit() {
                           placeholder="Cron (e.g. */5 * * * *)" 
                         />
                         <button
-                          className={`NotifyToggle ${routine.notify !== false ? "on" : "off"}`}
-                          onClick={() => updateRoutine(i, "notify", routine.notify === false ? true : false)}
+                          className={`NotifyToggle ${routine.notify ? "on" : "off"}`}
+                          onClick={() => updateRoutine(i, "notify", !routine.notify)}
                           title="Toggle notifications"
                         >
-                          {routine.notify !== false ? <FiBell /> : <FiBellOff />}
+                          {routine.notify ? <FiBell /> : <FiBellOff />}
                         </button>
                         <button className="RemoveRoutineButton" onClick={() => deleteRoutine(i)}><FiX /></button>
                       </div>
@@ -454,7 +454,7 @@ export function MemberEdit() {
                       <div key={routine.id} className="RoutineRow">
                         <span className="RoutineCron">
                           <FiClock style={{marginRight: 6}}/> {routine.cronPattern}
-                          {routine.notify === false ? <FiBellOff style={{marginLeft: 8, color: '#6b7280'}} title="Notifications disabled" /> : <FiBell style={{marginLeft: 8}} title="Notifications enabled" />}
+                          {!routine.notify ? <FiBellOff style={{marginLeft: 8, color: '#6b7280'}} title="Notifications disabled" /> : <FiBell style={{marginLeft: 8}} title="Notifications enabled" />}
                         </span>
                         <span className="RoutineText">{routine.requestText}</span>
                       </div>

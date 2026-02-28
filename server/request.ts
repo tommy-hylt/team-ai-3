@@ -3,7 +3,7 @@ export interface Request {
   text: string;
   requester: string;
   requestTime: Date;
-  notify?: boolean;
+  notify: boolean;
 
   status: "pending" | "running" | "completed" | "aborted";
   startTime?: Date;
