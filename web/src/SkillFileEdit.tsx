@@ -107,15 +107,6 @@ export function SkillFileEdit() {
                 {missing.length > 0 ? "File missing from some vendor folders" : "File out of sync across vendor folders"}
               </div>
               <div className="WarningDetails">
-                {missing.length > 0 && (
-                  <span>Missing: <strong>{missing.map(([v]) => v).join(", ")}</strong></span>
-                )}
-                {!allMatch && existing.length > 0 && (
-                  <>
-                    <span>Newest: <strong>{newest[0]}</strong></span>
-                    <span>Longest: <strong>{longest[0]}</strong> ({longest[1].size} bytes)</span>
-                  </>
-                )}
                 <div className="VendorList">
                   {entries.map(([v, info]) => {
                     const isSelected = v === selectedVendor;
