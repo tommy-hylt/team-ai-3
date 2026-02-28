@@ -154,7 +154,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
       const res = await fetch(`/api/members/${selectedMember.id}/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, requester: "User" }),
+        body: JSON.stringify({ text, requester: "User", notify: true }),
       });
       
       if (!res.ok) {

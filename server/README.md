@@ -50,7 +50,7 @@ A Node.js Express server that manages AI team members and executes agents.
 - `GET /api/members/:id/events`: SSE endpoint for real-time chat updates.
   - **Returns:** Event stream (`text/event-stream`).
 - `POST /api/members/:id/request`: Post a new request to a member (agent runs in the background).
-  - **Body:** `{ text: "Message content", requester: "User" }`
+  - **Body:** `{ text: "Message content", requester: "User", notify: true }`
   - **Returns:** `{ ok: true, requestId: "..." }`
 - `POST /api/requests/:id/cancel`: Kill a running agent process.
   - **Body:** `{ memberId: "Member Name" }`

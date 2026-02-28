@@ -149,8 +149,8 @@ app.post("/api/members/:id/request", async (req, res) => {
       return;
     }
 
-    // Default notify to true if from User, otherwise use provided value or default false
-    const shouldNotify = notify !== undefined ? Boolean(notify) : (requester === "User");
+    // Make notify mandatory. The caller must provide it.
+    const shouldNotify = Boolean(notify);
 
     const request = {
       id: randomUUID(),
