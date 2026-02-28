@@ -179,6 +179,28 @@
         strong {
           color: #f59e0b;
         }
+
+        .VendorSelector {
+          margin-top: 8px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+
+          select {
+            background-color: #16191d;
+            color: #e0e6ed;
+            border: 1px solid #4b5563;
+            border-radius: 6px;
+            padding: 4px 8px;
+            font-size: 12px;
+            outline: none;
+            cursor: pointer;
+
+            &:focus {
+              border-color: #0abab5;
+            }
+          }
+        }
       }
     }
   }
