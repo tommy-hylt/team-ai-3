@@ -136,10 +136,73 @@ app.get("/api/members/:id/chat", async (req, res) => {
   res.json(history);
 });
 
+async function handleAgentRequest(memberId: string, text: string, requester: string, notify: boolean, echo: boolean, requestId: string) {
+  const member = await getMember(memberId);
+  if (!member) return;
+
+  const request = {
+    id: requestId,
+    text,
+    requester,
+    requestTime: new Date(),
+    notify,
+    echo,
+    status: "running" as const,
+  };
+
+  await addRequest(memberId, request);
+  broadcast(memberId, "request", request);
+
+  try {
+    console.log(`Running agent for ${memberId} in background...`);
+    const agentResult = await runAgent(member, request.text, request.id);
+    
+    const currentStatus = await getRequestStatus(memberId, request.id);
+    if (currentStatus === "aborted") {
+      console.log(`Request ${request.id} was aborted, skipping response`);
+      return;
+    }
+
+    console.log(`Agent response for ${memberId}: ${agentResult.text.substring(0, 100)}...`);
+    
+    const response = {
+      text: agentResult.text,
+      time: new Date(),
+      requestId: request.id,
+      agent: agentResult.agentName,
+      notify: request.notify,
+      echo: request.echo ? request.requester : undefined,
+    };
+
+    await addResponse(memberId, response);
+    await updateRequestStatus(memberId, request.id, "completed");
+    broadcast(memberId, "response", response);
+    broadcast(memberId, "status_update", { id: request.id, status: "completed" });
+    
+    if (response.notify) {
+      sendNotification(`New message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+    }
+
+    // Handle echo by creating a new request in the original requester's context
+    if (request.echo && request.requester) {
+      const targetMember = await getMember(request.requester);
+      if (targetMember) {
+        console.log(`Echoing response from ${member.name} to ${targetMember.name}`);
+        const echoRequestId = randomUUID();
+        handleAgentRequest(targetMember.id, response.text, member.name, true, false, echoRequestId).catch(e => {
+          console.error(`Echo agent error for ${targetMember.id}:`, e);
+        });
+      }
+    }
+  } catch (e) {
+    console.error(`Background agent error for ${memberId}:`, e);
+  }
+}
+
 app.post("/api/members/:id/request", async (req, res) => {
   try {
     const memberId = req.params.id;
-    const { text, requester, notify } = req.body;
+    const { text, requester, notify, echo } = req.body;
     console.log(`POST /api/members/${memberId}/request from ${requester}: ${text}`);
     
     const member = await getMember(memberId);
@@ -151,57 +214,18 @@ app.post("/api/members/:id/request", async (req, res) => {
 
     // Make notify mandatory. The caller must provide it.
     const shouldNotify = Boolean(notify);
+    const shouldEcho = Boolean(echo);
 
-    const request = {
-      id: randomUUID(),
-      text,
-      requester,
-      requestTime: new Date(),
-      notify: shouldNotify,
-      status: "running" as const,
-    };
-
-    await addRequest(memberId, request);
-    broadcast(memberId, "request", request);
+    const requestId = randomUUID();
 
     // Respond immediately so the client isn't hanging
-    res.json({ ok: true, requestId: request.id });
+    res.json({ ok: true, requestId });
 
     // Run agent in the background
-    (async () => {
-      try {
-        console.log(`Running agent for ${memberId} in background...`);
-        const agentResult = await runAgent(member, request.text, request.id);
-        
-        // Check if aborted
-        const currentStatus = await getRequestStatus(memberId, request.id);
-        if (currentStatus === "aborted") {
-          console.log(`Request ${request.id} was aborted, skipping response`);
-          return;
-        }
+    handleAgentRequest(memberId, text, requester, shouldNotify, shouldEcho, requestId).catch(e => {
+      console.error(`Unhandled error in handleAgentRequest for ${memberId}:`, e);
+    });
 
-        console.log(`Agent response for ${memberId}: ${agentResult.text}`);
-        
-        const response = {
-          text: agentResult.text,
-          time: new Date(),
-          requestId: request.id,
-          agent: agentResult.agentName,
-          notify: request.notify,
-        };
-
-        await addResponse(memberId, response);
-        await updateRequestStatus(memberId, request.id, "completed");
-        broadcast(memberId, "response", response);
-        broadcast(memberId, "status_update", { id: request.id, status: "completed" });
-        
-        if (response.notify) {
-          sendNotification(`New message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
-        }
-      } catch (e) {
-        console.error(`Background agent error for ${memberId}:`, e);
-      }
-    })();
   } catch (error) {
     console.error("Error handling request:", error);
     if (!res.headersSent) {
