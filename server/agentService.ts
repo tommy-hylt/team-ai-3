@@ -283,6 +283,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     let stdout = "";
     let stderr = "";
+    let isResolved = false;
 
     console.log(`[executeAgent] Process PID: ${proc.pid}`);
 
@@ -296,7 +297,20 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
       const chunk = data.toString();
       stdout += chunk;
       console.log(`[executeAgent] stdout chunk (${chunk.length} chars): ${chunk.substring(0, 200)}`);
+      
+      if (!isResolved) {
+        const parsed = tryParseAgentJson(stdout);
+        if (parsed) {
+          isResolved = true;
+          console.log(`[executeAgent] Parsed JSON response from stdout early: ${parsed.text.substring(0, 200)}`);
+          if (parsed.sessionId) {
+            console.log(`[executeAgent] Found session ID: ${parsed.sessionId}`);
+          }
+          resolve(parsed);
+        }
+      }
     });
+
     proc.stderr.on("data", (data) => {
       const chunk = data.toString();
       stderr += chunk;
@@ -307,13 +321,16 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
       console.error(`[executeAgent] Process error:`, err);
       activeProcesses.delete(requestId);
       syncProcessFile();
-      resolve({ text: `Agent process error: ${err.message}` });
+      if (!isResolved) {
+        isResolved = true;
+        resolve({ text: `Agent process error: ${err.message}` });
+      }
     });
 
-    proc.on("close", (code) => {
+    proc.on("exit", (code) => {
       activeProcesses.delete(requestId);
       syncProcessFile();
-      console.log(`[executeAgent] Process closed with code ${code}`);
+      console.log(`[executeAgent] Process exited with code ${code}`);
       
       // Dump full raw output to a dedicated log file for debugging multiple messages
       const debugLog = `\n=========================================\n` +
@@ -336,9 +353,12 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
         console.log(`[executeAgent] stderr preview: ${stderr.substring(0, 500)}`);
       }
 
+      if (isResolved) return;
+
       const parsed = tryParseAgentJson(stdout);
       if (parsed) {
-        console.log(`[executeAgent] Parsed JSON response: ${parsed.text.substring(0, 200)}`);
+        isResolved = true;
+        console.log(`[executeAgent] Parsed JSON response on exit: ${parsed.text.substring(0, 200)}`);
         if (parsed.sessionId) {
           console.log(`[executeAgent] Found session ID: ${parsed.sessionId}`);
         }
@@ -346,7 +366,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
         return;
       }
 
-      if (code !== 0) {
+      isResolved = true;
+      if (code !== 0 && code !== null) {
         console.log(`[executeAgent] Non-zero exit code, returning error`);
         resolve({ text: `Agent failed. Code ${code}. Error: ${stderr}` });
         return;
