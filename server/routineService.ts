@@ -18,6 +18,7 @@ export interface Routine {
   startTime: string;
   lastTime: string;
   notify: boolean;
+  status: "active" | "disabled";
 }
 
 interface QueuedRoutine {
@@ -84,6 +85,7 @@ async function processRoutines() {
 
     // Process each routine to see if it should fire
     for (const routine of routines) {
+      if (routine.status === "disabled") continue;
       try {
         const currentDate = new Date(routine.lastTime || routine.startTime || now.toISOString());
         const interval = CronExpressionParser.parse(routine.cronPattern, {

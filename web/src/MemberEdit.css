@@ -178,6 +178,23 @@
         border-bottom: none;
         padding-bottom: 0;
       }
+
+      &.disabled {
+        opacity: 0.5;
+        .RoutineCron { color: #6b7280; }
+        .RoutineText { color: #6b7280; }
+      }
+    }
+
+    .DisabledLabel {
+      margin-left: 8px;
+      font-size: 9px;
+      background-color: #1c1f23;
+      color: #6b7280;
+      padding: 1px 6px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      font-weight: 700;
     }
 
     .RoutineCron {
@@ -220,6 +237,25 @@
         padding-bottom: 8px;
       }
 
+      .StatusToggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+        display: flex;
+        font-size: 16px;
+        transition: 0.2s;
+
+        &.active {
+          color: #0abab5;
+          &:hover { color: #0cd4cf; opacity: 0.8; }
+        }
+        &.disabled {
+          color: #4b5563;
+          &:hover { color: #6b7280; opacity: 0.8; }
+        }
+      }
+
       input, textarea {
         background: none;
         border: none;
@@ -239,6 +275,11 @@
         min-width: 0;
         font-family: "JetBrains Mono", monospace;
         color: #0abab5;
+        transition: 0.2s;
+
+        &.disabled {
+          color: #4b5563;
+        }
       }
 
       .RoutineTextInput {
@@ -331,6 +372,57 @@
           border-color: #0abab566;
           box-shadow: 0 0 12px #0abab522;
         }
+      }
+    }
+
+    .AddTagButton {
+      background: none;
+      border: 1px dashed #3f444e;
+      color: #6b7280;
+      padding: 1px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      transition: 0.2s;
+      height: 20px;
+
+      &:hover {
+        border-color: #0abab5;
+        color: #0abab5;
+      }
+    }
+
+    .InlineInput {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background-color: #16191d;
+      border: 1px solid #0abab544;
+      border-radius: 4px;
+      padding: 2px 8px;
+      height: 24px;
+
+      input {
+        width: 80px !important;
+        font-size: 11px !important;
+        color: #e0e6ed;
+      }
+
+      .ConfirmIcon, .CancelIcon {
+        font-size: 12px;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+
+      .ConfirmIcon {
+        color: #0abab5;
+        &:hover { color: #0cd4cf; }
+      }
+
+      .CancelIcon {
+        color: #f87171;
+        &:hover { color: #fb7185; }
       }
     }
   }

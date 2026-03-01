@@ -4,5 +4,8 @@
   "agents": [
     "claude-sonnet",
     "gemini-2.5-pro"
+  ],
+  "teams": [
+    "General"
   ]
 }

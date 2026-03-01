@@ -49,6 +49,94 @@
     overflow-y: auto;
   }
 
+  .TeamSection {
+    margin-bottom: 4px;
+  }
+
+  .TeamHeader {
+    padding: 8px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    background-color: #1c1f2344;
+    color: #6b7280;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    transition: 0.2s;
+
+    &:hover {
+      color: #e0e6ed;
+      background-color: #1c1f2388;
+    }
+
+    .TeamExpander {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+
+      svg {
+        font-size: 14px;
+        flex-shrink: 0;
+      }
+
+      .TeamName {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .TeamActions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      .OrderButton {
+        background: none;
+        border: none;
+        color: #4b5563;
+        padding: 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        border-radius: 4px;
+        transition: 0.2s;
+
+        &:hover:not(:disabled) {
+          color: #0abab5;
+          background-color: #0abab511;
+        }
+
+        &:disabled {
+          opacity: 0.2;
+          cursor: default;
+        }
+
+        svg {
+          font-size: 12px;
+        }
+      }
+
+      .TeamCount {
+        background-color: #1c1f23;
+        padding: 1px 6px;
+        border-radius: 10px;
+        font-size: 9px;
+        margin-left: 4px;
+      }
+    }
+  }
+
+  .TeamMembers {
+    border-bottom: 1px solid #1c1f2344;
+  }
+
   .MemberItem {
     padding: 16px 24px;
     cursor: pointer;

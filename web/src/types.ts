@@ -28,4 +28,5 @@ export interface Routine {
   startTime: string;
   lastTime: string;
   notify: boolean;
+  status: "active" | "disabled";
 }

@@ -4,5 +4,8 @@
   "agents": [
     "gemini-2.5-flash",
     "claude-haiku"
+  ],
+  "teams": [
+    "General"
   ]
 }

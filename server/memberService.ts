@@ -29,7 +29,8 @@ export async function createMember(data: any) {
   const memberJson = {
     name: name,
     description: data.description || "",
-    agents: data.agents || ["gemini-2.5-flash"]
+    agents: data.agents || ["gemini-2.5-flash"],
+    teams: data.teams || ["General"]
   };
 
   await Promise.all([
@@ -99,7 +100,7 @@ export async function getMemberDetails(name: string) {
 export async function updateMemberDetails(name: string, data: any) {
   const memberDir = join(__dirname, "../members", name);
   
-  if (data.description !== undefined || data.agents !== undefined) {
+  if (data.description !== undefined || data.agents !== undefined || data.teams !== undefined) {
     const memberJsonPath = join(memberDir, "member.json");
     const current = await loadMember(name);
     if (current) {
@@ -107,6 +108,7 @@ export async function updateMemberDetails(name: string, data: any) {
         ...current,
         description: data.description ?? current.description,
         agents: data.agents ?? current.agents,
+        teams: data.teams ?? current.teams,
       };
       // Remove id before saving as it's derived from folder name
       const { id, ...rest } = updated as any;
@@ -145,6 +147,7 @@ async function loadMember(name: string) {
     const content = await readFile(memberJsonPath, "utf-8");
     const member = JSON.parse(content) as Member;
     member.id = name;
+    if (!member.teams) member.teams = ["General"];
     return member;
   } catch {
     return undefined;

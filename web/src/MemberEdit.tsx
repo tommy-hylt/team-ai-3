@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare, FiPlus, FiClock, FiBell, FiBellOff } from "react-icons/fi";
+import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare, FiPlus, FiBell, FiBellOff, FiPlayCircle, FiPauseCircle } from "react-icons/fi";
 import { Routine } from "./types";
 import "./MemberEdit.css";
 
@@ -10,6 +10,7 @@ interface MemberDetails {
   name: string;
   description: string;
   agents: string[];
+  teams: string[];
   character: string;
   memory: string;
   availableAgents: string[];
@@ -34,6 +35,8 @@ export function MemberEdit() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutines, setEditingRoutines] = useState(false);
   const [tempRoutines, setTempRoutines] = useState<Routine[]>([]);
+  const [isAddingTeam, setIsAddingTeam] = useState(false);
+  const [newTeamName, setNewTeamName] = useState("");
 
   useEffect(() => {
 
@@ -137,6 +140,27 @@ export function MemberEdit() {
 
   }
 
+  function addTeam() {
+    setIsAddingTeam(true);
+    setNewTeamName("");
+  }
+
+  function confirmAddTeam() {
+    if (newTeamName.trim()) {
+      const current = (editValue as string[]) || [];
+      if (!current.includes(newTeamName.trim())) {
+        setEditValue([...current, newTeamName.trim()]);
+      }
+    }
+    setIsAddingTeam(false);
+  }
+
+  function removeTeam(teamName: string) {
+    const current = (editValue as string[]) || [];
+    const updated = current.filter(t => t !== teamName);
+    setEditValue(updated.length > 0 ? updated : ["General"]);
+  }
+
   async function handleSaveRoutines() {
     if (!id) return;
     const res = await fetch(`/api/members/${id}/routines`, {
@@ -156,7 +180,7 @@ export function MemberEdit() {
   }
 
   function addRoutine() {
-    setTempRoutines([...tempRoutines, { id: crypto.randomUUID?.() || Date.now().toString(), cronPattern: "*/5 * * * *", requestText: "Check system status", startTime: new Date().toISOString(), lastTime: "", notify: true }]);
+    setTempRoutines([...tempRoutines, { id: crypto.randomUUID?.() || Date.now().toString(), cronPattern: "*/5 * * * *", requestText: "Check system status", startTime: new Date().toISOString(), lastTime: "", notify: true, status: "active" }]);
   }
 
   function updateRoutine(index: number, key: keyof Routine, value: any) {
@@ -276,6 +300,58 @@ export function MemberEdit() {
           </div>
 
 
+
+          {/* Teams */}
+          <div className={`Field ${editingField === "teams" ? "editing" : ""}`}>
+            <div className="FieldHeader">
+              <label>Teams</label>
+              {editingField !== "teams" ? (
+                <button className="EditButton" onClick={() => startEditing("teams", details.teams)}>
+                  <FiEdit2 />
+                </button>
+              ) : (
+                <div className="EditActions">
+                  <button className="SaveButton" onClick={() => handleSave("teams")}><FiCheck /></button>
+                  <button className="CancelButton" onClick={() => setEditingField(null)}><FiX /></button>
+                </div>
+              )}
+            </div>
+            <div className="FieldContent">
+              {editingField === "teams" ? (
+                <div className="AgentTags editing">
+                  {(editValue as string[]).map((team) => (
+                    <span key={team} className="AgentTag active" onClick={() => removeTeam(team)}>
+                      {team} <FiX style={{ marginLeft: 4, fontSize: 10 }} />
+                    </span>
+                  ))}
+                  {isAddingTeam ? (
+                    <div className="InlineInput">
+                      <input 
+                        value={newTeamName} 
+                        onChange={e => setNewTeamName(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === "Enter") confirmAddTeam();
+                          if (e.key === "Escape") setIsAddingTeam(false);
+                        }}
+                        autoFocus
+                        placeholder="Team name"
+                      />
+                      <FiCheck className="ConfirmIcon" onClick={confirmAddTeam} />
+                      <FiX className="CancelIcon" onClick={() => setIsAddingTeam(false)} />
+                    </div>
+                  ) : (
+                    <button className="AddTagButton" onClick={addTeam}>
+                      <FiPlus />
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="AgentTags">
+                  {details.teams.map(t => <span key={t} className="AgentTag">{t}</span>)}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Agents */}
 
@@ -418,9 +494,16 @@ export function MemberEdit() {
                   {tempRoutines.map((routine, i) => (
                     <div key={routine.id} className="RoutineEditRow">
                       <div className="RoutineEditRowHeader">
+                        <button
+                          className={`StatusToggle ${routine.status || "active"}`}
+                          onClick={() => updateRoutine(i, "status", (routine.status || "active") === "active" ? "disabled" : "active")}
+                          title={(routine.status || "active") === "active" ? "Disable routine" : "Activate routine"}
+                        >
+                          {(routine.status || "active") === "active" ? <FiPlayCircle /> : <FiPauseCircle />}
+                        </button>
                         <input 
                           type="text" 
-                          className="RoutineCronInput"
+                          className={`RoutineCronInput ${routine.status === "disabled" ? "disabled" : ""}`}
                           value={routine.cronPattern} 
                           onChange={(e) => updateRoutine(i, "cronPattern", e.target.value)} 
                           placeholder="Cron (e.g. */5 * * * *)" 
@@ -451,9 +534,10 @@ export function MemberEdit() {
                 <div className="RoutinesList">
                   {routines.length > 0 ? (
                     routines.map(routine => (
-                      <div key={routine.id} className="RoutineRow">
+                      <div key={routine.id} className={`RoutineRow ${routine.status === "disabled" ? "disabled" : ""}`}>
                         <span className="RoutineCron">
-                          <FiClock style={{marginRight: 6}}/> {routine.cronPattern}
+                          {(routine.status || "active") === "active" ? <FiPlayCircle style={{marginRight: 6}} /> : <FiPauseCircle style={{marginRight: 6}} />}
+                          {routine.cronPattern}
                           {!routine.notify ? <FiBellOff style={{marginLeft: 8, color: '#6b7280'}} title="Notifications disabled" /> : <FiBell style={{marginLeft: 8}} title="Notifications enabled" />}
                         </span>
                         <span className="RoutineText">{routine.requestText}</span>
