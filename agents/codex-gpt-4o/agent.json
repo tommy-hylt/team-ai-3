@@ -1,0 +1,8 @@
+{
+  "name": "codex-gpt-4o",
+  "executable": "codex",
+  "args": [
+    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "gpt-4o"] },
+    { "type": "resume", "parts": ["resume"] }
+  ]
+}

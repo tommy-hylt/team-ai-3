@@ -1,0 +1,8 @@
+{
+  "name": "codex-o3-mini",
+  "executable": "codex",
+  "args": [
+    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "o3-mini"] },
+    { "type": "resume", "parts": ["resume"] }
+  ]
+}
