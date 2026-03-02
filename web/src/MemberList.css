@@ -15,10 +15,9 @@
     justify-content: space-between;
 
     h2 {
-      font-size: 12px;
+      font-size: 18px;
       font-weight: 800;
       color: #0abab5;
-
       letter-spacing: 0.1em;
       margin: 0;
     }
