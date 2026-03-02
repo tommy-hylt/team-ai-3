@@ -1,0 +1,8 @@
+{
+  "name": "codex-gpt-5.2",
+  "executable": "codex",
+  "args": [
+    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "gpt-5.2"] },
+    { "type": "resume", "parts": ["resume"] }
+  ]
+}
