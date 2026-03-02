@@ -2,8 +2,22 @@
   "name": "claude-opus",
   "executable": "claude",
   "args": [
-    { "type": "basic", "parts": ["--model", "opus", "--dangerously-skip-permissions", "--output-format", "json"] },
-    { "type": "resume", "parts": [] }
-  ],
-  "resume_with_id": ["-r"]
+    {
+      "type": "basic",
+      "parts": [
+        "--model",
+        "opus",
+        "--dangerously-skip-permissions",
+        "--print",
+        "--output-format",
+        "json"
+      ]
+    },
+    {
+      "type": "resume",
+      "parts": [
+        "-r"
+      ]
+    }
+  ]
 }

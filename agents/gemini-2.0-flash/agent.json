@@ -2,8 +2,21 @@
   "name": "gemini-2.0-flash",
   "executable": "gemini",
   "args": [
-    { "type": "basic", "parts": ["-m", "gemini-2.0-flash", "-y", "-o", "json"] },
-    { "type": "resume", "parts": [] }
-  ],
-  "resume_with_id": ["-r"]
+    {
+      "type": "basic",
+      "parts": [
+        "-m",
+        "gemini-2.0-flash",
+        "-y",
+        "-o",
+        "json"
+      ]
+    },
+    {
+      "type": "resume",
+      "parts": [
+        "-r"
+      ]
+    }
+  ]
 }

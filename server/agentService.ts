@@ -115,7 +115,6 @@ interface AgentArgPart {
 interface AgentConfig {
   executable: string;
   args: AgentArgPart[];
-  resume_with_id?: string[];    // e.g. ["--session-id"] for claude, ["-r"] for gemini
 }
 
 export async function runAgent(member: Member, requestText: string, requestId: string) {
@@ -130,27 +129,30 @@ export async function runAgent(member: Member, requestText: string, requestId: s
 
     // Try each agent in order, falling back to the next on failure
     for (let i = 0; i < member.agents.length; i++) {
+      const agentName = member.agents[i];
+      
       if (cancelledRequests.has(requestId)) {
-        console.log(`[runAgent] Request ${requestId} was cancelled, stopping`);
+        console.log(`[runAgent] Request ${requestId} cancelled`);
         cancelledRequests.delete(requestId);
         return { text: "Request cancelled.", agentName: "system" };
       }
 
-      const agentName = member.agents[i];
-      const isFallback = i > 0;
-      console.log(`[runAgent] ${isFallback ? "Fallback" : "Starting"} for member="${member.id}", agent="${agentName}"`);
-
       const agentConfig = await loadAgentConfig(agentName);
       if (!agentConfig) {
-        console.log(`[runAgent] Agent config not found for "${agentName}", skipping`);
+        console.log(`[runAgent] Agent config not found for "${agentName}"`);
         continue;
       }
 
-      const result = await tryAgent(member.id, agentName, agentConfig, memberDir, requestText, requestId);
-      if (result) return result;
+      const result = await tryAgent(member, agentName, agentConfig, memberDir, requestText, requestId);
+      if (result) {
+        return result;
+      }
     }
 
     return { text: "Error: All agents failed. Please try again later.", agentName: "system" };
+  } catch (e: any) {
+    console.error(`[runAgent] Unexpected error:`, e);
+    return { text: `Error: ${e.message}`, agentName: "system" };
   } finally {
     cancelledRequests.delete(requestId);
     release();
@@ -158,22 +160,22 @@ export async function runAgent(member: Member, requestText: string, requestId: s
 }
 
 async function tryAgent(
-  memberId: string,
+  member: Member,
   agentName: string,
   config: AgentConfig,
   memberDir: string,
   requestText: string,
   requestId: string,
 ): Promise<{ text: string, agentName: string } | undefined> {
-  const sessionId = await getSessionId(memberId, agentName);
+  const sessionId = await getSessionId(member.id, agentName);
 
   // Try resume if we have a session
   if (sessionId) {
     console.log(`[tryAgent] Attempting resume for "${agentName}" with sessionId=${sessionId}`);
-    const result = await invokeAgent(config, memberDir, requestText, requestId, memberId, sessionId);
+    const result = await invokeAgent(config, memberDir, requestText, requestId, member.id, sessionId);
     if (!result.failed) {
       if (result.sessionId) {
-        await saveSessionId(memberId, agentName, result.sessionId);
+        await saveSessionId(member.id, agentName, result.sessionId);
       }
       return { text: result.text, agentName };
     }
@@ -183,7 +185,7 @@ async function tryAgent(
       return undefined;
     }
     console.log(`[tryAgent] Resume failed for "${agentName}", expiring session`);
-    await expireSession(memberId, agentName);
+    await expireSession(member.id, agentName);
   }
 
   // If cancelled, don't start fresh invocation
@@ -193,13 +195,21 @@ async function tryAgent(
   }
 
   // Fresh invocation
-  const freshPrompt = `Please read CHARACTER.md and MEMORY.md first.\n\n${requestText}`;
+  const freshPrompt = `IMPORTANT: You are currently acting as '${member.name}', an AI team member operating in your dedicated workspace.
+Your identity and core instructions are defined in './CHARACTER.md'.
+Your long-term memory and project context are stored in './MEMORY.md'.
+
+MANDATORY FIRST STEP:
+You must read both './CHARACTER.md' and './MEMORY.md' now to understand your role, personality, and history before addressing the request below.
+
+User Request:
+${requestText}`;
   console.log(`[tryAgent] Fresh invocation for "${agentName}"`);
-  const result = await invokeAgent(config, memberDir, freshPrompt, requestId, memberId);
+  const result = await invokeAgent(config, memberDir, freshPrompt, requestId, member.id);
   if (!result.failed) {
     if (result.sessionId) {
       console.log(`[tryAgent] Saving session ID for "${agentName}": ${result.sessionId}`);
-      await saveSessionId(memberId, agentName, result.sessionId);
+      await saveSessionId(member.id, agentName, result.sessionId);
     }
     return { text: result.text, agentName };
   }
@@ -225,17 +235,8 @@ async function invokeAgent(
     if (argPart.type === "basic") {
       finalArgs.push(...argPart.parts);
     } else if (argPart.type === "resume" && sessionId) {
-      // Add the standard resume flags from args definition (e.g. -c for claude, -r for gemini)
       finalArgs.push(...argPart.parts);
-
-      // If we have a specific flag to pass the session ID, add it if not already present
-      if (config.resume_with_id && config.resume_with_id.length > 0) {
-        const idFlag = config.resume_with_id[0];
-        if (!argPart.parts.includes(idFlag)) {
-          finalArgs.push(...config.resume_with_id);
-          finalArgs.push(sessionId);
-        }
-      }
+      finalArgs.push(sessionId);
     }
   }
 
@@ -287,6 +288,25 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     console.log(`[executeAgent] Process PID: ${proc.pid}`);
 
+    // Set a timeout to prevent indefinite hangs
+    const timeout = setTimeout(() => {
+      if (!isResolved) {
+        console.error(`[executeAgent] Request ${requestId} timed out after 5 minutes. Killing process ${proc.pid}...`);
+        isResolved = true;
+        if (proc.pid) {
+          treeKill(proc.pid, "SIGTERM", () => {
+            activeProcesses.delete(requestId);
+            syncProcessFile();
+            resolve({ text: "Error: Agent request timed out after 5 minutes." });
+          });
+        } else {
+          activeProcesses.delete(requestId);
+          syncProcessFile();
+          resolve({ text: "Error: Agent request timed out after 5 minutes." });
+        }
+      }
+    }, 300000); // 5 minutes
+
     if (stdinData) {
       console.log(`[executeAgent] Writing ${stdinData.length} chars to stdin`);
       proc.stdin.write(stdinData);
@@ -297,18 +317,6 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
       const chunk = data.toString();
       stdout += chunk;
       console.log(`[executeAgent] stdout chunk (${chunk.length} chars): ${chunk.substring(0, 200)}`);
-      
-      if (!isResolved) {
-        const parsed = tryParseAgentJson(stdout);
-        if (parsed) {
-          isResolved = true;
-          console.log(`[executeAgent] Parsed JSON response from stdout early: ${parsed.text.substring(0, 200)}`);
-          if (parsed.sessionId) {
-            console.log(`[executeAgent] Found session ID: ${parsed.sessionId}`);
-          }
-          resolve(parsed);
-        }
-      }
     });
 
     proc.stderr.on("data", (data) => {
@@ -319,6 +327,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
+      clearTimeout(timeout);
       activeProcesses.delete(requestId);
       syncProcessFile();
       if (!isResolved) {
@@ -328,6 +337,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     });
 
     proc.on("exit", (code) => {
+      clearTimeout(timeout);
       activeProcesses.delete(requestId);
       syncProcessFile();
       console.log(`[executeAgent] Process exited with code ${code}`);
@@ -358,7 +368,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
       const parsed = tryParseAgentJson(stdout);
       if (parsed) {
         isResolved = true;
-        console.log(`[executeAgent] Parsed JSON response on exit: ${parsed.text.substring(0, 200)}`);
+        console.log(`[executeAgent] Parsed JSON response: ${parsed.text.substring(0, 200)}`);
         if (parsed.sessionId) {
           console.log(`[executeAgent] Found session ID: ${parsed.sessionId}`);
         }
