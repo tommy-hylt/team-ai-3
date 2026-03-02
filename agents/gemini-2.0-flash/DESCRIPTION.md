@@ -1,11 +1,12 @@
 # gemini-2.0-flash
 
-Use this agent when:
-- you want an even cheaper/faster Gemini option than pro
-- you’re doing quick triage and don’t need top-tier reasoning
+**Provider:** Google (via Gemini CLI)
+**Model:** gemini-2.0-flash
 
-Avoid when:
-- you need the best accuracy (use gemini-2.5-pro)
+**Use this agent when:**
+- You want an extremely fast and cost-effective Gemini option.
+- You are doing quick triage, summarization, or simple code generation.
+- You need a very large context window but don't need top-tier complex reasoning.
 
-Command notes:
-- Gemini CLI (`gemini`) with `-m gemini-2.0-flash` and `-p <prompt>`.
+**Avoid when:**
+- You need the best accuracy and deep reasoning (use gemini-2.5-pro instead).

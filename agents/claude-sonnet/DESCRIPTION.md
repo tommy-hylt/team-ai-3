@@ -1,13 +1,12 @@
 # claude-sonnet
 
-Use this agent when:
-- you need stronger reasoning/coding than haiku
-- you can spend more tokens to reduce retries / mistakes
+**Provider:** Anthropic (via Claude Code CLI)
+**Model:** claude-3-5-sonnet-latest (or similar)
 
-Avoid when:
-- the task is simple and haiku is good enough
+**Use this agent when:**
+- You need a strong balance of reasoning, coding ability, and speed.
+- The task requires complex multi-step planning and tool usage.
+- You want the best general-purpose Claude model for software engineering.
 
-Command notes:
-- Claude Code CLI (`claude`) in print mode (`-p`).
-- Model alias: `sonnet`.
-- Uses `--dangerously-skip-permissions`.
+**Avoid when:**
+- The task is simple enough that Haiku can do it much cheaper and faster.

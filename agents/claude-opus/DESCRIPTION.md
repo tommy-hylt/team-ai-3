@@ -1,13 +1,12 @@
 # claude-opus
 
-Use this agent when:
-- the task is genuinely hard (architecture, tricky bugs, deep reasoning)
-- paying more is worth it to avoid churn and broken plans
+**Provider:** Anthropic (via Claude Code CLI)
+**Model:** claude-3-opus-latest (or similar)
 
-Avoid when:
-- you’re doing simple triage or repetitive small edits
+**Use this agent when:**
+- The task is genuinely hard (architecture, tricky bugs, deep reasoning).
+- Paying a premium is worth it to avoid churn, broken plans, or misunderstandings.
+- You need the highest level of instruction following and complex problem-solving.
 
-Command notes:
-- Claude Code CLI (`claude`) in print mode (`-p`).
-- Model alias: `opus`.
-- Uses `--dangerously-skip-permissions`.
+**Avoid when:**
+- You are doing simple triage, repetitive small edits, or standard coding tasks where Sonnet excels.

@@ -1,11 +1,12 @@
 # gemini-2.5-pro
 
-Use this agent when:
-- you want Gemini with stronger reasoning than flash
-- you need long-context analysis with fewer mistakes
+**Provider:** Google (via Gemini CLI)
+**Model:** gemini-2.5-pro
 
-Avoid when:
-- speed/cost matters more than quality (use gemini-2.5-flash)
+**Use this agent when:**
+- You want the most capable Gemini model with the strongest reasoning.
+- You need long-context analysis with complex synthesis and fewer mistakes.
+- You are tackling difficult engineering tasks or architectural refactors.
 
-Command notes:
-- Gemini CLI (`gemini`) with `-m gemini-2.5-pro` and `-p <prompt>`.
+**Avoid when:**
+- Speed and cost matter more than maximum quality (use gemini-2.5-flash).

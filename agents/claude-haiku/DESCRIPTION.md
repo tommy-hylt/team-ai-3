@@ -1,15 +1,13 @@
 # claude-haiku
 
-Use this agent when you need:
-- the lowest cost / highest throughput Claude option
-- quick triage, routing, small edits, lightweight reasoning
+**Provider:** Anthropic (via Claude Code CLI)
+**Model:** claude-3-5-haiku-latest (or similar)
 
-Avoid when:
-- the task is complex and requires deep reasoning or long context
-- you expect many tool calls / multi-step planning where a stronger model is worth it
+**Use this agent when you need:**
+- The lowest cost / highest throughput Claude option.
+- Quick triage, routing, small edits, or lightweight reasoning.
+- Fast iteration on simpler tasks.
 
-Command notes:
-- Uses Claude Code CLI (`claude`).
-- Uses `-p <prompt>` (print mode; exits when done).
-- Uses `--model haiku` (alias; other common aliases: `sonnet`, `opus`).
-- Uses `--dangerously-skip-permissions` (so your surrounding system must enforce safety)
+**Avoid when:**
+- The task is complex and requires deep reasoning or long context.
+- You expect many tool calls / multi-step planning where a stronger model is worth it.
