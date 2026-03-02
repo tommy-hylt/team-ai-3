@@ -391,7 +391,35 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
 function tryParseAgentJson(output: string): AgentResult | undefined {
   const trimmed = output.trim();
+  const lines = trimmed.split("\n");
 
+  let finalResult: AgentResult | undefined = undefined;
+  let collectedSessionId: string | undefined = undefined;
+
+  // 1. Try parsing JSONL top-to-bottom to collect thread/session IDs and text
+  for (const line of lines) {
+    const l = line.trim();
+    if (l.startsWith("{") && l.endsWith("}")) {
+      try {
+        const json = JSON.parse(l);
+        if (json.thread_id) collectedSessionId = json.thread_id;
+        if (json.session_id) collectedSessionId = json.session_id;
+        if (json.sessionId) collectedSessionId = json.sessionId;
+
+        const result = extractResponse(json);
+        if (result && result.text) {
+          finalResult = result;
+          if (result.sessionId) collectedSessionId = result.sessionId;
+        }
+      } catch { }
+    }
+  }
+
+  if (finalResult && finalResult.text) {
+    return { text: finalResult.text, sessionId: finalResult.sessionId || collectedSessionId };
+  }
+
+  // 2. Try block-based parsing (for Claude/Gemini single huge objects)
   let lastOpen = trimmed.lastIndexOf("{");
   let lastClose = trimmed.lastIndexOf("}");
 
@@ -401,22 +429,13 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
       try {
         const json = JSON.parse(candidate);
         const result = extractResponse(json);
-        if (result) return result;
+        if (result && result.text) {
+          result.sessionId = result.sessionId || collectedSessionId;
+          return result;
+        }
       } catch { }
     }
     lastOpen = trimmed.lastIndexOf("{", lastOpen - 1);
-  }
-
-  const lines = trimmed.split("\n");
-  for (let i = lines.length - 1; i >= 0; i--) {
-    const line = lines[i].trim();
-    if (line.startsWith("{") && line.endsWith("}")) {
-      try {
-        const json = JSON.parse(line);
-        const result = extractResponse(json);
-        if (result) return result;
-      } catch { }
-    }
   }
 
   return undefined;
@@ -424,7 +443,12 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
 
 function extractResponse(json: any): AgentResult | undefined {
   // Extract session_id from any JSON that contains it
-  const sessionId = json.session_id || json.sessionId || undefined;
+  const sessionId = json.session_id || json.sessionId || json.thread_id || undefined;
+
+  // Codex JSONL handling
+  if (json.type === "item.completed" && json.item && json.item.type === "agent_message" && json.item.text) {
+    return { text: json.item.text, sessionId };
+  }
 
   if (json.response) return { text: json.response, sessionId };
   if (json.text) return { text: json.text, sessionId };
