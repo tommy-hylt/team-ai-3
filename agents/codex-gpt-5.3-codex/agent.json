@@ -1,0 +1,8 @@
+{
+  "name": "codex-gpt-5.3-codex",
+  "executable": "codex",
+  "args": [
+    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "gpt-5.3-codex"] },
+    { "type": "resume", "parts": ["resume"] }
+  ]
+}
