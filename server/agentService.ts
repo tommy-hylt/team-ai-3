@@ -10,6 +10,7 @@ import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts"
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROCESS_FILE = join(__dirname, "processes.json");
 
+// Force restart to clear deadlocks
 function generateUUIDv7(): string {
   const now = BigInt(Date.now());
   const bytes = Buffer.alloc(16);

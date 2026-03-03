@@ -1,8 +1,0 @@
-{
-  "name": "codex-gpt-5.3-codex-spark",
-  "executable": "codex",
-  "args": [
-    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "gpt-5.3-codex-spark"] },
-    { "type": "resume", "parts": ["resume"] }
-  ]
-}

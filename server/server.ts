@@ -1,3 +1,5 @@
+import { spawn } from "child_process";
+import fs from "fs";
 import { randomUUID } from "crypto";
 import path from "path";
 import { fileURLToPath } from "url";
@@ -136,41 +138,26 @@ app.get("/api/members/:id/chat", async (req, res) => {
   res.json(history);
 });
 
-async function handleAgentRequest(memberId: string, request: any) {
-  const member = await getMember(memberId);
-  if (!member) return;
-
+app.post("/api/internal/webhook/agent-finished", async (req, res) => {
   try {
-    console.log(`Running agent for ${memberId} in background...`);
-    const agentResult = await runAgent(member, request.text, request.id);
-    
-    const currentStatus = await getRequestStatus(memberId, request.id);
-    if (currentStatus === "aborted") {
-      console.log(`Request ${request.id} was aborted, skipping response`);
-      return;
+    const { memberId, request, response } = req.body;
+    console.log(`[webhook] Received agent-finished for ${memberId}, request ${request.id}`);
+
+    const member = await getMember(memberId);
+    if (!member) {
+      return res.status(404).json({ error: "Member not found" });
     }
 
-    console.log(`Agent response for ${memberId}: ${agentResult.text.substring(0, 100)}...`);
-    
-    const response = {
-      text: agentResult.text,
-      time: new Date(),
-      requestId: request.id,
-      agent: agentResult.agentName,
-      notify: request.notify,
-      echo: request.echo ? request.requester : undefined,
-    };
-
-    await addResponse(memberId, response);
-    await updateRequestStatus(memberId, request.id, "completed");
+    // Broadcast SSE
     broadcast(memberId, "response", response);
     broadcast(memberId, "status_update", { id: request.id, status: "completed" });
     
+    // Push Notification
     if (response.notify) {
-      sendNotification(`New message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
+      sendNotification(`New message from ${member.name}`, response.text.substring(0, 100), `/${memberId}`);
     }
 
-    // Handle echo by creating a new request in the original requester's context
+    // Handle echo
     if (request.echo && request.requester) {
       const targetMember = await getMember(request.requester);
       if (targetMember) {
@@ -186,14 +173,40 @@ async function handleAgentRequest(memberId: string, request: any) {
         };
         await addRequest(targetMember.id, echoRequest);
         broadcast(targetMember.id, "request", echoRequest);
-        handleAgentRequest(targetMember.id, echoRequest).catch(e => {
-          console.error(`Echo agent error for ${targetMember.id}:`, e);
-        });
+        handleAgentRequest(targetMember.id, echoRequest);
       }
     }
-  } catch (e) {
-    console.error(`Background agent error for ${memberId}:`, e);
+
+    res.json({ ok: true });
+  } catch (error) {
+    console.error("[webhook] Error processing agent-finished:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
+});
+
+function handleAgentRequest(memberId: string, request: any) {
+  console.log(`Spawning detached worker for ${memberId}, request ${request.id}...`);
+  
+  const workerPath = path.join(__dirname, "scripts", "agent-worker.ts");
+  const tsxBin = path.join(__dirname, "node_modules", "tsx", "dist", "cli.mjs");
+
+  const outFd = fs.openSync(path.join(__dirname, "out.log"), "a");
+  const errFd = fs.openSync(path.join(__dirname, "err.log"), "a");
+
+  // Call node.exe directly with the tsx CLI to bypass all Windows shell escaping issues
+  const child = spawn(process.execPath, [tsxBin, workerPath, memberId, request.id], {
+    detached: true,
+    stdio: ["ignore", outFd, errFd],
+    windowsHide: true,
+    cwd: __dirname
+  });
+
+  child.on("error", (err) => {
+    console.error(`Failed to spawn worker for ${memberId}:`, err);
+  });
+
+  // Unreference the child so the server can exit independently
+  child.unref();
 }
 
 app.post("/api/members/:id/request", async (req, res) => {
@@ -231,9 +244,11 @@ app.post("/api/members/:id/request", async (req, res) => {
     res.json({ ok: true, requestId: request.id });
 
     // Run agent in the background
-    handleAgentRequest(memberId, request).catch(e => {
-      console.error(`Unhandled error in handleAgentRequest for ${memberId}:`, e);
-    });
+    try {
+      handleAgentRequest(memberId, request);
+    } catch (e) {
+      console.error(`Unhandled error spawning worker for ${memberId}:`, e);
+    }
 
   } catch (error) {
     console.error("Error handling request:", error);
