@@ -11,8 +11,8 @@ self.addEventListener('push', function(event) {
   const title = data.title || 'New Message';
   const options = {
     body: data.body || 'You have a new message.',
-    icon: '/vite.svg', // Assuming vite.svg is there or default
-    badge: '/vite.svg',
+    icon: '/logo.svg',
+    badge: '/logo.svg',
     data: { url: data.url || '/' }
   };
 
