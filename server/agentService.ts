@@ -229,6 +229,7 @@ async function invokeAgent(
   prompt: string,
   requestId: string,
   memberId: string,
+  agentName: string,
   sessionId?: string,
 ): Promise<InvokeResult> {
   const finalArgs: string[] = [];
@@ -245,9 +246,9 @@ async function invokeAgent(
   console.log(`[invokeAgent] prompt length=${prompt.length} chars, resume=${!!sessionId}`);
 
   const startTime = Date.now();
-  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, prompt);
+  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, prompt);
   const elapsed = Date.now() - startTime;
-  console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result.text.length}`);
+  console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result?.text?.length || 0}`);
 
   const failed = !result.text
     || result.text.startsWith("Agent failed.")
@@ -271,7 +272,7 @@ interface AgentResult {
   sessionId?: string;
 }
 
-function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, stdinData?: string): Promise<AgentResult> {
+function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, agentName: string, stdinData?: string): Promise<AgentResult> {
   return new Promise((resolve) => {
     console.log(`[executeAgent] Spawning: ${executable} ${args.join(' ')} (cwd: ${cwd})`);
     const env = { ...process.env };
@@ -289,24 +290,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     console.log(`[executeAgent] Process PID: ${proc.pid}`);
 
-    // Set a timeout to prevent indefinite hangs
-    const timeout = setTimeout(() => {
-      if (!isResolved) {
-        console.error(`[executeAgent] Request ${requestId} timed out after 5 minutes. Killing process ${proc.pid}...`);
-        isResolved = true;
-        if (proc.pid) {
-          treeKill(proc.pid, "SIGTERM", () => {
-            activeProcesses.delete(requestId);
-            syncProcessFile();
-            resolve({ text: "Error: Agent request timed out after 5 minutes." });
-          });
-        } else {
-          activeProcesses.delete(requestId);
-          syncProcessFile();
-          resolve({ text: "Error: Agent request timed out after 5 minutes." });
-        }
-      }
-    }, 300000); // 5 minutes
+    const logFilePath = join(__dirname, "logs", `${requestId}-${agentName}.log`);
 
     if (stdinData) {
       console.log(`[executeAgent] Writing ${stdinData.length} chars to stdin`);
@@ -317,18 +301,19 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     proc.stdout.on("data", (data) => {
       const chunk = data.toString();
       stdout += chunk;
+      appendFile(logFilePath, chunk, "utf-8").catch(() => {});
       console.log(`[executeAgent] stdout chunk (${chunk.length} chars): ${chunk.substring(0, 200)}`);
     });
 
     proc.stderr.on("data", (data) => {
       const chunk = data.toString();
       stderr += chunk;
+      appendFile(logFilePath, chunk, "utf-8").catch(() => {});
       console.log(`[executeAgent] stderr chunk (${chunk.length} chars): ${chunk.substring(0, 200)}`);
     });
 
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
-      clearTimeout(timeout);
       activeProcesses.delete(requestId);
       syncProcessFile();
       if (!isResolved) {
@@ -338,7 +323,6 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     });
 
     proc.on("exit", (code) => {
-      clearTimeout(timeout);
       activeProcesses.delete(requestId);
       syncProcessFile();
       console.log(`[executeAgent] Process exited with code ${code}`);

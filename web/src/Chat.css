@@ -249,7 +249,14 @@
         margin-top: 0;
       }
 
-      .MarkdownToggle {
+      .ToggleGroup {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .MarkdownToggle, .LogToggle {
         background: none;
         border: none;
         color: #6b7280;
@@ -260,7 +267,6 @@
         justify-content: center;
         border-radius: 4px;
         transition: 0.2s;
-        margin-left: auto;
         font-size: 16px;
 
         &:hover {
@@ -272,54 +278,77 @@
           color: #4b5563;
         }
       }
+
+      .CancelTextButton {
+        background: none;
+        border: none;
+        color: #6b7280;
+        padding: 2px 8px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: 0.2s;
+
+        &:hover {
+          color: #ef4444;
+          background-color: #ef444422;
+        }
+      }
+    }
+
+    .LogArea {
+      margin-top: 8px;
+      background-color: #000;
+      border: 1px solid #1c1f23;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-x: auto;
+      max-height: 400px;
+      overflow-y: auto;
+      width: 100%;
+      box-sizing: border-box;
+
+      pre {
+        margin: 0;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 11px;
+        color: #e0e6ed;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
     }
   }
 
-  .LoadingContainer {
-    align-self: flex-start;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    animation: Chat-message-fade 0.4s;
-
-    .TypingIndicator {
-      padding: 12px 20px;
-      background-color: #16191d;
-      border-radius: 18px 18px 18px 2px;
-      display: flex;
-      gap: 5px;
-      border: 1px solid #1c1f23;
-      width: fit-content;
-
-      span {
-        width: 5px;
-        height: 5px;
-        background-color: #0abab5;
-        border-radius: 50%;
-        opacity: 0.4;
-        animation: Chat-typing 1.4s infinite ease-in-out;
-
-        &:nth-child(2) { animation-delay: 0.2s; }
-        &:nth-child(3) { animation-delay: 0.4s; }
-      }
+  .loading-message {
+    .Text {
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
     }
+  }
 
-    .CancelButton {
-      background: none;
-      border: none;
-      color: #6b7280;
-      padding: 4px 8px;
-      font-size: 13px;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      transition: 0.2s;
+  .TypingIndicator {
+    padding: 12px 20px;
+    background-color: #16191d;
+    border-radius: 18px 18px 18px 2px;
+    display: flex;
+    gap: 5px;
+    border: 1px solid #1c1f23;
+    width: fit-content;
 
-      &:hover {
-        color: #ef4444;
-      }
+    span {
+      width: 5px;
+      height: 5px;
+      background-color: #0abab5;
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: Chat-typing 1.4s infinite ease-in-out;
+
+      &:nth-child(2) { animation-delay: 0.2s; }
+      &:nth-child(3) { animation-delay: 0.4s; }
     }
   }
 

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiX, FiSend, FiFolder } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -45,6 +45,8 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
+  const [logs, setLogs] = useState<Record<string, string>>({});
+  const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstLoad = useRef(true);
@@ -198,6 +200,25 @@ export function Chat({ onBack }: { onBack: () => void }) {
     }
   }
 
+  async function toggleLog(requestId: string) {
+    if (showLog[requestId]) {
+      setShowLog(prev => ({ ...prev, [requestId]: false }));
+      return;
+    }
+    setShowLog(prev => ({ ...prev, [requestId]: true }));
+    try {
+      const res = await fetch(`/api/requests/${requestId}/logs`);
+      if (!res.ok) {
+        setLogs(prev => ({ ...prev, [requestId]: "No logs found." }));
+        return;
+      }
+      const data = await res.json();
+      setLogs(prev => ({ ...prev, [requestId]: data.content || "No logs found." }));
+    } catch {
+      setLogs(prev => ({ ...prev, [requestId]: "Error fetching logs." }));
+    }
+  }
+
   if (loading) {
     return (
       <div className="Chat">
@@ -246,25 +267,63 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
                 {m.type === "response" && m.agent && <span className="AgentLabel">{m.agent}</span>}
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
-                <button 
-                  className={`MarkdownToggle ${renderMd[i] !== false ? "active" : ""}`} 
-                  onClick={() => setRenderMd(prev => ({ ...prev, [i]: prev[i] === false ? true : false }))}
-                  title="Toggle Markdown"
-                >
-                  {renderMd[i] !== false ? <TbMarkdown /> : <TbMarkdownOff />}
-                </button>
+                <div className="ToggleGroup">
+                  {m.type === "request" && m.id && (
+                    <button 
+                      className={`LogToggle ${showLog[m.id] ? "active" : ""}`}
+                      onClick={() => toggleLog(m.id!)}
+                      title="View Execution Log"
+                    >
+                      <FiTerminal />
+                    </button>
+                  )}
+                  <button 
+                    className={`MarkdownToggle ${renderMd[i] !== false ? "active" : ""}`} 
+                    onClick={() => setRenderMd(prev => ({ ...prev, [i]: prev[i] === false ? true : false }))}
+                    title="Toggle Markdown"
+                  >
+                    {renderMd[i] !== false ? <TbMarkdown /> : <TbMarkdownOff />}
+                  </button>
+                </div>
               </div>
+              {m.type === "request" && m.id && showLog[m.id] && (
+                <div className="LogArea">
+                  <pre>{logs[m.id] || "Loading..."}</pre>
+                </div>
+              )}
             </div>
             {m.type === "request" && m.status === "running" && (
-              <div className="LoadingContainer">
-                <div className="TypingIndicator">
-                  <span></span>
-                  <span></span>
-                  <span></span>
+              <div className="Message response loading-message">
+                <div className="Text">
+                  <div className="TypingIndicator">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
                 </div>
-                <button className="CancelButton" onClick={() => m.id && handleCancel(m.id)}>
-                  <FiX /> Cancel
-                </button>
+                <div className="MetaRow">
+                  <MessageTime date={m.requestTime} live={true} />
+                  <span className="AgentLabel">{selectedMember.agents[0]}</span>
+                  <div className="ToggleGroup">
+                    <button className="CancelTextButton" onClick={() => m.id && handleCancel(m.id)}>
+                      Cancel
+                    </button>
+                    {m.id && (
+                      <button 
+                        className={`LogToggle ${showLog[m.id] ? "active" : ""}`}
+                        onClick={() => toggleLog(m.id!)}
+                        title="View Execution Log"
+                      >
+                        <FiTerminal />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {m.id && showLog[m.id] && (
+                  <div className="LogArea">
+                    <pre>{logs[m.id] || "Loading..."}</pre>
+                  </div>
+                )}
               </div>
             )}
           </div>

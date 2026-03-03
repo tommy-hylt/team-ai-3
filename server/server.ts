@@ -259,6 +259,26 @@ app.post("/api/members/:id/request", async (req, res) => {
 });
 
 // File APIs
+app.get("/api/requests/:id/logs", async (req, res) => {
+  const logDir = path.join(__dirname, "logs");
+  try {
+    const files = await fs.promises.readdir(logDir);
+    const matchingFiles = files.filter(f => f.startsWith(req.params.id + "-") && f.endsWith(".log"));
+    if (matchingFiles.length === 0) {
+      return res.status(404).json({ error: "Log not found" });
+    }
+    
+    let logContent = "";
+    for (const f of matchingFiles) {
+      logContent += `\n--- ${f} ---\n`;
+      logContent += await fs.promises.readFile(path.join(logDir, f), "utf-8");
+    }
+    res.json({ content: logContent });
+  } catch (error) {
+    res.status(500).json({ error: "Failed to read logs" });
+  }
+});
+
 app.get("/api/members/:id/files", async (req, res) => {
   const path = (req.query.path as string) || "";
   const entries = await listFiles(req.params.id, path);
