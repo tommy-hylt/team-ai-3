@@ -11,7 +11,7 @@ interface MemberListProps {
 }
 
 export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberListProps) {
-  const { members, selectedMember } = useContext(MemberContext);
+  const { members, selectedMember, loading } = useContext(MemberContext);
   const navigate = useNavigate();
   const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem("expandedTeams");
@@ -32,19 +32,11 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
   }, [members]);
 
   const [teamOrder, setTeamOrder] = useState<string[]>(() => {
-    const saved = localStorage.getItem("teamOrder");
-    const initialTeams = Object.keys(teamsMap).sort((a, b) => {
-      if (a === "General") return -1;
-      if (b === "General") return 1;
-      return a.localeCompare(b);
-    });
-    if (!saved) return initialTeams;
-    
-    const savedOrder = JSON.parse(saved) as string[];
-    // Filter out teams that no longer exist and add new teams
-    const existingTeams = savedOrder.filter(t => teamsMap[t]);
-    const newTeams = Object.keys(teamsMap).filter(t => !savedOrder.includes(t));
-    return [...existingTeams, ...newTeams];
+    try {
+      const saved = localStorage.getItem("teamOrder");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return ["General"];
   });
 
   useEffect(() => {
@@ -55,19 +47,26 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
     localStorage.setItem("teamOrder", JSON.stringify(teamOrder));
   }, [teamOrder]);
 
-  // Update team order when teamsMap changes (new teams added)
+  // Sync team order when members finish loading or teamsMap changes
   useEffect(() => {
+    if (loading) return; // Do not touch order while members are still loading (teamsMap is empty)
+    
     const currentTeams = Object.keys(teamsMap);
-    const newTeams = currentTeams.filter(t => !teamOrder.includes(t));
-    if (newTeams.length > 0) {
-      setTeamOrder(prev => [...prev, ...newTeams]);
-    }
-    // Also remove teams that no longer exist
-    const removedTeams = teamOrder.filter(t => !teamsMap[t]);
-    if (removedTeams.length > 0) {
-      setTeamOrder(prev => prev.filter(t => teamsMap[t]));
-    }
-  }, [teamsMap]);
+    
+    setTeamOrder(prev => {
+      // 1. Keep existing order but filter out teams that no longer exist
+      const newOrder = prev.filter(t => currentTeams.includes(t));
+      // 2. Append any brand new teams to the end
+      const newTeams = currentTeams.filter(t => !newOrder.includes(t));
+      const finalOrder = [...newOrder, ...newTeams];
+      
+      // Only update if there's an actual change
+      if (JSON.stringify(prev) !== JSON.stringify(finalOrder)) {
+        return finalOrder;
+      }
+      return prev;
+    });
+  }, [teamsMap, loading]);
 
   const toggleTeam = (team: string) => {
     setExpandedTeams(prev => ({
