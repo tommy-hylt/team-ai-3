@@ -279,23 +279,8 @@
         }
       }
 
-      .CancelTextButton {
-        background: none;
-        border: none;
-        color: #6b7280;
-        padding: 2px 8px;
-        font-size: 11px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        cursor: pointer;
-        border-radius: 4px;
-        transition: 0.2s;
-
-        &:hover {
-          color: #ef4444;
-          background-color: #ef444422;
-        }
+      .LogToggle {
+        font-size: 14px;
       }
     }
 
@@ -327,6 +312,30 @@
       background: none !important;
       border: none !important;
       padding: 0 !important;
+    }
+  }
+
+  .TypingContainer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    .CancelButton {
+      background: none;
+      border: none;
+      color: #6b7280;
+      padding: 4px 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: 0.2s;
+
+      &:hover {
+        color: #ef4444;
+      }
     }
   }
 

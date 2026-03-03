@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -200,22 +200,22 @@ export function Chat({ onBack }: { onBack: () => void }) {
     }
   }
 
-  async function toggleLog(requestId: string) {
-    if (showLog[requestId]) {
-      setShowLog(prev => ({ ...prev, [requestId]: false }));
+  async function toggleLog(logKey: string, requestId: string) {
+    if (showLog[logKey]) {
+      setShowLog(prev => ({ ...prev, [logKey]: false }));
       return;
     }
-    setShowLog(prev => ({ ...prev, [requestId]: true }));
+    setShowLog(prev => ({ ...prev, [logKey]: true }));
     try {
       const res = await fetch(`/api/requests/${requestId}/logs`);
       if (!res.ok) {
-        setLogs(prev => ({ ...prev, [requestId]: "No logs found." }));
+        setLogs(prev => ({ ...prev, [logKey]: "No logs found." }));
         return;
       }
       const data = await res.json();
-      setLogs(prev => ({ ...prev, [requestId]: data.content || "No logs found." }));
+      setLogs(prev => ({ ...prev, [logKey]: data.content || "No logs found." }));
     } catch {
-      setLogs(prev => ({ ...prev, [requestId]: "Error fetching logs." }));
+      setLogs(prev => ({ ...prev, [logKey]: "Error fetching logs." }));
     }
   }
 
@@ -254,7 +254,9 @@ export function Chat({ onBack }: { onBack: () => void }) {
         </div>
       </div>
       <div className="MessageList" ref={scrollRef}>
-        {messages.map((m, i) => (
+        {messages.map((m, i) => {
+          const logId = m.type === "request" ? m.id : m.requestId;
+          return (
           <div key={i} className={`MessageWrapper ${m.type}`}>
             <div className={`Message ${m.type} ${m.type === "request" && m.status === "aborted" ? "aborted" : ""}`}>
               {m.type === "request" && m.requester && (
@@ -268,10 +270,10 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 {m.type === "response" && m.agent && <span className="AgentLabel">{m.agent}</span>}
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
                 <div className="ToggleGroup">
-                  {m.type === "request" && m.id && (
+                  {logId && (
                     <button 
-                      className={`LogToggle ${showLog[m.id] ? "active" : ""}`}
-                      onClick={() => toggleLog(m.id!)}
+                      className={`LogToggle ${showLog[logId] ? "active" : ""}`}
+                      onClick={() => toggleLog(logId, logId)}
                       title="View Execution Log"
                     >
                       <FiTerminal />
@@ -286,32 +288,34 @@ export function Chat({ onBack }: { onBack: () => void }) {
                   </button>
                 </div>
               </div>
-              {m.type === "request" && m.id && showLog[m.id] && (
+              {logId && showLog[logId] && (
                 <div className="LogArea">
-                  <pre>{logs[m.id] || "Loading..."}</pre>
+                  <pre>{logs[logId] || "Loading..."}</pre>
                 </div>
               )}
             </div>
             {m.type === "request" && m.status === "running" && (
               <div className="Message response loading-message">
                 <div className="Text">
-                  <div className="TypingIndicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+                  <div className="TypingContainer">
+                    <div className="TypingIndicator">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                    <button className="CancelButton" onClick={() => m.id && handleCancel(m.id)}>
+                      <FiX /> Cancel
+                    </button>
                   </div>
                 </div>
                 <div className="MetaRow">
                   <MessageTime date={m.requestTime} live={true} />
                   <span className="AgentLabel">{selectedMember.agents[0]}</span>
                   <div className="ToggleGroup">
-                    <button className="CancelTextButton" onClick={() => m.id && handleCancel(m.id)}>
-                      Cancel
-                    </button>
                     {m.id && (
                       <button 
-                        className={`LogToggle ${showLog[m.id] ? "active" : ""}`}
-                        onClick={() => toggleLog(m.id!)}
+                        className={`LogToggle ${showLog[`loading-${m.id}`] ? "active" : ""}`}
+                        onClick={() => toggleLog(`loading-${m.id}`, m.id!)}
                         title="View Execution Log"
                       >
                         <FiTerminal />
@@ -319,15 +323,16 @@ export function Chat({ onBack }: { onBack: () => void }) {
                     )}
                   </div>
                 </div>
-                {m.id && showLog[m.id] && (
+                {m.id && showLog[`loading-${m.id}`] && (
                   <div className="LogArea">
-                    <pre>{logs[m.id] || "Loading..."}</pre>
+                    <pre>{logs[`loading-${m.id}`] || "Loading..."}</pre>
                   </div>
                 )}
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
         <div ref={messagesEndRef} />
       </div>
       <div className="InputArea">
