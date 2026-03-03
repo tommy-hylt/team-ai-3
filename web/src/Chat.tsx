@@ -255,7 +255,8 @@ export function Chat({ onBack }: { onBack: () => void }) {
       </div>
       <div className="MessageList" ref={scrollRef}>
         {messages.map((m, i) => {
-          const logId = m.type === "request" ? m.id : m.requestId;
+          const reqId = m.type === "request" ? m.id : m.requestId;
+          const logKey = `${m.type}-${reqId}`;
           return (
           <div key={i} className={`MessageWrapper ${m.type}`}>
             <div className={`Message ${m.type} ${m.type === "request" && m.status === "aborted" ? "aborted" : ""}`}>
@@ -270,10 +271,10 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 {m.type === "response" && m.agent && <span className="AgentLabel">{m.agent}</span>}
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
                 <div className="ToggleGroup">
-                  {logId && (
+                  {reqId && (
                     <button 
-                      className={`LogToggle ${showLog[logId] ? "active" : ""}`}
-                      onClick={() => toggleLog(logId, logId)}
+                      className={`LogToggle ${showLog[logKey] ? "active" : ""}`}
+                      onClick={() => toggleLog(logKey, reqId)}
                       title="View Execution Log"
                     >
                       <FiTerminal />
@@ -288,9 +289,9 @@ export function Chat({ onBack }: { onBack: () => void }) {
                   </button>
                 </div>
               </div>
-              {logId && showLog[logId] && (
+              {reqId && showLog[logKey] && (
                 <div className="LogArea">
-                  <pre>{logs[logId] || "Loading..."}</pre>
+                  <pre>{logs[logKey] || "Loading..."}</pre>
                 </div>
               )}
             </div>
