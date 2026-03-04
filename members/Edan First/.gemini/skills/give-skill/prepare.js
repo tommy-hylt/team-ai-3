@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * prepare.js — Ensure .claude / .gemini / .agent skill folders are in sync.
+ * prepare.js — Ensure .claude / .gemini / .agents skill folders are in sync.
  * Uses .claude as source of truth (falls back to first folder found).
  * Usage: node prepare.js --skill <skill-name>
  */
@@ -16,7 +16,7 @@ if (skillIdx === -1 || !args[skillIdx + 1]) {
 const skillName = args[skillIdx + 1];
 
 const memberRoot = path.resolve(__dirname, '../../..');
-const FOLDERS = ['.claude', '.gemini', '.agent'];
+const FOLDERS = ['.claude', '.gemini', '.agents'];
 const skillPaths = FOLDERS.map(f => path.join(memberRoot, f, 'skills', skillName));
 
 // Recursively hash a directory into a string for comparison

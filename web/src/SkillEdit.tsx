@@ -29,7 +29,7 @@ export function SkillEdit() {
       const [claudeRes, geminiRes, agentRes] = await Promise.all([
         fetch(`/api/members/${id}/files?path=.claude/skills/${skillName}`),
         fetch(`/api/members/${id}/files?path=.gemini/skills/${skillName}`),
-        fetch(`/api/members/${id}/files?path=.agent/skills/${skillName}`)
+        fetch(`/api/members/${id}/files?path=.agents/skills/${skillName}`)
       ]);
 
       const claudeEntries: FileEntry[] = claudeRes.ok ? await claudeRes.json() : [];

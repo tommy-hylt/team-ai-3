@@ -32,7 +32,7 @@ export function SkillList() {
     Promise.all([
       fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
       fetch(`/api/members/${id}/files?path=.gemini/skills`).then(r => r.json()),
-      fetch(`/api/members/${id}/files?path=.agent/skills`).then(r => r.json()),
+      fetch(`/api/members/${id}/files?path=.agents/skills`).then(r => r.json()),
     ]).then(([claude, gemini, agent]) => {
       const getDirs = (entries: SkillEntry[]) =>
         (Array.isArray(entries) ? entries : []).filter(e => e.type === "directory").map(e => e.name);
@@ -52,7 +52,7 @@ export function SkillList() {
         sync[name] = {
           ".claude": claudeDirs.includes(name),
           ".gemini": geminiDirs.includes(name),
-          ".agent": agentDirs.includes(name),
+          ".agents": agentDirs.includes(name),
         };
       }
       setSyncMap(sync);

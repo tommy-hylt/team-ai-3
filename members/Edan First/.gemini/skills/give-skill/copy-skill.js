@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * copy-skill.js — Copy a skill from this member to a target member.
- * Copies into all 3 folders: .claude / .gemini / .agent
+ * Copies into all 3 folders: .claude / .gemini / .agents
  * Usage: node copy-skill.js --skill <skill-name> --member <target-member-folder-name>
  */
 const fs = require('fs');
@@ -43,7 +43,7 @@ function copyDir(src, dst) {
   }
 }
 
-const FOLDERS = ['.claude', '.gemini', '.agent'];
+const FOLDERS = ['.claude', '.gemini', '.agents'];
 for (const folder of FOLDERS) {
   const dest = path.join(targetRoot, folder, 'skills', skillName);
   copyDir(sourcePath, dest);

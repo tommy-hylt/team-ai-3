@@ -28,7 +28,7 @@ export function SkillFileEdit() {
         
         let bestVendor = ".claude";
         if (!data[bestVendor]?.content) {
-          if (data[".agent"]?.content) bestVendor = ".agent";
+          if (data[".agents"]?.content) bestVendor = ".agents";
           else if (data[".gemini"]?.content) bestVendor = ".gemini";
         }
         

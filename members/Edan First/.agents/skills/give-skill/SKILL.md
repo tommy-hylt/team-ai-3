@@ -3,7 +3,7 @@ name: give-skill
 description: Copy one of your skills to another member. Usage example — "give your cleanup-prepare skill to Ava".
 ---
 
-Copy a skill from this member to a target member, deploying it into all 3 skill folders (`.claude`, `.gemini`, `.agent`).
+Copy a skill from this member to a target member, deploying it into all 3 skill folders (`.claude`, `.gemini`, `.agents`).
 
 ## Workflow
 
@@ -23,7 +23,7 @@ Check that `.claude/skills/<skill-name>/` exists in your working directory.
 
 ### 4. Sync your 3 source folders
 
-Run the prepare script to ensure your `.claude`, `.gemini`, and `.agent` copies of the skill are identical before copying:
+Run the prepare script to ensure your `.claude`, `.gemini`, and `.agents` copies of the skill are identical before copying:
 
 ```
 node ".claude/skills/give-skill/prepare.js" --skill <skill-name>
@@ -37,7 +37,7 @@ This uses `.claude/skills/<skill-name>/` as the source of truth and syncs the ot
 node ".claude/skills/give-skill/copy-skill.js" --skill <skill-name> --member "<target-member-folder-name>"
 ```
 
-This copies from your `.claude/skills/<skill-name>/` into the target member's `.claude/skills/<skill-name>/`, `.gemini/skills/<skill-name>/`, and `.agent/skills/<skill-name>/`.
+This copies from your `.claude/skills/<skill-name>/` into the target member's `.claude/skills/<skill-name>/`, `.gemini/skills/<skill-name>/`, and `.agents/skills/<skill-name>/`.
 
 ### 6. Report result
 

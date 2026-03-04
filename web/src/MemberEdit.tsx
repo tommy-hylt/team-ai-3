@@ -55,7 +55,7 @@ export function MemberEdit() {
       Promise.all([
         fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
         fetch(`/api/members/${id}/files?path=.gemini/skills`).then(r => r.json()),
-        fetch(`/api/members/${id}/files?path=.agent/skills`).then(r => r.json()),
+        fetch(`/api/members/${id}/files?path=.agents/skills`).then(r => r.json()),
       ]).then(([claude, gemini, agent]) => {
         const getDirs = (entries: any[]) =>
           (Array.isArray(entries) ? entries : []).filter((e: any) => e.type === "directory").map((e: any) => e.name);

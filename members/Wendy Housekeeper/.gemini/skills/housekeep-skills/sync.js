@@ -2,7 +2,7 @@
 /**
  * sync.js — Housekeep skill folders across all members.
  *
- * For each member, ensures .claude/skills/, .gemini/skills/, and .agent/skills/
+ * For each member, ensures .claude/skills/, .gemini/skills/, and .agents/skills/
  * contain the same set of skills with identical contents.
  *
  * Source of truth: the existing skill folder whose newest file mtime is latest.
@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const FOLDERS = ['.claude', '.gemini', '.agent'];
+const FOLDERS = ['.claude', '.gemini', '.agents'];
 
 // __dirname = <members>/<MemberName>/.claude/skills/housekeep-skills
 // memberRoot = <members>/<MemberName>  (go up 3 levels)

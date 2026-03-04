@@ -44,7 +44,7 @@ export async function createMember(data: any) {
 
   if (data.cloneFrom) {
     const sourceDir = join(__dirname, "../members", data.cloneFrom);
-    const vendorFolders = [".claude", ".gemini", ".agent"];
+    const vendorFolders = [".claude", ".gemini", ".agents"];
 
     for (const vendor of vendorFolders) {
       const sourceSkills = join(sourceDir, vendor, "skills");

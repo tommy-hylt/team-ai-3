@@ -1,6 +1,6 @@
 ---
 name: housekeep-skills
-description: Sync skill folders across all members — ensures .claude/skills/, .gemini/skills/, and .agent/skills/ are identical for each member. Uses .claude/skills/ as source of truth.
+description: Sync skill folders across all members — ensures .claude/skills/, .gemini/skills/, and .agents/skills/ are identical for each member. Uses .claude/skills/ as source of truth.
 ---
 
 When called, run the sync script to housekeep skill folders for all members.
@@ -15,7 +15,7 @@ node ".claude/skills/housekeep-skills/sync.js"
 
 This script:
 - Loops over every member folder in `../` (siblings of your working directory)
-- For each member that has at least one skills folder, checks whether `.claude/skills/`, `.gemini/skills/`, and `.agent/skills/` contain identical skills
+- For each member that has at least one skills folder, checks whether `.claude/skills/`, `.gemini/skills/`, and `.agents/skills/` contain identical skills
 - Where they differ, copies missing or outdated skills from the source of truth folder to the others
 
 ### 2. Review the output
