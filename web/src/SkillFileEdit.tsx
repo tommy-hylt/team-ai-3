@@ -77,6 +77,13 @@ export function SkillFileEdit() {
   const dirty = value !== originalContent;
   const canSave = dirty || isOutOfSync;
 
+  const isSkillMd = fileName === "SKILL.md";
+  const missingHeader = isSkillMd && !value.trim().startsWith("---");
+
+  function fixHeader() {
+    setValue(`---\nname: ${skillName}\ndescription: \n---\n\n${value}`);
+  }
+
   let newest = existing[0];
   let longest = existing[0];
 
@@ -99,6 +106,19 @@ export function SkillFileEdit() {
         </button>
       </div>
       <div className="EditorArea">
+        {missingHeader && (
+          <div className="SyncWarning HeaderWarning">
+            <FiAlertTriangle className="WarningIcon" />
+            <div className="WarningContent">
+              <div className="WarningTitle">
+                Missing SKILL.md Frontmatter Header
+              </div>
+              <div className="WarningDetails">
+                <button className="FixButton" onClick={fixHeader}>Add Default Header</button>
+              </div>
+            </div>
+          </div>
+        )}
         {isOutOfSync && (
           <div className="SyncWarning">
             <FiAlertTriangle className="WarningIcon" />
