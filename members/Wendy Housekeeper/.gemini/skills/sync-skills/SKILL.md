@@ -1,5 +1,5 @@
 ---
-name: housekeep-skills
+name: sync-skills
 description: Sync skill folders across all members — ensures .claude/skills/, .gemini/skills/, and .agents/skills/ are identical for each member. Uses .claude/skills/ as source of truth.
 ---
 
@@ -10,7 +10,7 @@ When called, run the sync script to housekeep skill folders for all members.
 ### 1. Run the sync script
 
 ```
-node ".claude/skills/housekeep-skills/sync.js"
+node ".claude/skills/sync-skills/sync.js"
 ```
 
 This script:
