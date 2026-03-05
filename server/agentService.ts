@@ -173,7 +173,7 @@ async function tryAgent(
   // Try resume if we have a session
   if (sessionId) {
     console.log(`[tryAgent] Attempting resume for "${agentName}" with sessionId=${sessionId}`);
-    const result = await invokeAgent(config, memberDir, requestText, requestId, member.id, sessionId);
+    const result = await invokeAgent(config, memberDir, requestText, requestId, member.id, agentName, sessionId);
     if (!result.failed) {
       if (result.sessionId) {
         await saveSessionId(member.id, agentName, result.sessionId);
@@ -206,7 +206,7 @@ You must read both './CHARACTER.md' and './MEMORY.md' now to understand your rol
 User Request:
 ${requestText}`;
   console.log(`[tryAgent] Fresh invocation for "${agentName}"`);
-  const result = await invokeAgent(config, memberDir, freshPrompt, requestId, member.id);
+  const result = await invokeAgent(config, memberDir, freshPrompt, requestId, member.id, agentName);
   if (!result.failed) {
     if (result.sessionId) {
       console.log(`[tryAgent] Saving session ID for "${agentName}": ${result.sessionId}`);
@@ -381,6 +381,12 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
   let finalResult: AgentResult | undefined = undefined;
   let collectedSessionId: string | undefined = undefined;
 
+  // 0. Regex fallback for session ID in case JSON parsing fails entirely due to formatting
+  const sessionMatch = trimmed.match(/"session_id"\s*:\s*"([^"]+)"/) || trimmed.match(/"sessionId"\s*:\s*"([^"]+)"/) || trimmed.match(/"thread_id"\s*:\s*"([^"]+)"/);
+  if (sessionMatch) {
+    collectedSessionId = sessionMatch[1];
+  }
+
   // 1. Try parsing JSONL top-to-bottom to collect thread/session IDs and text
   for (const line of lines) {
     const l = line.trim();
@@ -423,7 +429,8 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
     lastOpen = trimmed.lastIndexOf("{", lastOpen - 1);
   }
 
-  return undefined;
+  // Fallback to raw text but preserve any session ID we managed to extract via regex
+  return { text: trimmed, sessionId: collectedSessionId };
 }
 
 function extractResponse(json: any): AgentResult | undefined {
