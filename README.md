@@ -15,11 +15,12 @@ Team AI allows you to manage multiple AI agents, each with their own unique char
 
 ## Key Features
 
-- **Multi-Agent Architecture**: Support for Claude, Gemini, and other CLI-based AI agents.
-- **Real-time Chat**: Live updates via Server-Sent Events (SSE) with Markdown rendering.
-- **Routines System**: Schedule automated background tasks and requests for members using cron patterns.
+- **Multi-Agent Architecture**: Support for Claude, Gemini, and Codex CLI-based AI agents.
+- **Detached Execution**: Agent CLI tools run in a resilient, detached background worker process (`agent-worker.ts`), ensuring tasks finish and save to disk even if the main server restarts or crashes.
+- **Real-time Chat**: Live updates via Server-Sent Events (SSE) and webhook pings. Includes an interactive execution log viewer.
+- **Routines System**: Schedule automated background tasks and requests for members using cron patterns. You can toggle routines active/disabled.
 - **Web Push Notifications**: Get notified when an agent replies even if the tab is closed.
-- **Skill System**: Shared skills synchronized across all supported AI vendor formats.
+- **Skill System**: Shared skills synchronized across all supported AI vendor formats (`.claude`, `.gemini`, `.agents`).
 - **Smart Drafts**: Chat inputs are automatically saved to local storage.
 
 ## Getting Started

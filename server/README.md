@@ -5,9 +5,11 @@ A Node.js Express server that manages AI team members and executes agents.
 ## Features
 
 - **Member Management**: Reads member configurations and data from the `members/` directory.
-- **Agent Execution**: Spawns agent processes using `child_process.spawn`.
+- **Detached Execution**: Spawns detached `agent-worker.ts` processes via `npx` to execute CLI tools independently, preventing UI and server hangs.
+- **Robust Parsing**: Supports complex JSON output and JSON-Lines (JSONL) streams with regex fallbacks to preserve session IDs even during formatting errors.
+- **Execution Logs**: Streams real-time `stdout`/`stderr` from agents into individual execution logs in `server/logs/`.
 - **Chat History**: Persists requests and responses to member-specific JSON files.
-- **Real-time Updates**: Streams chat events to clients via Server-Sent Events (SSE).
+- **Real-time Updates**: Streams chat events to clients via Server-Sent Events (SSE) and webhook endpoints.
 - **Push Notifications**: Integrated Web Push for mobile and desktop background alerts.
 - **TypeScript & ESM**: Written in TypeScript using ES Modules, powered by `tsx` for development.
 
