@@ -5,8 +5,8 @@
  *
  * Commands:
  *   list
- *   add    --cron "<pattern>" --text "<message>"
- *   edit   --id <uuid> [--cron "<pattern>"] [--text "<message>"]
+ *   add    --cron "<pattern>" --text "<message>" [--notify]
+ *   edit   --id <uuid> [--cron "<pattern>"] [--text "<message>"] [--notify] [--status active|disabled]
  *   delete --id <uuid>
  */
 const http = require('http');
@@ -23,6 +23,10 @@ const [,, command, ...rest] = process.argv;
 function getArg(name) {
   const idx = rest.indexOf(name);
   return idx !== -1 ? rest[idx + 1] : null;
+}
+
+function hasFlag(name) {
+  return rest.includes(name);
 }
 
 // --- HTTP helpers ---
@@ -67,10 +71,12 @@ async function main() {
       console.log('No routines configured.');
     } else {
       routines.forEach((r, i) => {
-        console.log(`[${i + 1}] id:   ${r.id}`);
-        console.log(`     cron: ${r.cronPattern}`);
-        console.log(`     text: ${r.requestText}`);
-        console.log(`     last: ${r.lastTime || '(never)'}`);
+        console.log(`[${i + 1}] id:     ${r.id}`);
+        console.log(`     cron:   ${r.cronPattern}`);
+        console.log(`     text:   ${r.requestText}`);
+        console.log(`     status: ${r.status ?? 'active'}`);
+        console.log(`     notify: ${r.notify ?? false}`);
+        console.log(`     last:   ${r.lastTime || '(never)'}`);
       });
     }
     return;
@@ -80,34 +86,49 @@ async function main() {
     const cron = getArg('--cron');
     const text = getArg('--text');
     if (!cron || !text) {
-      console.error('Usage: routines.js add --cron "<pattern>" --text "<message>"');
+      console.error('Usage: routines.js add --cron "<pattern>" --text "<message>" [--notify]');
       process.exit(1);
     }
     const now = new Date().toISOString();
-    const routine = { id: randomUUID(), cronPattern: cron, requestText: text, startTime: now, lastTime: now };
+    const routine = {
+      id: randomUUID(),
+      cronPattern: cron,
+      requestText: text,
+      startTime: now,
+      lastTime: now,
+      notify: hasFlag('--notify'),
+      status: 'active',
+    };
     const routines = await getRoutines();
     routines.push(routine);
     await saveRoutines(routines);
-    console.log(`Added  id:   ${routine.id}`);
-    console.log(`       cron: ${cron}`);
-    console.log(`       text: ${text}`);
+    console.log(`Added  id:     ${routine.id}`);
+    console.log(`       cron:   ${cron}`);
+    console.log(`       text:   ${text}`);
+    console.log(`       notify: ${routine.notify}`);
+    console.log(`       status: ${routine.status}`);
     return;
   }
 
   if (command === 'edit') {
     const id = getArg('--id');
-    if (!id) { console.error('Usage: routines.js edit --id <uuid> [--cron "<pattern>"] [--text "<message>"]'); process.exit(1); }
+    if (!id) { console.error('Usage: routines.js edit --id <uuid> [--cron "<pattern>"] [--text "<message>"] [--notify] [--status active|disabled]'); process.exit(1); }
     const routines = await getRoutines();
     const r = routines.find(r => r.id === id);
     if (!r) { console.error(`Routine not found: ${id}`); process.exit(1); }
-    const cron = getArg('--cron');
-    const text = getArg('--text');
-    if (cron) r.cronPattern = cron;
-    if (text) r.requestText = text;
+    const cron   = getArg('--cron');
+    const text   = getArg('--text');
+    const status = getArg('--status');
+    if (cron)   r.cronPattern  = cron;
+    if (text)   r.requestText  = text;
+    if (status) r.status       = status;
+    if (rest.includes('--notify')) r.notify = true;
     await saveRoutines(routines);
-    console.log(`Updated id:   ${id}`);
-    console.log(`        cron: ${r.cronPattern}`);
-    console.log(`        text: ${r.requestText}`);
+    console.log(`Updated id:     ${id}`);
+    console.log(`        cron:   ${r.cronPattern}`);
+    console.log(`        text:   ${r.requestText}`);
+    console.log(`        notify: ${r.notify ?? false}`);
+    console.log(`        status: ${r.status ?? 'active'}`);
     return;
   }
 

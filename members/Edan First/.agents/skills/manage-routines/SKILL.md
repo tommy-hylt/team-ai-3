@@ -11,10 +11,15 @@ All operations go through `.claude/skills/manage-routines/routines.js`. It autom
 
 ```
 node ".claude/skills/manage-routines/routines.js" list
-node ".claude/skills/manage-routines/routines.js" add    --cron "<pattern>" --text "<message>"
-node ".claude/skills/manage-routines/routines.js" edit   --id <uuid> [--cron "<pattern>"] [--text "<message>"]
+node ".claude/skills/manage-routines/routines.js" add    --cron "<pattern>" --text "<message>" [--notify]
+node ".claude/skills/manage-routines/routines.js" edit   --id <uuid> [--cron "<pattern>"] [--text "<message>"] [--notify] [--status active|disabled]
 node ".claude/skills/manage-routines/routines.js" delete --id <uuid>
 ```
+
+| Flag/Arg | Default | Use when |
+|---|---|---|
+| `--notify` | off | The user should receive a push notification each time this routine fires |
+| `--status disabled` | active | Temporarily pause a routine without deleting it |
 
 ## Workflow
 
