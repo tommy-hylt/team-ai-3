@@ -41,6 +41,8 @@ function AppContent() {
     if (id && !isNew && members.length > 0) {
       const member = members.find(m => m.id === id);
       if (member) setSelectedMember(member);
+    } else if (location.pathname === "/") {
+      setSelectedMember(undefined);
     }
   }, [location.pathname, members, setSelectedMember]);
 
