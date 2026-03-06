@@ -35,7 +35,7 @@ function AppContent() {
   // Sync route ID with selectedMember
   useEffect(() => {
     const parts = location.pathname.split("/");
-    const id = parts[1];
+    const id = parts[1] ? decodeURIComponent(parts[1]) : undefined;
     const isNew = id === "new";
 
     if (id && !isNew && members.length > 0) {
