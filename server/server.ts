@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
-import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory } from "./chatService.ts";
+import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile, checkFileSync } from "./fileService.ts";
@@ -142,19 +142,25 @@ app.get("/api/members/:id/chat", async (req, res) => {
   res.json(history);
 });
 
-app.post("/api/internal/webhook/agent-finished", async (req, res) => {
+app.post("/api/members/:id/responses", async (req, res) => {
   try {
-    const { memberId, request, response } = req.body;
-    console.log(`[webhook] Received agent-finished for ${memberId}, request ${request.id}`);
+    const memberId = req.params.id;
+    const response = req.body;
+    console.log(`POST /api/members/${memberId}/responses for request ${response.requestId}`);
 
     const member = await getMember(memberId);
     if (!member) {
       return res.status(404).json({ error: "Member not found" });
     }
 
+    const request = await getRequest(memberId, response.requestId);
+    if (!request) {
+      return res.status(404).json({ error: "Request not found" });
+    }
+
     // Broadcast SSE
     broadcast(memberId, "response", response);
-    broadcast(memberId, "status_update", { id: request.id, status: "completed" });
+    broadcast(memberId, "status_update", { id: response.requestId, status: "completed" });
     
     // Push Notification
     if (response.notify) {
@@ -183,7 +189,7 @@ app.post("/api/internal/webhook/agent-finished", async (req, res) => {
 
     res.json({ ok: true });
   } catch (error) {
-    console.error("[webhook] Error processing agent-finished:", error);
+    console.error("Error processing response:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

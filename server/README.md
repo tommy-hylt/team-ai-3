@@ -56,6 +56,9 @@ A Node.js Express server that manages AI team members and executes agents.
 - `POST /api/members/:id/request`: Post a new request to a member (agent runs in the background).
   - **Body:** `{ text: "Message content", requester: "User", notify: true, echo: false }`
   - **Returns:** `{ ok: true, requestId: "..." }`
+- `POST /api/members/:id/responses`: Post a new response for a member (used by background workers).
+  - **Body:** Response object `{ requestId: "...", text: "...", agent?: "...", notify: boolean, echo?: string }`
+  - **Returns:** `{ ok: true }`
 - `POST /api/requests/:id/cancel`: Kill a running agent process.
   - **Body:** `{ memberId: "Member Name" }`
   - **Returns:** `{ ok: true, killed: boolean, message: "..." }`

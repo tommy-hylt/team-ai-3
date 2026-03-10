@@ -176,7 +176,7 @@ async function dispatchRoutineRequest(memberId: string, text: string, notify: bo
     await addResponse(memberId, response);
     await updateRequestStatus(memberId, request.id, "completed");
     broadcast(memberId, "response", response);
-    broadcast(memberId, "status_update", { id: request.id, status: "completed" });
+    broadcast(memberId, "status_update", { id: response.requestId, status: "completed" });
 
     if (response.notify) {
       sendNotification(`Routine message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);

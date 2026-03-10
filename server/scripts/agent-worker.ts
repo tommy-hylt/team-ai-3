@@ -54,15 +54,15 @@ async function main() {
     await addResponse(memberId, response);
     await updateRequestStatus(memberId, requestId, "completed");
 
-    console.log(`[worker] Triggering webhook`);
+    console.log(`[worker] Triggering server response notification`);
     try {
-      await fetch("http://localhost:8699/api/internal/webhook/agent-finished", {
+      await fetch(`http://localhost:8699/api/members/${memberId}/responses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ memberId, request, response }),
+        body: JSON.stringify(response),
       });
     } catch (e) {
-      console.error(`[worker] Webhook failed (server might be down), but response was saved.`);
+      console.error(`[worker] Server notification failed (server might be down), but response was saved.`);
     }
 
   } catch (e) {

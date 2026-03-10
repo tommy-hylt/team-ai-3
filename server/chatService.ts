@@ -45,6 +45,11 @@ export async function getRequestStatus(memberName: string, requestId: string) {
   return request?.status;
 }
 
+export async function getRequest(memberName: string, requestId: string) {
+  const requests = await readJson<Request[]>(memberName, "requests.json") || [];
+  return requests.find(r => r.id === requestId);
+}
+
 export async function clearChatHistory(memberName: string) {
   await writeJson(memberName, "requests.json", []);
   await writeJson(memberName, "responses.json", []);
