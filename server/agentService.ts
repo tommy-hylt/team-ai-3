@@ -250,11 +250,21 @@ async function invokeAgent(
   const elapsed = Date.now() - startTime;
   console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result?.text?.length || 0}`);
 
-  const failed = !result.text
-    || result.text.startsWith("Agent failed.")
-    || result.text.startsWith("Agent process error:")
-    || result.text.startsWith("Error:");
+  const failed = isAgentResponseFailed(result.text);
   return { ...result, failed };
+}
+
+function isAgentResponseFailed(text: string): boolean {
+  if (!text) return true;
+  const t = text.trim();
+  if (t.startsWith("Agent failed.") || t.startsWith("Agent process error:") || t.startsWith("Error:")) return true;
+  
+  // Quota and limit detection
+  const lower = t.toLowerCase();
+  if (lower.includes("hit your limit") || lower.includes("quota exceeded") || lower.includes("rate limit") || lower.includes("too many requests")) return true;
+  if (lower.includes("resets") && (lower.includes("pm") || lower.includes("am") || /\d+:\d+/.test(lower))) return true;
+
+  return false;
 }
 
 async function loadAgentConfig(agentName: string): Promise<AgentConfig | undefined> {
