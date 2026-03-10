@@ -7,7 +7,7 @@ import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory } from "./chatService.ts";
-import { runAgent, cancelRequest, cancelAllRequests, getServerId } from "./agentService.ts";
+import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile, checkFileSync } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
@@ -129,6 +129,10 @@ app.get("/api/members/:id", async (req, res) => {
     return;
   }
   res.json(member);
+});
+
+app.get("/api/members/:id/busy", (req, res) => {
+  res.json({ busy: isMemberBusy(req.params.id) });
 });
 
 app.get("/api/members/:id/chat", async (req, res) => {

@@ -34,6 +34,8 @@ A Node.js Express server that manages AI team members and executes agents.
   - **Returns:** The basic member profile object.
 - `GET /api/members/:id/details`: Get full details (character, memory, agents) for a member.
   - **Returns:** Member details object `{ character: "...", memory: "...", agents: [...] }`.
+- `GET /api/members/:id/busy`: Check if a member is currently running an agent process.
+  - **Returns:** `{ busy: boolean }`.
 - `POST /api/members/:id/details`: Update details for a member.
   - **Body:** Partial member details object `{ character?: "...", memory?: "...", agents?: [...] }`.     
   - **Returns:** The updated member details object.

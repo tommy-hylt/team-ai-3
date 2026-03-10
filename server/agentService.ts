@@ -101,7 +101,7 @@ export function cancelAllRequests(memberId: string) {
   syncProcessFile();
 }
 
-export function isMemberOccupied(memberId: string): boolean {
+export function isMemberBusy(memberId: string): boolean {
   for (const entry of activeProcesses.values()) {
     if (entry.memberId === memberId) return true;
   }

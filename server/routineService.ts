@@ -5,7 +5,7 @@ import { randomUUID } from "crypto";
 import { CronExpressionParser } from "cron-parser";
 import { listMembers, getMember } from "./memberService.ts";
 import { addRequest, getRequestStatus, updateRequestStatus, addResponse } from "./chatService.ts";
-import { isMemberOccupied, runAgent } from "./agentService.ts";
+import { isMemberBusy, runAgent } from "./agentService.ts";
 import { broadcast } from "./notificationService.ts";
 import { sendNotification } from "./pushService.ts";
 
@@ -130,7 +130,7 @@ async function processRoutines() {
     const queued = routineQueue[i];
     
     // Check if member is occupied by other requests
-    if (!isMemberOccupied(queued.memberId)) {
+    if (!isMemberBusy(queued.memberId)) {
       // Dequeue and dispatch
       routineQueue.splice(i, 1);
       lastRoutineDispatchTime = Date.now();
