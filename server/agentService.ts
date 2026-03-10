@@ -259,12 +259,15 @@ function isAgentResponseFailed(text: string): boolean {
   const t = text.trim();
   if (t.startsWith("Agent failed.") || t.startsWith("Agent process error:") || t.startsWith("Error:")) return true;
   
-  // Quota and limit detection
-  const lower = t.toLowerCase();
-  if (lower.includes("hit your limit") || lower.includes("quota exceeded") || lower.includes("rate limit") || lower.includes("too many requests")) return true;
-  if (lower.includes("resets") && (lower.includes("pm") || lower.includes("am") || /\d+:\d+/.test(lower))) return true;
+  // Anchored patterns for common CLI quota/limit leaks
+  const failurePatterns = [
+    /^you've hit your limit resets \d+(am|pm)( \([^)]+\))?$/i, // Claude (tightened)
+    /^quota exceeded$/i,                                        // Gemini (strict)
+    /^rate limit reached$/i,                                    // OpenAI/Codex (strict)
+    /^too many requests$/i                                      // Generic (strict)
+  ];
 
-  return false;
+  return failurePatterns.some(re => re.test(t));
 }
 
 async function loadAgentConfig(agentName: string): Promise<AgentConfig | undefined> {
