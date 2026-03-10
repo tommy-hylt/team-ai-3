@@ -177,7 +177,7 @@ app.post("/api/members/:id/responses", async (req, res) => {
               text: response.text,
               requester: member.name,
               requestTime: new Date(),
-              notify: true,
+              notify: Boolean(response.notify),
               echo: false,
               status: "running" as const,
             };
