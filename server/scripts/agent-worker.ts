@@ -50,19 +50,21 @@ async function main() {
       echo: request.echo ? request.requester : undefined,
     };
 
-    console.log(`[worker] Writing response for ${memberId}`);
-    await addResponse(memberId, response);
-    await updateRequestStatus(memberId, requestId, "completed");
-
     console.log(`[worker] Triggering server response notification`);
     try {
-      await fetch(`http://localhost:8699/api/members/${memberId}/responses`, {
+      const res = await fetch(`http://localhost:8699/api/members/${memberId}/responses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(response),
       });
+      if (!res.ok) {
+        throw new Error(`Server responded with ${res.status}`);
+      }
     } catch (e) {
-      console.error(`[worker] Server notification failed (server might be down), but response was saved.`);
+      console.error(`[worker] Server notification failed. Falling back to local save.`);
+      // Fallback only if server is unreachable
+      await addResponse(memberId, response);
+      await updateRequestStatus(memberId, requestId, "completed");
     }
 
   } catch (e) {
