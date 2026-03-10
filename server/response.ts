@@ -1,5 +1,5 @@
 export interface Response {
-    requestId: string;
+    requestId?: string;
     text: string;
     time: Date;
     agent?: string;

@@ -146,45 +146,52 @@ app.post("/api/members/:id/responses", async (req, res) => {
   try {
     const memberId = req.params.id;
     const response = req.body;
-    console.log(`POST /api/members/${memberId}/responses for request ${response.requestId}`);
+    console.log(`POST /api/members/${memberId}/responses for request ${response.requestId || "none"}`);
 
     const member = await getMember(memberId);
     if (!member) {
       return res.status(404).json({ error: "Member not found" });
     }
 
-    const request = await getRequest(memberId, response.requestId);
-    if (!request) {
-      return res.status(404).json({ error: "Request not found" });
-    }
+    // Always add the response to the chat history
+    await addResponse(memberId, response);
 
-    // Broadcast SSE
+    // Broadcast the response via SSE
     broadcast(memberId, "response", response);
-    broadcast(memberId, "status_update", { id: response.requestId, status: "completed" });
+
+    // If there is a requestId, we can do extra logic (status update, echo)
+    if (response.requestId) {
+      const request = await getRequest(memberId, response.requestId);
+      if (request) {
+        // Update request status
+        await updateRequestStatus(memberId, response.requestId, "completed");
+        broadcast(memberId, "status_update", { id: response.requestId, status: "completed" });
+
+        // Handle echo
+        if (request.echo && request.requester) {
+          const targetMember = await getMember(request.requester);
+          if (targetMember) {
+            console.log(`Echoing response from ${member.name} to ${targetMember.name}`);
+            const echoRequest = {
+              id: randomUUID(),
+              text: response.text,
+              requester: member.name,
+              requestTime: new Date(),
+              notify: true,
+              echo: false,
+              status: "running" as const,
+            };
+            await addRequest(targetMember.id, echoRequest);
+            broadcast(targetMember.id, "request", echoRequest);
+            handleAgentRequest(targetMember.id, echoRequest);
+          }
+        }
+      }
+    }
     
     // Push Notification
     if (response.notify) {
       sendNotification(`New message from ${member.name}`, response.text.substring(0, 100), `/${memberId}`);
-    }
-
-    // Handle echo
-    if (request.echo && request.requester) {
-      const targetMember = await getMember(request.requester);
-      if (targetMember) {
-        console.log(`Echoing response from ${member.name} to ${targetMember.name}`);
-        const echoRequest = {
-          id: randomUUID(),
-          text: response.text,
-          requester: member.name,
-          requestTime: new Date(),
-          notify: true,
-          echo: false,
-          status: "running" as const,
-        };
-        await addRequest(targetMember.id, echoRequest);
-        broadcast(targetMember.id, "request", echoRequest);
-        handleAgentRequest(targetMember.id, echoRequest);
-      }
     }
 
     res.json({ ok: true });
