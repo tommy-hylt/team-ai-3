@@ -262,6 +262,7 @@ function isAgentResponseFailed(text: string): boolean {
   // Anchored patterns for common CLI quota/limit leaks
   const failurePatterns = [
     /^you've hit your limit . resets \d+(am|pm)( \([^)]+\))?$/i, // Claude (account for dot separator)
+    /^failed to authenticate\..*$/i,                             // Claude Auth failure
     /^quota exceeded$/i,                                         // Gemini (strict)
     /^rate limit reached$/i,                                     // OpenAI/Codex (strict)
     /^too many requests$/i                                       // Generic (strict)
