@@ -38,6 +38,11 @@ function saveDraft(memberId: string, text: string) {
   localStorage.setItem("chat_drafts", JSON.stringify(drafts));
 }
 
+interface LogEntry {
+  filename: string;
+  content: string;
+}
+
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -45,7 +50,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
-  const [logs, setLogs] = useState<Record<string, string>>({});
+  const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
   const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -209,13 +214,13 @@ export function Chat({ onBack }: { onBack: () => void }) {
     try {
       const res = await fetch(`/api/requests/${requestId}/logs`);
       if (!res.ok) {
-        setLogs(prev => ({ ...prev, [logKey]: "No logs found." }));
+        setLogs(prev => ({ ...prev, [logKey]: [{ filename: "Error", content: "No logs found." }] }));
         return;
       }
       const data = await res.json();
-      setLogs(prev => ({ ...prev, [logKey]: data.content || "No logs found." }));
+      setLogs(prev => ({ ...prev, [logKey]: data.logs || [] }));
     } catch {
-      setLogs(prev => ({ ...prev, [logKey]: "Error fetching logs." }));
+      setLogs(prev => ({ ...prev, [logKey]: [{ filename: "Error", content: "Error fetching logs." }] }));
     }
   }
 
@@ -291,7 +296,13 @@ export function Chat({ onBack }: { onBack: () => void }) {
               </div>
               {reqId && showLog[logKey] && (
                 <div className="LogArea">
-                  <pre>{logs[logKey] || "Loading..."}</pre>
+                  {(logs[logKey] || []).map((log, idx) => (
+                    <div key={idx} className="LogEntry">
+                      <div className="LogHeader">{log.filename}</div>
+                      <pre>{log.content}</pre>
+                    </div>
+                  ))}
+                  {(!logs[logKey] || logs[logKey].length === 0) && <pre>Loading...</pre>}
                 </div>
               )}
             </div>
@@ -326,7 +337,13 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 </div>
                 {m.id && showLog[`loading-${m.id}`] && (
                   <div className="LogArea">
-                    <pre>{logs[`loading-${m.id}`] || "Loading..."}</pre>
+                    {(logs[`loading-${m.id}`] || []).map((log, idx) => (
+                      <div key={idx} className="LogEntry">
+                        <div className="LogHeader">{log.filename}</div>
+                        <pre>{log.content}</pre>
+                      </div>
+                    ))}
+                    {(!logs[`loading-${m.id}`] || logs[`loading-${m.id}`].length === 0) && <pre>Loading...</pre>}
                   </div>
                 )}
               </div>

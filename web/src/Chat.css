@@ -285,24 +285,52 @@
     }
 
     .LogArea {
-      margin-top: 8px;
-      background-color: #000;
+      margin-top: 12px;
+      background-color: #08090a;
       border: 1px solid #1c1f23;
-      border-radius: 8px;
-      padding: 12px;
-      overflow-x: auto;
-      max-height: 400px;
-      overflow-y: auto;
+      border-radius: 12px;
+      overflow: hidden;
       width: 100%;
       box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
 
-      pre {
-        margin: 0;
-        font-family: "JetBrains Mono", monospace;
-        font-size: 11px;
-        color: #e0e6ed;
-        white-space: pre-wrap;
-        word-break: break-all;
+      .LogEntry {
+        border-bottom: 1px solid #1c1f23;
+        &:last-child {
+          border-bottom: none;
+        }
+
+        .LogHeader {
+          background-color: #121417;
+          padding: 6px 12px;
+          font-size: 10px;
+          font-weight: 700;
+          color: #6b7280;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          border-bottom: 1px solid #1c1f23;
+        }
+
+        pre {
+          margin: 0;
+          padding: 12px;
+          font-family: "JetBrains Mono", monospace;
+          font-size: 11px;
+          color: #94a3b8;
+          white-space: pre-wrap;
+          word-break: break-all;
+          max-height: 300px;
+          overflow-y: auto;
+
+          &::-webkit-scrollbar {
+            width: 4px;
+          }
+          &::-webkit-scrollbar-thumb {
+            background: #1c1f23;
+            border-radius: 10px;
+          }
+        }
       }
     }
   }

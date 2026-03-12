@@ -285,12 +285,12 @@ app.get("/api/requests/:id/logs", async (req, res) => {
       return res.status(404).json({ error: "Log not found" });
     }
     
-    let logContent = "";
+    const logs = [];
     for (const f of matchingFiles) {
-      logContent += `\n--- ${f} ---\n`;
-      logContent += await fs.promises.readFile(path.join(logDir, f), "utf-8");
+      const content = await fs.promises.readFile(path.join(logDir, f), "utf-8");
+      logs.push({ filename: f, content });
     }
-    res.json({ content: logContent });
+    res.json({ logs });
   } catch (error) {
     res.status(500).json({ error: "Failed to read logs" });
   }
