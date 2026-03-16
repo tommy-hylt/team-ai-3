@@ -146,6 +146,7 @@ app.post("/api/members/:id/responses", async (req, res) => {
   try {
     const memberId = req.params.id;
     const response = req.body;
+    if (!response.time) response.time = new Date();
     console.log(`POST /api/members/${memberId}/responses for request ${response.requestId || "none"}`);
 
     const member = await getMember(memberId);
