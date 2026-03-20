@@ -2,83 +2,142 @@
 
 A Node.js Express server that manages AI team members and executes agents.
 
-## Features
+## API Documentation
 
-- **Member Management**: Reads member configurations and data from the `members/` directory.
-- **Detached Execution**: Spawns detached `agent-worker.ts` processes via `npx` to execute CLI tools independently, preventing UI and server hangs.
-- **Robust Parsing**: Supports complex JSON output and JSON-Lines (JSONL) streams with regex fallbacks to preserve session IDs even during formatting errors.
-- **Execution Logs**: Streams real-time `stdout`/`stderr` from agents into individual execution logs in `server/logs/`.
-- **Chat History**: Persists requests and responses to member-specific JSON files.
-- **Real-time Updates**: Streams chat events to clients via Server-Sent Events (SSE) and webhook endpoints.
-- **Push Notifications**: Integrated Web Push for mobile and desktop background alerts.
-- **TypeScript & ESM**: Written in TypeScript using ES Modules, powered by `tsx` for development.
+All API endpoints are prefixed with `/api`.
 
-## Getting Started
+### 👥 Members
 
-1. Install dependencies: `npm install`
-2. Start development server: `npm run dev` (Runs on port 8699)
+#### `GET /api/members`
+List all active team members.
+- **Returns:** `Member[]` (Array of member objects).
 
-## API Endpoints
+#### `POST /api/members`
+Create a new team member.
+- **Body:**
+  - `name` (string, **mandatory**): The display name of the member.
+- **Returns:** Member details object.
 
-### Server
-- `GET /api/server/id`: Get the unique UUIDv7 for the current server instance.
-  - **Returns:** `{ serverId: "..." }`
+#### `GET /api/members/:id`
+Get basic info for a specific member.
+- **Returns:** Member object.
 
-### Members
-- `GET /api/members`: List all active members.
-  - **Returns:** Array of basic member profile objects.
-- `POST /api/members`: Create a new member or clone an existing one.
-  - **Body:** `{ name: "...", cloneFrom?: "...", cloneOptions?: { cloneSkills: boolean, cloneMemory: boolean } }`
-  - **Returns:** The newly created member details object.
-- `GET /api/members/:id`: Get basic info for a member.
-  - **Returns:** The basic member profile object.
-- `GET /api/members/:id/details`: Get full details (character, memory, agents) for a member.
-  - **Returns:** Member details object `{ character: "...", memory: "...", agents: [...] }`.
-- `GET /api/members/:id/busy`: Check if a member is currently running an agent process.
-  - **Returns:** `{ busy: boolean }`.
-- `POST /api/members/:id/details`: Update details for a member.
-  - **Body:** Partial member details object `{ character?: "...", memory?: "...", agents?: [...] }`.     
-  - **Returns:** The updated member details object.
-- `GET /api/members/:id/routines`: Get the routines configured for a member.
-  - **Returns:** Array of routine objects `{ id: "...", cronPattern: "...", requestText: "...", startTime: "...", lastTime: "..." }`.
-- `POST /api/members/:id/routines`: Update the routines for a member.
-  - **Body:** Array of routine objects.
-  - **Returns:** `{ ok: true }`
-- `DELETE /api/members/:id`: Soft delete a member.  - **Returns:** `{ ok: true }`
+#### `DELETE /api/members/:id`
+Soft-delete a member (marks status as "deleted").
+- **Returns:** `{ ok: true }`.
 
-### Chat
-- `GET /api/members/:id/chat`: Retrieve chat history.
-  - **Returns:** Array of chat message objects (combined requests and responses).
-- `POST /api/members/:id/chat/clear`: Clear chat history and abort running requests.
-  - **Returns:** `{ ok: true }`
-- `GET /api/members/:id/events`: SSE endpoint for real-time chat updates.
-  - **Returns:** Event stream (`text/event-stream`).
-- `POST /api/members/:id/request`: Post a new request to a member (agent runs in the background).
-  - **Body:** `{ text: "Message content", requester: "User", notify: true, echo: false }`
-  - **Returns:** `{ ok: true, requestId: "..." }`
-- `POST /api/members/:id/responses`: Post a new response for a member (used by background workers).
-  - **Body:** Response object `{ requestId?: "...", text: "...", agent?: "...", notify: boolean, echo?: string }`
-  - **Returns:** `{ ok: true }`
-- `POST /api/requests/:id/cancel`: Kill a running agent process.
-  - **Body:** `{ memberId: "Member Name" }`
-  - **Returns:** `{ ok: true, killed: boolean, message: "..." }`
+#### `GET /api/members/:id/details`
+Get full details (character, memory, agents) for a member.
+- **Returns:** `{ character: string, memory: string, agents: string[] }`.
 
-### Files & Skills
-- `GET /api/members/:id/files?path=<relative>`: List files/directories.
-  - **Returns:** Array of file entry objects `{ name: "...", isDirectory: boolean, ... }`.
-- `GET /api/members/:id/files/<relative>`: Get file content.
-  - **Returns:** `{ content: "..." }`
-- `GET /api/members/:id/skills/:skillName/files/:fileName/sync`: Get detailed sync comparison metadata.
-  - **Returns:** Sync results indicating synchronization state across AI vendors.
-- `POST /api/members/:id/files`: Save a file (auto-syncs across vendors for skills).
-  - **Body:** `{ path: "file/path.txt", content: "..." }`
-  - **Returns:** `{ ok: true }`
-- `DELETE /api/members/:id/files/<relative>`: Delete a file or folder (auto-syncs for skills).
-  - **Returns:** `{ ok: true }`
+#### `POST /api/members/:id/details`
+Update a member's configuration.
+- **Body:**
+  - `character` (string, optional): Updates character description.
+  - `memory` (string, optional): Updates memory context.
+  - `agents` (string[], optional): Updates the list of agent models to use.
+- **Returns:** Updated details object.
 
-### Notifications
-- `GET /api/push/public-key`: Get VAPID public key.
-  - **Returns:** `{ publicKey: "..." }`
-- `POST /api/push/subscribe`: Register a browser for push notifications.
-  - **Body:** Web Push subscription object `{ endpoint: "...", keys: { p256dh: "...", auth: "..." } }`.
-  - **Returns:** `{ ok: true }`
+#### `GET /api/members/:id/busy`
+Check if a member is currently running an agent process.
+- **Returns:** `{ busy: boolean }`.
+
+---
+
+### 💬 Chat & Agents
+
+#### `GET /api/members/:id/chat`
+Retrieve full chat history (requests and responses).
+- **Returns:** `MessageType[]` (Array of messages, sorted chronologically).
+
+#### `POST /api/members/:id/request`
+Post a new request to a member (triggers the background agent execution).
+- **Body:**
+  - `text` (string, **mandatory**): The message to send.
+  - `requester` (string, **mandatory**): Name of the user/agent making the request.
+  - `notify` (boolean, **mandatory**): Whether to send a push notification when finished.
+  - `echo` (boolean, **mandatory**): Whether the response should be sent back to the requester.
+- **Returns:** `{ ok: true, requestId: string }`.
+
+#### `POST /api/members/:id/responses`
+Post a new response for a member (typically used by background workers).
+- **Body:**
+  - `text` (string, **mandatory**): The response content.
+  - `requestId` (string, optional): The ID of the request this response is for.
+  - `time` (Date string, optional): When the response was generated (defaults to server current time).
+  - `agent` (string, optional): Name of the agent that generated the response.
+  - `notify` (boolean, optional): Whether to trigger a push notification.
+  - `echo` (string, optional): ID of a member to automatically echo this response to.
+- **Returns:** `{ ok: true }`.
+
+#### `POST /api/requests/:id/cancel`
+Terminate a running agent process.
+- **Body:**
+  - `memberId` (string, **mandatory**): The member the request belongs to.
+- **Returns:** `{ ok: true, killed: boolean }`.
+
+#### `POST /api/members/:id/chat/clear`
+Wipe all chat history and cancel any active requests for a member.
+- **Returns:** `{ ok: true }`.
+
+#### `GET /api/members/:id/events`
+**SSE Endpoint**: Opens a real-time event stream for a member.
+- **Events:** `request`, `response`, `status_update`.
+
+#### `GET /api/requests/:id/logs`
+Fetch execution logs for a specific request.
+- **Returns:** `{ logs: { filename: string, content: string }[] }`.
+
+---
+
+### 📂 Files
+
+#### `GET /api/members/:id/files`
+List files in a member's workspace.
+- **Query Params:** `path` (string, optional): Subdirectory to list.
+- **Returns:** `FileEntry[]`.
+
+#### `GET /api/members/:id/files/*`
+Get content of a specific file.
+- **Returns:** `{ content: string }`.
+
+#### `POST /api/members/:id/files`
+Save or create a file in the workspace.
+- **Body:**
+  - `path` (string, **mandatory**): Relative path within workspace.
+  - `content` (string, optional): Content to write (defaults to empty string).
+- **Returns:** `{ ok: true }`.
+
+#### `DELETE /api/members/:id/files/*`
+Delete a file from the workspace.
+- **Returns:** `{ ok: true }`.
+
+---
+
+### 🔁 Routines
+
+#### `GET /api/members/:id/routines`
+Get all scheduled routines for a member.
+- **Returns:** `Routine[]`.
+
+#### `POST /api/members/:id/routines`
+Save/Update the list of routines for a member.
+- **Body:** `Routine[]` (Array of all routines for the member).
+- **Returns:** `{ ok: true }`.
+
+---
+
+### 🔔 Notifications & System
+
+#### `GET /api/push/public-key`
+Retrieve VAPID public key for Web Push subscription.
+- **Returns:** `{ publicKey: string }`.
+
+#### `POST /api/push/subscribe`
+Register a browser for push notifications.
+- **Body:** `Subscription` (Web Push subscription object).
+- **Returns:** `{ ok: true }`.
+
+#### `GET /api/server/id`
+Get the unique ID of the current server instance.
+- **Returns:** `{ serverId: string }`.
