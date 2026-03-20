@@ -159,7 +159,7 @@ export function MemberNew() {
         <button className="BackButton" onClick={() => navigate("/")}>
           <FiChevronLeft />
         </button>
-        <h2>{cloneId ? "Clone Agent" : "New Agent"}</h2>
+        <h2>{cloneId ? "Clone Agent" : "New Member"}</h2>
       </div>
       <div className="ScrollArea">
         <div className="Form">
