@@ -68,6 +68,17 @@ export function MemberNew() {
     fetchInitial();
   }, [cloneId]);
 
+  function handleNameBlur() {
+    const name = data.name.trim();
+    if (!name) return;
+
+    setData(prev => ({
+      ...prev,
+      character: prev.character.trim() === "" ? `# ${name} - Character` : prev.character,
+      memory: prev.memory.trim() === "" ? `# ${name} - Memory` : prev.memory
+    }));
+  }
+
   async function handleSave() {
     if (!data.name.trim()) return alert("Name is required");
 
@@ -148,7 +159,12 @@ export function MemberNew() {
           <div className="Field editing">
             <div className="FieldHeader"><label>Name</label></div>
             <div className="FieldContent">
-              <input value={data.name} onChange={e => setData({ ...data, name: e.target.value })} autoFocus />
+              <input 
+                value={data.name} 
+                onChange={e => setData({ ...data, name: e.target.value })} 
+                onBlur={handleNameBlur}
+                autoFocus 
+              />
             </div>
           </div>
 
