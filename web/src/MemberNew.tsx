@@ -72,10 +72,17 @@ export function MemberNew() {
     const name = data.name.trim();
     if (!name) return;
 
+    const charHeaderRegex = /^# .* - Character$/;
+    const memoHeaderRegex = /^# .* - Memory$/;
+
     setData(prev => ({
       ...prev,
-      character: prev.character.trim() === "" ? `# ${name} - Character` : prev.character,
-      memory: prev.memory.trim() === "" ? `# ${name} - Memory` : prev.memory
+      character: (prev.character.trim() === "" || charHeaderRegex.test(prev.character.trim())) 
+        ? `# ${name} - Character` 
+        : prev.character,
+      memory: (prev.memory.trim() === "" || memoHeaderRegex.test(prev.memory.trim())) 
+        ? `# ${name} - Memory` 
+        : prev.memory
     }));
   }
 
