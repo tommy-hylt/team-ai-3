@@ -1,4 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
+import { readFileSync } from "fs";
 import { readFile, writeFile, appendFile } from "fs/promises";
 import { randomBytes } from "crypto";
 import { join, dirname } from "path";
@@ -79,6 +80,23 @@ export function cancelRequest(requestId: string): boolean {
     }
     return true;
   }
+
+  // Fallback: the process was spawned by a detached agent-worker — look it up in processes.json
+  try {
+    const entries: Array<{ requestId: string; pid: number }> = JSON.parse(readFileSync(PROCESS_FILE, "utf-8"));
+    const found = entries.find(e => e.requestId === requestId);
+    if (found?.pid) {
+      console.log(`[cancelRequest] Found PID ${found.pid} in processes.json for request ${requestId}, killing...`);
+      treeKill(found.pid, "SIGTERM", (err) => {
+        if (err) console.error(`[cancelRequest] tree-kill error for PID ${found.pid}:`, err.message);
+        else console.log(`[cancelRequest] Process tree for PID ${found.pid} killed successfully`);
+      });
+      return true;
+    }
+  } catch {
+    // processes.json missing or malformed — nothing to kill
+  }
+
   return false;
 }
 
