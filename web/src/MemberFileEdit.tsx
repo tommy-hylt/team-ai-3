@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { FiChevronLeft, FiTrash2, FiEdit2 } from "react-icons/fi";
+import { FiChevronLeft, FiTrash2, FiEdit2, FiMoreHorizontal } from "react-icons/fi";
 import "./SkillFileEdit.css";
 
 export function MemberFileEdit() {
@@ -14,6 +14,8 @@ export function MemberFileEdit() {
   const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showFullPath, setShowFullPath] = useState(false);
+  const [rootPath, setRootPath] = useState("");
 
   useEffect(() => {
     if (!id || !filePath) return;
@@ -27,6 +29,9 @@ export function MemberFileEdit() {
         setOriginal(data.content || "");
         setLoaded(true);
       });
+    fetch(`/api/members/${id}/rootpath`)
+      .then(res => res.json())
+      .then(data => setRootPath(data.rootPath || ""));
   }, [id, filePath]);
 
   async function handleSave() {
@@ -71,7 +76,14 @@ export function MemberFileEdit() {
         }}>
           <FiChevronLeft />
         </button>
-        <h2>{filePath.split("/").pop()} <span className="SkillPath">{filePath.split("/").slice(0, -1).join("/")}/</span></h2>
+        {showFullPath ? (
+          <h2 className="FullPathTitle">{rootPath}/{filePath}</h2>
+        ) : (
+          <h2>{filePath.split("/").pop()} <span className="SkillPath">{filePath.split("/").slice(0, -1).join("/")}/</span></h2>
+        )}
+        <button className="ActionButton" title="Toggle full path" onClick={() => setShowFullPath(v => !v)}>
+          <FiMoreHorizontal />
+        </button>
         {!isEditing && (
           <button className="ActionButton" onClick={() => setIsEditing(true)}>
             <FiEdit2 />

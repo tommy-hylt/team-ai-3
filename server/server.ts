@@ -9,7 +9,7 @@ import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMe
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
-import { listFiles, getFile, saveFile, deleteFile, checkFileSync } from "./fileService.ts";
+import { listFiles, getFile, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 import { getRoutines, saveRoutines, startRoutineLoop } from "./routineService.ts";
@@ -295,6 +295,10 @@ app.get("/api/requests/:id/logs", async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Failed to read logs" });
   }
+});
+
+app.get("/api/members/:id/rootpath", (req, res) => {
+  res.json({ rootPath: getMemberRootPath(req.params.id) });
 });
 
 app.get("/api/members/:id/files", async (req, res) => {

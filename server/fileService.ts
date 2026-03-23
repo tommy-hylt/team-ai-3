@@ -80,6 +80,11 @@ function getSkillSyncPaths(relativePath: string): string[] {
   return [relativePath];
 }
 
+/** Return the absolute path to a member's root directory */
+export function getMemberRootPath(memberId: string): string {
+  return memberDir(memberId);
+}
+
 /** Check if a skill exists in all 3 vendor folders */
 export async function checkSkillSync(memberId: string, skillName: string) {
   const base = memberDir(memberId);
