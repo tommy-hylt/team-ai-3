@@ -36,16 +36,7 @@ const memberLocks = new Map<string, Promise<void>>();
 
 // processes.json is the source of truth for worker-spawned processes.
 // The server is the sole reader/writer — workers call POST/DELETE /api/processes.
-// A promise-based lock serializes all reads and writes to prevent interleaving.
 type ProcessEntry = { requestId: string; memberId: string; pid: number; executable: string; startTime: string; server: string };
-
-let fileLock: Promise<void> = Promise.resolve();
-
-function withLock<T>(fn: () => T): Promise<T> {
-  const result = fileLock.then(fn);
-  fileLock = result.then(() => {}, () => {});
-  return result;
-}
 
 function readProcessFile(): ProcessEntry[] {
   try {
@@ -61,19 +52,15 @@ function writeProcessFile(entries: ProcessEntry[]): void {
   }
 }
 
-export function registerProcess(entry: ProcessEntry): Promise<void> {
-  return withLock(() => {
-    const entries = readProcessFile();
-    const idx = entries.findIndex(e => e.requestId === entry.requestId);
-    if (idx >= 0) entries[idx] = entry; else entries.push(entry);
-    writeProcessFile(entries);
-  });
+export function registerProcess(entry: ProcessEntry): void {
+  const entries = readProcessFile();
+  const idx = entries.findIndex(e => e.requestId === entry.requestId);
+  if (idx >= 0) entries[idx] = entry; else entries.push(entry);
+  writeProcessFile(entries);
 }
 
-export function unregisterProcess(requestId: string): Promise<void> {
-  return withLock(() => {
-    writeProcessFile(readProcessFile().filter(e => e.requestId !== requestId));
-  });
+export function unregisterProcess(requestId: string): void {
+  writeProcessFile(readProcessFile().filter(e => e.requestId !== requestId));
 }
 
 async function acquireLock(memberId: string): Promise<() => void> {
@@ -92,7 +79,7 @@ async function acquireLock(memberId: string): Promise<() => void> {
   };
 }
 
-export async function cancelRequest(requestId: string): Promise<boolean> {
+export function cancelRequest(requestId: string): boolean {
   cancelledRequests.add(requestId);
   const entry = activeProcesses.get(requestId);
   if (entry) {
@@ -109,24 +96,22 @@ export async function cancelRequest(requestId: string): Promise<boolean> {
   }
 
   // Fallback: process was spawned by a detached agent-worker — look it up in processes.json
-  return withLock(() => {
-    const entries = readProcessFile();
-    const regEntry = entries.find(e => e.requestId === requestId);
-    if (regEntry?.pid) {
-      const pid = regEntry.pid;
-      console.log(`[cancelRequest] Found PID ${pid} in processes.json for request ${requestId}, killing...`);
-      writeProcessFile(entries.filter(e => e.requestId !== requestId));
-      treeKill(pid, "SIGTERM", (err) => {
-        if (err) console.error(`[cancelRequest] tree-kill error for PID ${pid}:`, err.message);
-        else console.log(`[cancelRequest] Process tree for PID ${pid} killed successfully`);
-      });
-      return true;
-    }
-    return false;
-  });
+  const entries = readProcessFile();
+  const regEntry = entries.find(e => e.requestId === requestId);
+  if (regEntry?.pid) {
+    const pid = regEntry.pid;
+    console.log(`[cancelRequest] Found PID ${pid} in processes.json for request ${requestId}, killing...`);
+    writeProcessFile(entries.filter(e => e.requestId !== requestId));
+    treeKill(pid, "SIGTERM", (err) => {
+      if (err) console.error(`[cancelRequest] tree-kill error for PID ${pid}:`, err.message);
+      else console.log(`[cancelRequest] Process tree for PID ${pid} killed successfully`);
+    });
+    return true;
+  }
+  return false;
 }
 
-export async function cancelAllRequests(memberId: string): Promise<void> {
+export function cancelAllRequests(memberId: string): void {
   console.log(`[cancelAllRequests] Cancelling all requests for member ${memberId}`);
 
   for (const [requestId, entry] of activeProcesses.entries()) {
@@ -145,30 +130,28 @@ export async function cancelAllRequests(memberId: string): Promise<void> {
   }
 
   // Also cancel worker-spawned processes tracked in processes.json
-  await withLock(() => {
-    const entries = readProcessFile();
-    const remaining: ProcessEntry[] = [];
-    for (const entry of entries) {
-      if (entry.memberId === memberId) {
-        cancelledRequests.add(entry.requestId);
-        console.log(`[cancelAllRequests] Killing PID ${entry.pid} from processes.json for request ${entry.requestId}`);
-        treeKill(entry.pid, "SIGTERM", (err) => {
-          if (err) console.error(`[cancelAllRequests] tree-kill error for PID ${entry.pid}:`, err.message);
-          else console.log(`[cancelAllRequests] Process tree for PID ${entry.pid} killed successfully`);
-        });
-      } else {
-        remaining.push(entry);
-      }
+  const entries = readProcessFile();
+  const remaining: ProcessEntry[] = [];
+  for (const entry of entries) {
+    if (entry.memberId === memberId) {
+      cancelledRequests.add(entry.requestId);
+      console.log(`[cancelAllRequests] Killing PID ${entry.pid} from processes.json for request ${entry.requestId}`);
+      treeKill(entry.pid, "SIGTERM", (err) => {
+        if (err) console.error(`[cancelAllRequests] tree-kill error for PID ${entry.pid}:`, err.message);
+        else console.log(`[cancelAllRequests] Process tree for PID ${entry.pid} killed successfully`);
+      });
+    } else {
+      remaining.push(entry);
     }
-    writeProcessFile(remaining);
-  });
+  }
+  writeProcessFile(remaining);
 }
 
-export async function isMemberBusy(memberId: string): Promise<boolean> {
+export function isMemberBusy(memberId: string): boolean {
   for (const entry of activeProcesses.values()) {
     if (entry.memberId === memberId) return true;
   }
-  return withLock(() => readProcessFile().some(e => e.memberId === memberId));
+  return readProcessFile().some(e => e.memberId === memberId);
 }
 
 interface AgentArgPart {

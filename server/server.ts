@@ -89,15 +89,15 @@ app.get("/api/members/:id/events", (req, res) => {
   subscribe(req.params.id, res);
 });
 
-app.post("/api/processes", async (req, res) => {
+app.post("/api/processes", (req, res) => {
   const entry = req.body;
   if (!entry.requestId || !entry.pid) return res.status(400).json({ error: "requestId and pid are required" });
-  await registerProcess(entry);
+  registerProcess(entry);
   res.json({ ok: true });
 });
 
-app.delete("/api/processes/:requestId", async (req, res) => {
-  await unregisterProcess(req.params.requestId);
+app.delete("/api/processes/:requestId", (req, res) => {
+  unregisterProcess(req.params.requestId);
   res.json({ ok: true });
 });
 
@@ -105,7 +105,7 @@ app.post("/api/requests/:id/cancel", async (req, res) => {
   const { memberId } = req.body;
   if (!memberId) return res.status(400).json({ error: "memberId is required" });
 
-  const killed = await cancelRequest(req.params.id);
+  const killed = cancelRequest(req.params.id);
   
   // Always update status to aborted even if no process was found (e.g. server restarted)
   await updateRequestStatus(memberId, req.params.id, "aborted");
@@ -126,7 +126,7 @@ app.delete("/api/members/:id", async (req, res) => {
 
 app.post("/api/members/:id/chat/clear", async (req, res) => {
   console.log(`POST /api/members/${req.params.id}/chat/clear`);
-  await cancelAllRequests(req.params.id);
+  cancelAllRequests(req.params.id);
   await clearChatHistory(req.params.id);
   await expireAllSessions(req.params.id);
   res.json({ ok: true });
@@ -143,8 +143,8 @@ app.get("/api/members/:id", async (req, res) => {
   res.json(member);
 });
 
-app.get("/api/members/:id/busy", async (req, res) => {
-  res.json({ busy: await isMemberBusy(req.params.id) });
+app.get("/api/members/:id/busy", (req, res) => {
+  res.json({ busy: isMemberBusy(req.params.id) });
 });
 
 app.get("/api/members/:id/chat", async (req, res) => {
