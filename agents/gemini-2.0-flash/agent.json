@@ -9,7 +9,7 @@
         "gemini-2.0-flash",
         "-y",
         "-o",
-        "json"
+        "stream-json"
       ]
     },
     {

@@ -9,8 +9,9 @@
         "haiku",
         "--dangerously-skip-permissions",
         "--print",
+        "--verbose",
         "--output-format",
-        "json"
+        "stream-json"
       ]
     },
     {

@@ -7,6 +7,7 @@ import { fileURLToPath } from "url";
 import treeKill from "tree-kill";
 import Member from "./member.ts";
 import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts";
+import { getRequestStatus } from "./chatService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const PROCESS_FILE = join(__dirname, "processes.json");
@@ -227,7 +228,8 @@ async function tryAgent(
       return { text: result.text, agentName };
     }
     // If cancelled, don't retry with fresh invocation
-    if (cancelledRequests.has(requestId)) {
+    // Check both in-memory (server path) and file-based status (worker path, separate process)
+    if (cancelledRequests.has(requestId) || (await getRequestStatus(member.id, requestId)) === "aborted") {
       console.log(`[tryAgent] Request ${requestId} was cancelled, not retrying`);
       return undefined;
     }
@@ -236,7 +238,7 @@ async function tryAgent(
   }
 
   // If cancelled, don't start fresh invocation
-  if (cancelledRequests.has(requestId)) {
+  if (cancelledRequests.has(requestId) || (await getRequestStatus(member.id, requestId)) === "aborted") {
     console.log(`[tryAgent] Request ${requestId} was cancelled, skipping fresh invocation`);
     return undefined;
   }
@@ -340,14 +342,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     // Re-enable shell for command discovery (especially for .cmd files on Windows like gemini)
     const proc = spawn(executable, args, { shell: true, env, cwd });
 
-    // Register process in-memory and notify server via API to persist in processes.json
-    const entry: ProcessEntry = { requestId, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId };
-    activeProcesses.set(requestId, { process: proc, ...entry });
-    fetch("http://localhost:8699/api/processes", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(entry),
-    }).catch(err => console.error(`[executeAgent] Failed to register process with server:`, err.message));
+    // Register in-memory for direct (non-worker) invocations
+    activeProcesses.set(requestId, { process: proc, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId });
 
     let stdout = "";
     let stderr = "";
@@ -380,8 +376,6 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
       activeProcesses.delete(requestId);
-      fetch(`http://localhost:8699/api/processes/${requestId}`, { method: "DELETE" })
-        .catch(e => console.error(`[executeAgent] Failed to unregister process:`, e.message));
       if (!isResolved) {
         isResolved = true;
         resolve({ text: `Agent process error: ${err.message}` });
@@ -390,8 +384,6 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     proc.on("exit", (code) => {
       activeProcesses.delete(requestId);
-      fetch(`http://localhost:8699/api/processes/${requestId}`, { method: "DELETE" })
-        .catch(e => console.error(`[executeAgent] Failed to unregister process:`, e.message));
       console.log(`[executeAgent] Process exited with code ${code}`);
 
       // Dump full raw output to a dedicated log file for debugging multiple messages

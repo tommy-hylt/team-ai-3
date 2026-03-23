@@ -4,9 +4,9 @@ import { addResponse, updateRequestStatus, getRequestStatus, getChatHistory } fr
 import { Request } from "../request.ts";
 
 async function main() {
-  const [memberId, requestId] = process.argv.slice(2);
+  const [memberId, requestId, serverId] = process.argv.slice(2);
   if (!memberId || !requestId) {
-    console.error("Usage: tsx agent-worker.ts <memberId> <requestId>");
+    console.error("Usage: tsx agent-worker.ts <memberId> <requestId> [serverId]");
     process.exit(1);
   }
 
@@ -30,6 +30,13 @@ async function main() {
     process.exit(0);
   }
 
+  // Register this worker's PID so the server can kill the entire subtree on cancel
+  await fetch("http://localhost:8699/api/processes", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requestId, memberId, pid: process.pid, executable: "agent-worker", startTime: new Date().toISOString(), server: serverId || "" }),
+  }).catch(err => console.error(`[worker] Failed to register process:`, err.message));
+
   try {
     console.log(`[worker] Running agent for ${memberId}, request ${requestId}...`);
     const agentResult = await runAgent(member, request.text, requestId);
@@ -38,7 +45,7 @@ async function main() {
     const postStatus = await getRequestStatus(memberId, requestId);
     if (postStatus === "aborted") {
       console.log(`[worker] Request ${requestId} was aborted during execution, skipping response`);
-      process.exit(0);
+      return;
     }
 
     const response = {
@@ -70,6 +77,9 @@ async function main() {
   } catch (e) {
     console.error(`[worker] Agent error for ${memberId}:`, e);
     await updateRequestStatus(memberId, requestId, "aborted");
+  } finally {
+    await fetch(`http://localhost:8699/api/processes/${requestId}`, { method: "DELETE" })
+      .catch(err => console.error(`[worker] Failed to unregister process:`, err.message));
   }
 }
 

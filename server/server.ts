@@ -224,7 +224,7 @@ function handleAgentRequest(memberId: string, request: any) {
   const errFd = fs.openSync(path.join(__dirname, "err.log"), "a");
 
   // Call node.exe directly with the tsx CLI to bypass all Windows shell escaping issues
-  const child = spawn(process.execPath, [tsxBin, workerPath, memberId, request.id], {
+  const child = spawn(process.execPath, [tsxBin, workerPath, memberId, request.id, getServerId()], {
     detached: true,
     stdio: ["ignore", outFd, errFd],
     windowsHide: true,
