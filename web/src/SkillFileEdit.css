@@ -8,6 +8,7 @@
   .Header {
     display: flex;
     align-items: center;
+    flex-wrap: wrap;
     gap: 12px;
     padding: 16px;
     border-bottom: 1px solid #1c1f23;
@@ -21,6 +22,8 @@
       margin: 0;
       color: #ebecf0;
       flex: 1;
+      min-width: 0;
+      word-break: break-all;
 
       .SkillPath {
         font-size: 12px;
@@ -33,11 +36,7 @@
       font-size: 11px;
       font-weight: 500;
       color: #4b5563;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      direction: rtl;
-      text-align: left;
+      word-break: break-all;
     }
     }
 
