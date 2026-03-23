@@ -1,6 +1,6 @@
 import { spawn, ChildProcess } from "child_process";
-import { readFileSync } from "fs";
-import { readFile, writeFile, appendFile } from "fs/promises";
+import { mkdirSync, writeFileSync, unlinkSync, readdirSync, readFileSync } from "fs";
+import { readFile, appendFile } from "fs/promises";
 import { randomBytes } from "crypto";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
@@ -9,7 +9,7 @@ import Member from "./member.ts";
 import { getSessionId, saveSessionId, expireSession } from "./sessionService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const PROCESS_FILE = join(__dirname, "processes.json");
+const PROCESSES_DIR = join(__dirname, "processes");
 
 // Force restart to clear deadlocks
 function generateUUIDv7(): string {
@@ -50,18 +50,25 @@ async function acquireLock(memberId: string): Promise<() => void> {
   };
 }
 
-function syncProcessFile() {
-  const entries = Array.from(activeProcesses.entries()).map(([requestId, entry]) => ({
-    requestId,
-    memberId: entry.memberId,
-    pid: entry.pid,
-    executable: entry.executable,
-    startTime: entry.startTime,
-    server: entry.server,
-  }));
-  writeFile(PROCESS_FILE, JSON.stringify(entries, null, 2)).catch((err) => {
-    console.error("[syncProcessFile] Failed to write processes.json:", err.message);
-  });
+function processFilePath(requestId: string): string {
+  return join(PROCESSES_DIR, `${requestId}.json`);
+}
+
+function writeProcessEntry(requestId: string, entry: object) {
+  try {
+    mkdirSync(PROCESSES_DIR, { recursive: true });
+    writeFileSync(processFilePath(requestId), JSON.stringify(entry));
+  } catch (err: any) {
+    console.error(`[writeProcessEntry] Failed for ${requestId}:`, err.message);
+  }
+}
+
+function deleteProcessEntry(requestId: string) {
+  try { unlinkSync(processFilePath(requestId)); } catch { /* already gone */ }
+}
+
+function readProcessEntry(requestId: string): { pid: number; memberId: string } | undefined {
+  try { return JSON.parse(readFileSync(processFilePath(requestId), "utf-8")); } catch { return undefined; }
 }
 
 export function cancelRequest(requestId: string): boolean {
@@ -71,7 +78,7 @@ export function cancelRequest(requestId: string): boolean {
     const pid = entry.process.pid;
     console.log(`[cancelRequest] Killing process tree for PID ${pid}, request ${requestId}`);
     activeProcesses.delete(requestId);
-    syncProcessFile();
+    deleteProcessEntry(requestId);
     if (pid) {
       treeKill(pid, "SIGTERM", (err) => {
         if (err) console.error(`[cancelRequest] tree-kill error for PID ${pid}:`, err.message);
@@ -81,20 +88,17 @@ export function cancelRequest(requestId: string): boolean {
     return true;
   }
 
-  // Fallback: the process was spawned by a detached agent-worker — look it up in processes.json
-  try {
-    const entries: Array<{ requestId: string; pid: number }> = JSON.parse(readFileSync(PROCESS_FILE, "utf-8"));
-    const found = entries.find(e => e.requestId === requestId);
-    if (found?.pid) {
-      console.log(`[cancelRequest] Found PID ${found.pid} in processes.json for request ${requestId}, killing...`);
-      treeKill(found.pid, "SIGTERM", (err) => {
-        if (err) console.error(`[cancelRequest] tree-kill error for PID ${found.pid}:`, err.message);
-        else console.log(`[cancelRequest] Process tree for PID ${found.pid} killed successfully`);
-      });
-      return true;
-    }
-  } catch {
-    // processes.json missing or malformed — nothing to kill
+  // Fallback: the process was spawned by a detached agent-worker — look it up in its process file
+  const fileEntry = readProcessEntry(requestId);
+  if (fileEntry?.pid) {
+    const pid = fileEntry.pid;
+    console.log(`[cancelRequest] Found PID ${pid} in process file for request ${requestId}, killing...`);
+    deleteProcessEntry(requestId);
+    treeKill(pid, "SIGTERM", (err) => {
+      if (err) console.error(`[cancelRequest] tree-kill error for PID ${pid}:`, err.message);
+      else console.log(`[cancelRequest] Process tree for PID ${pid} killed successfully`);
+    });
+    return true;
   }
 
   return false;
@@ -108,6 +112,7 @@ export function cancelAllRequests(memberId: string) {
       const pid = entry.process.pid;
       console.log(`[cancelAllRequests] Killing process tree for PID ${pid}, request ${requestId}`);
       activeProcesses.delete(requestId);
+      deleteProcessEntry(requestId);
       if (pid) {
         treeKill(pid, "SIGTERM", (err) => {
           if (err) console.error(`[cancelAllRequests] tree-kill error for PID ${pid}:`, err.message);
@@ -116,7 +121,25 @@ export function cancelAllRequests(memberId: string) {
       }
     }
   }
-  syncProcessFile();
+
+  // Also kill any worker-spawned processes for this member tracked in process files
+  try {
+    for (const file of readdirSync(PROCESSES_DIR)) {
+      if (!file.endsWith(".json")) continue;
+      try {
+        const data = JSON.parse(readFileSync(join(PROCESSES_DIR, file), "utf-8"));
+        if (data.memberId === memberId && data.pid) {
+          cancelledRequests.add(data.requestId);
+          console.log(`[cancelAllRequests] Killing PID ${data.pid} from process file for request ${data.requestId}`);
+          deleteProcessEntry(data.requestId);
+          treeKill(data.pid, "SIGTERM", (err) => {
+            if (err) console.error(`[cancelAllRequests] tree-kill error for PID ${data.pid}:`, err.message);
+            else console.log(`[cancelAllRequests] Process tree for PID ${data.pid} killed successfully`);
+          });
+        }
+      } catch { /* malformed file, skip */ }
+    }
+  } catch { /* processes dir doesn't exist yet */ }
 }
 
 export function isMemberBusy(memberId: string): boolean {
@@ -313,8 +336,9 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     const proc = spawn(executable, args, { shell: true, env, cwd });
     
     // Register process
-    activeProcesses.set(requestId, { process: proc, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId });
-    syncProcessFile();
+    const entry = { requestId, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId };
+    activeProcesses.set(requestId, { process: proc, ...entry });
+    writeProcessEntry(requestId, entry);
 
     let stdout = "";
     let stderr = "";
@@ -347,7 +371,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
       activeProcesses.delete(requestId);
-      syncProcessFile();
+      deleteProcessEntry(requestId);
       if (!isResolved) {
         isResolved = true;
         resolve({ text: `Agent process error: ${err.message}` });
@@ -356,7 +380,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     proc.on("exit", (code) => {
       activeProcesses.delete(requestId);
-      syncProcessFile();
+      deleteProcessEntry(requestId);
       console.log(`[executeAgent] Process exited with code ${code}`);
       
       // Dump full raw output to a dedicated log file for debugging multiple messages
