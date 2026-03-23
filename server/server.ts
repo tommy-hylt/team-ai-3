@@ -7,7 +7,7 @@ import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest } from "./chatService.ts";
-import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy } from "./agentService.ts";
+import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
@@ -87,6 +87,18 @@ app.get("/api/members/:id/events", (req, res) => {
   res.flushHeaders();
 
   subscribe(req.params.id, res);
+});
+
+app.post("/api/processes", (req, res) => {
+  const entry = req.body;
+  if (!entry.requestId || !entry.pid) return res.status(400).json({ error: "requestId and pid are required" });
+  registerProcess(entry);
+  res.json({ ok: true });
+});
+
+app.delete("/api/processes/:requestId", (req, res) => {
+  unregisterProcess(req.params.requestId);
+  res.json({ ok: true });
 });
 
 app.post("/api/requests/:id/cancel", async (req, res) => {
