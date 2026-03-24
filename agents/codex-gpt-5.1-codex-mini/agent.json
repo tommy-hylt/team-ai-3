@@ -1,8 +1,0 @@
-{
-  "name": "codex-gpt-5.1-codex-mini",
-  "executable": "codex",
-  "args": [
-    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "gpt-5.1-codex-mini"] },
-    { "type": "resume", "parts": ["resume"] }
-  ]
-}

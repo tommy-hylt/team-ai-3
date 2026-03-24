@@ -1,12 +1,12 @@
 {
-  "name": "gemini-2.0-flash",
+  "name": "gemini-3.1-pro-preview",
   "executable": "gemini",
   "args": [
     {
       "type": "basic",
       "parts": [
         "-m",
-        "gemini-2.0-flash",
+        "gemini-3.1-pro-preview",
         "-y",
         "-o",
         "stream-json"

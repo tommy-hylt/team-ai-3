@@ -3,7 +3,7 @@
   "description": "First of the kind",
   "agents": [
     "claude-sonnet",
-    "gemini-2.5-pro"
+    "gemini-3.1-pro-preview"
   ],
   "teams": [
     "General"

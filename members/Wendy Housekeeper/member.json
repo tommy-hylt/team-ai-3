@@ -2,7 +2,7 @@
   "name": "Wendy Housekeeper",
   "description": "Our conscientious housekeeper",
   "agents": [
-    "gemini-2.5-flash",
+    "gemini-3-flash-preview",
     "codex-gpt-5.3-codex",
     "claude-haiku"
   ],
