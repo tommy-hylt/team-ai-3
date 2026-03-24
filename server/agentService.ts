@@ -446,7 +446,10 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
     collectedSessionId = sessionMatch[1];
   }
 
-  // 1. Try parsing JSONL top-to-bottom to collect thread/session IDs and text
+  // 1. Try parsing JSONL top-to-bottom to collect thread/session IDs, text, and gemini delta messages.
+  // assistantMsgs accumulates gemini stream-json delta content; reset on tool_result so only the
+  // final response block (after the last tool call) is kept.
+  const assistantMsgs: string[] = [];
   for (const line of lines) {
     const l = line.trim();
     if (l.startsWith("{") && l.endsWith("}")) {
@@ -461,6 +464,12 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
           finalResult = result;
           if (result.sessionId) collectedSessionId = result.sessionId;
         }
+
+        if (json.type === "tool_result") {
+          assistantMsgs.length = 0;
+        } else if (json.role === "assistant" && typeof json.content === "string") {
+          assistantMsgs.push(json.content);
+        }
       } catch { }
     }
   }
@@ -469,23 +478,6 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
     return { text: finalResult.text, sessionId: finalResult.sessionId || collectedSessionId };
   }
 
-  // 1b. Handle gemini stream-json format: assemble response from assistant delta messages.
-  // Only take messages after the last tool_result to skip planning/thinking preamble.
-  const assistantMsgs: string[] = [];
-  for (const line of lines) {
-    const l = line.trim();
-    if (l.startsWith("{") && l.endsWith("}")) {
-      try {
-        const json = JSON.parse(l);
-        if (json.type === "tool_result") {
-          // Reset: we only want messages after the last tool interaction
-          assistantMsgs.length = 0;
-        } else if (json.role === "assistant" && typeof json.content === "string") {
-          assistantMsgs.push(json.content);
-        }
-      } catch { }
-    }
-  }
   if (assistantMsgs.length > 0) {
     return { text: assistantMsgs.join(""), sessionId: collectedSessionId };
   }
