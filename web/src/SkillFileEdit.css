@@ -1,5 +1,6 @@
 .SkillFileEdit {
   flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   background-color: #08090a;
@@ -148,7 +149,9 @@
         white-space: pre-wrap;
         word-break: break-word;
       }
+
     }
+
 
     .SyncWarning {
       background-color: #f59e0b11;
@@ -316,4 +319,123 @@
       }
     }
   }
+}
+
+/* Markdown view mode — flat selectors to avoid CSS nesting compilation issues */
+.ReadMode.markdown-enabled {
+  overflow-x: hidden;
+  min-width: 0;
+}
+
+.ReadMode.markdown-enabled .MarkdownBody {
+  max-width: 800px;
+  width: 100%;
+  min-width: 0;
+  color: #e0e6ed;
+  font-size: 14.5px;
+  line-height: 1.6;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+.ReadMode.markdown-enabled p {
+  margin-top: 0;
+  margin-bottom: 12px;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+.ReadMode.markdown-enabled p:last-child {
+  margin-bottom: 0;
+}
+
+.ReadMode.markdown-enabled h1,
+.ReadMode.markdown-enabled h2,
+.ReadMode.markdown-enabled h3,
+.ReadMode.markdown-enabled h4,
+.ReadMode.markdown-enabled h5,
+.ReadMode.markdown-enabled h6 {
+  color: #ebecf0;
+  margin-top: 24px;
+  margin-bottom: 12px;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.ReadMode.markdown-enabled h1:first-child,
+.ReadMode.markdown-enabled h2:first-child,
+.ReadMode.markdown-enabled h3:first-child {
+  margin-top: 0;
+}
+
+.ReadMode.markdown-enabled pre {
+  background-color: #08090a;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 13px;
+  margin: 12px 0;
+  white-space: pre;
+  word-break: normal;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ReadMode.markdown-enabled code {
+  font-family: "JetBrains Mono", monospace;
+  background-color: #08090a;
+  padding: 2px 4px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+
+.ReadMode.markdown-enabled pre code {
+  background-color: transparent;
+  padding: 0;
+  font-size: inherit;
+  word-break: normal;
+}
+
+.ReadMode.markdown-enabled ul,
+.ReadMode.markdown-enabled ol {
+  margin-top: 0;
+  margin-bottom: 12px;
+  padding-left: 24px;
+}
+
+.ReadMode.markdown-enabled table {
+  border-collapse: collapse;
+  margin-bottom: 12px;
+  font-size: 13px;
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.ReadMode.markdown-enabled th,
+.ReadMode.markdown-enabled td {
+  border: 1px solid #4b5563;
+  padding: 8px 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.ReadMode.markdown-enabled th {
+  background-color: #1c1f23;
+  font-weight: 700;
+}
+
+.ReadMode.markdown-enabled blockquote {
+  border-left: 3px solid #0abab5;
+  margin: 0 0 12px 0;
+  padding: 4px 0 4px 16px;
+  color: #94a3b8;
+}
+
+.ReadMode.markdown-enabled hr {
+  border: none;
+  border-top: 1px solid #1c1f23;
+  margin: 16px 0;
 }

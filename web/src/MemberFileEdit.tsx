@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { FiChevronLeft, FiTrash2, FiEdit2, FiMoreHorizontal } from "react-icons/fi";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import "./SkillFileEdit.css";
 
 export function MemberFileEdit() {
@@ -64,6 +66,7 @@ export function MemberFileEdit() {
   if (!loaded) return <div className="SkillFileEdit">Loading...</div>;
 
   const dirty = value !== original;
+  const isMarkdown = filePath.endsWith(".md");
 
   return (
     <div className="SkillFileEdit">
@@ -102,8 +105,11 @@ export function MemberFileEdit() {
             placeholder="Write file content here..."
           />
         ) : (
-          <div className="ReadMode">
-            <pre>{value || "(Empty file)"}</pre>
+          <div className={`ReadMode${isMarkdown ? " markdown-enabled" : ""}`}>
+            {isMarkdown
+              ? <div className="MarkdownBody"><ReactMarkdown remarkPlugins={[remarkGfm]}>{value || "(Empty file)"}</ReactMarkdown></div>
+              : <pre>{value || "(Empty file)"}</pre>
+            }
           </div>
         )}
       </div>

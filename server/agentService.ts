@@ -469,6 +469,27 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
     return { text: finalResult.text, sessionId: finalResult.sessionId || collectedSessionId };
   }
 
+  // 1b. Handle gemini stream-json format: assemble response from assistant delta messages.
+  // Only take messages after the last tool_result to skip planning/thinking preamble.
+  const assistantMsgs: string[] = [];
+  for (const line of lines) {
+    const l = line.trim();
+    if (l.startsWith("{") && l.endsWith("}")) {
+      try {
+        const json = JSON.parse(l);
+        if (json.type === "tool_result") {
+          // Reset: we only want messages after the last tool interaction
+          assistantMsgs.length = 0;
+        } else if (json.role === "assistant" && typeof json.content === "string") {
+          assistantMsgs.push(json.content);
+        }
+      } catch { }
+    }
+  }
+  if (assistantMsgs.length > 0) {
+    return { text: assistantMsgs.join(""), sessionId: collectedSessionId };
+  }
+
   // 2. Try block-based parsing (for Claude/Gemini single huge objects)
   let lastOpen = trimmed.lastIndexOf("{");
   let lastClose = trimmed.lastIndexOf("}");
