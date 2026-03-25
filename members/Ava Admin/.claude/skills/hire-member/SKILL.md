@@ -50,9 +50,23 @@ Returns the created member details object.
 
 Multiple agents can be listed — the server uses the first available.
 
+## Name Format
+
+Member names follow the pattern `"FirstName Position"` (e.g. `"Yuki Tutor"`, `"Marco Analyst"`).
+
+- **FirstName** — a common English given name (e.g. Alice, Ben, Clara, David, Fiona, George, Helen, Ivan, Julia, Kevin, Laura, Mike, Nina, Oscar, Paula, Quinn, Rachel, Sam, Tina, Victor, Wendy, Xavier, Yasmine, Zara).
+- **Position** — a concise job or status title (e.g. Programmer, Analyst, Designer, Manager, Researcher, Planner, Assistant, Coordinator, Engineer, Advisor, Tutor, Administrator).
+
+If the user provides only a first name, infer a suitable position based on the described role.
+If the user provides only a position (or role description) but no first name, choose a fitting English given name.
+If neither is provided, choose both a name and position that fit the described role or context.
+
 ## Workflow
 
 1. Gather details from the user's request: name, role, teams, agent
-2. Compose the `character` field — describe who they are, their responsibilities, communication style, and any behavioural constraints
-3. Call the API
-4. Report the created member's name, agent, and teams to the user
+2. List the members directory (`../../members/` relative to the skill folder, or check `GET http://localhost:8699/api/members`) to get all existing member names
+3. If filling in a first name, ensure it does not match the first name of any existing member (case-insensitive). Pick a different name if there is a clash
+4. If the name is missing a first name or position (or both), fill in suitable values following the Name Format above — clash-free
+5. Compose the `character` field — describe who they are, their responsibilities, communication style, and any behavioural constraints
+6. Call the API
+7. Report the created member's name (including any filled-in parts), agent, and teams to the user
