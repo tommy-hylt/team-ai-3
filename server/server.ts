@@ -9,7 +9,7 @@ import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMe
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
-import { listFiles, getFile, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
+import { listFiles, getFile, getFileBuffer, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 import { getRoutines, saveRoutines, startRoutineLoop } from "./routineService.ts";
@@ -323,6 +323,21 @@ app.get("/api/members/:id/skills/:skillName/files/:fileName/sync", async (req, r
   const { id, skillName, fileName } = req.params;
   const results = await checkFileSync(id, skillName, fileName);
   res.json(results);
+});
+
+const IMAGE_MIME: Record<string, string> = {
+  png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
+  gif: "image/gif", webp: "image/webp", svg: "image/svg+xml",
+  bmp: "image/bmp", ico: "image/x-icon",
+};
+
+app.get("/api/members/:id/files-raw/*", async (req, res) => {
+  const relativePath = (req.params as any)[0];
+  const data = await getFileBuffer(req.params.id, relativePath);
+  if (!data) return res.status(404).json({ error: "File not found" });
+  const ext = relativePath.split(".").pop()?.toLowerCase() || "";
+  res.setHeader("Content-Type", IMAGE_MIME[ext] || "application/octet-stream");
+  res.send(data);
 });
 
 app.get("/api/members/:id/files/*", async (req, res) => {

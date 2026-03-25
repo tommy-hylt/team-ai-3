@@ -63,7 +63,10 @@ export function MemberFileEdit() {
     navigate(`/${id}/files${dirPath ? `?path=${encodeURIComponent(dirPath)}` : ""}`);
   }
 
-  if (!loaded) return <div className="SkillFileEdit">Loading...</div>;
+  const IMAGE_EXTS = [".png", ".jpg", ".jpeg", ".gif", ".webp", ".svg", ".bmp", ".ico"];
+  const isImage = IMAGE_EXTS.some(ext => filePath.toLowerCase().endsWith(ext));
+
+  if (!isImage && !loaded) return <div className="SkillFileEdit">Loading...</div>;
 
   const dirty = value !== original;
   const isMarkdown = filePath.endsWith(".md");
@@ -87,7 +90,7 @@ export function MemberFileEdit() {
         <button className="ActionButton" title="Toggle full path" onClick={() => setShowFullPath(v => !v)}>
           <FiMoreHorizontal />
         </button>
-        {!isEditing && (
+        {!isImage && !isEditing && (
           <button className="ActionButton" onClick={() => setIsEditing(true)}>
             <FiEdit2 />
           </button>
@@ -97,7 +100,11 @@ export function MemberFileEdit() {
         </button>
       </div>
       <div className="EditorArea">
-        {isEditing ? (
+        {isImage ? (
+          <div className="ReadMode ImageMode">
+            <img src={`/api/members/${id}/files-raw/${encodeURIComponent(filePath)}`} alt={filePath.split("/").pop()} />
+          </div>
+        ) : isEditing ? (
           <textarea
             value={value}
             onChange={e => setValue(e.target.value)}

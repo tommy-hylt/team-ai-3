@@ -34,6 +34,16 @@ export async function getFile(memberId: string, relativePath: string) {
   }
 }
 
+/** Get raw file buffer by relative path (for binary files like images) */
+export async function getFileBuffer(memberId: string, relativePath: string) {
+  const fullPath = join(memberDir(memberId), relativePath);
+  try {
+    return await readFile(fullPath);
+  } catch {
+    return undefined;
+  }
+}
+
 /** Save file content, with skill sync across vendor folders */
 export async function saveFile(memberId: string, relativePath: string, content: string) {
   const paths = getSkillSyncPaths(relativePath);
