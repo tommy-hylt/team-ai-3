@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -50,6 +50,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [messages, setMessages] = useState<MessageType[]>([]);
   const [input, setInput] = useState("");
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
+  const [copied, setCopied] = useState<Record<number, boolean>>({});
   const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
   const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -277,7 +278,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
                 <div className="ToggleGroup">
                   {reqId && (
-                    <button 
+                    <button
                       className={`LogToggle ${showLog[logKey] ? "active" : ""}`}
                       onClick={() => toggleLog(logKey, reqId)}
                       title="View Execution Log"
@@ -285,8 +286,19 @@ export function Chat({ onBack }: { onBack: () => void }) {
                       <FiTerminal />
                     </button>
                   )}
-                  <button 
-                    className={`MarkdownToggle ${renderMd[i] !== false ? "active" : ""}`} 
+                  <button
+                    className={`CopyToggle ${copied[i] ? "active" : ""}`}
+                    onClick={() => {
+                      navigator.clipboard.writeText(m.text);
+                      setCopied(prev => ({ ...prev, [i]: true }));
+                      setTimeout(() => setCopied(prev => ({ ...prev, [i]: false })), 1500);
+                    }}
+                    title="Copy message"
+                  >
+                    {copied[i] ? <FiCheck /> : <FiCopy />}
+                  </button>
+                  <button
+                    className={`MarkdownToggle ${renderMd[i] !== false ? "active" : ""}`}
                     onClick={() => setRenderMd(prev => ({ ...prev, [i]: prev[i] === false ? true : false }))}
                     title="Toggle Markdown"
                   >
