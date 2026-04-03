@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useRef, useCallback } from "react";
+import { useContext, useEffect, useState, useRef, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck } from "react-icons/fi";
@@ -43,12 +43,70 @@ interface LogEntry {
   content: string;
 }
 
+// Extracted so keystrokes only re-render this small component, not the message list
+const ChatInput = memo(function ChatInput({
+  memberId,
+  memberName,
+  initialValue,
+  onSend,
+}: {
+  memberId: string;
+  memberName: string;
+  initialValue: string;
+  onSend: (text: string) => void;
+}) {
+  const [input, setInput] = useState(initialValue);
+  const saveDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sync when initialValue arrives after async draft check
+  useEffect(() => {
+    setInput(initialValue);
+  }, [initialValue]);
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const val = e.target.value;
+    setInput(val);
+    if (saveDraftTimer.current) clearTimeout(saveDraftTimer.current);
+    saveDraftTimer.current = setTimeout(() => saveDraft(memberId, val), 500);
+  }
+
+  function send() {
+    const text = input.trim();
+    if (!text) return;
+    setInput("");
+    if (saveDraftTimer.current) clearTimeout(saveDraftTimer.current);
+    onSend(text);
+  }
+
+  return (
+    <div className="InputArea">
+      <div className="InputWrapper">
+        <textarea
+          value={input}
+          rows={3}
+          onChange={handleChange}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+              e.preventDefault();
+              send();
+            }
+          }}
+          placeholder={`Message ${memberName}...`}
+        />
+        <button onClick={send} disabled={!input.trim()}>
+          <FiSend />
+        </button>
+      </div>
+    </div>
+  );
+});
+
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
   const navigate = useNavigate();
   const { members, loading } = useContext(MemberContext);
   const [messages, setMessages] = useState<MessageType[]>([]);
-  const [input, setInput] = useState("");
+  const [initialDraft, setInitialDraft] = useState("");
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
   const [copied, setCopied] = useState<Record<number, boolean>>({});
   const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
@@ -58,16 +116,15 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const isFirstLoad = useRef(true);
   const isSending = useRef(false);
   const clientId = useRef(Math.random().toString(36).substring(7));
-  const saveDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedMember = members.find(m => m.id === id);
 
   useEffect(() => {
     if (!id) return;
-    
+
     // Reset state for new ID
     setMessages([]);
-    setInput("");
+    setInitialDraft("");
 
     // Load initial history
     fetch(`/api/members/${id}/chat`)
@@ -83,16 +140,16 @@ export function Chat({ onBack }: { onBack: () => void }) {
               merged.push(msg);
             }
           }
-          return merged.sort((a, b) => 
-            new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+          return merged.sort((a, b) =>
+            new Date(a.type === "request" ? a.requestTime : a.time).getTime() -
             new Date(b.type === "request" ? b.requestTime : b.time).getTime()
           );
         });
-        
+
         // After history is loaded, check for drafts
         const drafts = getDrafts();
         const draftText = drafts[id]?.text || "";
-        
+
         if (draftText) {
           // Avoid restoring draft if it matches the very last request (prevents re-sending on refresh/resume)
           const lastRequest = [...data].reverse().find(m => m.type === "request");
@@ -101,21 +158,21 @@ export function Chat({ onBack }: { onBack: () => void }) {
             saveDraft(id, "");
           } else {
             console.log(`[Chat ${clientId.current}] Restoring draft for ${id}`);
-            setInput(draftText);
+            setInitialDraft(draftText);
           }
         }
       });
 
     // Subscribe to events
     const evtSource = new EventSource(`/api/members/${id}/events`);
-    
+
     evtSource.addEventListener("request", (e) => {
       try {
         const req = JSON.parse(e.data);
         setMessages(prev => {
           if (prev.some(m => m.type === "request" && m.id === req.id)) return prev;
-          return [...prev, { ...req, type: "request" }].sort((a, b) => 
-            new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+          return [...prev, { ...req, type: "request" }].sort((a, b) =>
+            new Date(a.type === "request" ? a.requestTime : a.time).getTime() -
             new Date(b.type === "request" ? b.requestTime : b.time).getTime()
           );
         });
@@ -125,8 +182,8 @@ export function Chat({ onBack }: { onBack: () => void }) {
     evtSource.addEventListener("response", (e) => {
       try {
         const res = JSON.parse(e.data);
-        setMessages(prev => [...prev, { ...res, type: "response" }].sort((a, b) => 
-          new Date(a.type === "request" ? a.requestTime : a.time).getTime() - 
+        setMessages(prev => [...prev, { ...res, type: "response" }].sort((a, b) =>
+          new Date(a.type === "request" ? a.requestTime : a.time).getTime() -
           new Date(b.type === "request" ? b.requestTime : b.time).getTime()
         ));
       } catch (err) { console.error("SSE Response Error", err); }
@@ -135,7 +192,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
     evtSource.addEventListener("status_update", (e) => {
       try {
         const { id, status } = JSON.parse(e.data);
-        setMessages(prev => prev.map(m => 
+        setMessages(prev => prev.map(m =>
           (m.type === "request" && m.id === id) ? { ...m, status } : m
         ));
       } catch (err) { console.error("SSE Status Error", err); }
@@ -149,40 +206,28 @@ export function Chat({ onBack }: { onBack: () => void }) {
   useEffect(() => {
     // Slight delay to allow React to render the new messages to the DOM
     const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ 
-        behavior: isFirstLoad.current ? "auto" : "smooth" 
+      messagesEndRef.current?.scrollIntoView({
+        behavior: isFirstLoad.current ? "auto" : "smooth"
       });
       isFirstLoad.current = false;
     }, 50);
     return () => clearTimeout(timer);
   }, [messages]);
 
-  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    const val = e.target.value;
-    setInput(val);
-    if (id) {
-      if (saveDraftTimer.current) clearTimeout(saveDraftTimer.current);
-      saveDraftTimer.current = setTimeout(() => saveDraft(id, val), 500);
-    }
-  }, [id]);
+  async function handleSend(text: string) {
+    if (!selectedMember || isSending.current) return;
 
-  async function handleSend() {
-    if (!selectedMember || !input.trim() || isSending.current) return;
-    
-    const text = input.trim();
     console.log(`[Chat ${clientId.current}] handleSend triggered for "${text.substring(0, 20)}..."`);
-    
-    isSending.current = true;
-    try {
-      setInput("");
-      if (id) saveDraft(id, "");
 
+    isSending.current = true;
+    if (id) saveDraft(id, "");
+    try {
       const res = await fetch(`/api/members/${selectedMember.id}/request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, requester: "User", notify: true, echo: false }),
       });
-      
+
       if (!res.ok) {
         console.error(`[Chat ${clientId.current}] POST failed with status ${res.status}`);
       }
@@ -341,7 +386,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
                   <span className="AgentLabel">{selectedMember.agents[0]}</span>
                   <div className="ToggleGroup">
                     {m.id && (
-                      <button 
+                      <button
                         className={`LogToggle ${showLog[`loading-${m.id}`] ? "active" : ""}`}
                         onClick={() => toggleLog(`loading-${m.id}`, m.id!)}
                         title="View Execution Log"
@@ -369,25 +414,13 @@ export function Chat({ onBack }: { onBack: () => void }) {
         })}
         <div ref={messagesEndRef} />
       </div>
-      <div className="InputArea">
-        <div className="InputWrapper">
-          <textarea 
-            value={input} 
-            rows={3}
-            onChange={handleInputChange} 
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder={`Message ${selectedMember.name}...`}
-          />
-          <button onClick={handleSend} disabled={!input.trim()}>
-            <FiSend />
-          </button>
-        </div>
-      </div>
+      <ChatInput
+        key={id}
+        memberId={id!}
+        memberName={selectedMember.name}
+        initialValue={initialDraft}
+        onSend={handleSend}
+      />
     </div>
   );
 }
