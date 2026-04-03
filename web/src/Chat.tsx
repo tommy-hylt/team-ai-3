@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState, useRef } from "react";
+import { useContext, useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck } from "react-icons/fi";
@@ -58,6 +58,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const isFirstLoad = useRef(true);
   const isSending = useRef(false);
   const clientId = useRef(Math.random().toString(36).substring(7));
+  const saveDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedMember = members.find(m => m.id === id);
 
@@ -156,11 +157,14 @@ export function Chat({ onBack }: { onBack: () => void }) {
     return () => clearTimeout(timer);
   }, [messages]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  const handleInputChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setInput(val);
-    if (id) saveDraft(id, val);
-  };
+    if (id) {
+      if (saveDraftTimer.current) clearTimeout(saveDraftTimer.current);
+      saveDraftTimer.current = setTimeout(() => saveDraft(id, val), 500);
+    }
+  }, [id]);
 
   async function handleSend() {
     if (!selectedMember || !input.trim() || isSending.current) return;
