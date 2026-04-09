@@ -171,7 +171,11 @@ export function Chat({ onBack }: { onBack: () => void }) {
         const req = JSON.parse(e.data);
         setMessages(prev => {
           if (prev.some(m => m.type === "request" && m.id === req.id)) return prev;
-          return [...prev, { ...req, type: "request" }].sort((a, b) =>
+          // Remove matching optimistic bubble (SSE may arrive before POST response returns)
+          const filtered = prev.filter(m =>
+            !(m.type === "request" && m.id?.startsWith("__optimistic_") && m.text === req.text)
+          );
+          return [...filtered, { ...req, type: "request" }].sort((a, b) =>
             new Date(a.type === "request" ? a.requestTime : a.time).getTime() -
             new Date(b.type === "request" ? b.requestTime : b.time).getTime()
           );
