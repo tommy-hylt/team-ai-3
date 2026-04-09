@@ -221,6 +221,20 @@ export function Chat({ onBack }: { onBack: () => void }) {
 
     isSending.current = true;
     if (id) saveDraft(id, "");
+
+    // Optimistically show the message immediately, before the server round-trip
+    const tempId = `__optimistic_${Date.now()}`;
+    setMessages(prev => [...prev, {
+      type: "request",
+      id: tempId,
+      text,
+      requester: "User",
+      requestTime: new Date(),
+      notify: true,
+      echo: false,
+      status: "running",
+    }]);
+
     try {
       const res = await fetch(`/api/members/${selectedMember.id}/request`, {
         method: "POST",
@@ -228,11 +242,19 @@ export function Chat({ onBack }: { onBack: () => void }) {
         body: JSON.stringify({ text, requester: "User", notify: true, echo: false }),
       });
 
-      if (!res.ok) {
+      if (res.ok) {
+        const data = await res.json();
+        // Swap temp ID for the real one so the SSE dedup check matches and skips the duplicate
+        setMessages(prev => prev.map(m =>
+          m.type === "request" && m.id === tempId ? { ...m, id: data.requestId } : m
+        ));
+      } else {
         console.error(`[Chat ${clientId.current}] POST failed with status ${res.status}`);
+        setMessages(prev => prev.filter(m => !(m.type === "request" && m.id === tempId)));
       }
     } catch (e) {
       console.error(`[Chat ${clientId.current}] handleSend error:`, e);
+      setMessages(prev => prev.filter(m => !(m.type === "request" && m.id === tempId)));
     } finally {
       isSending.current = false;
     }
