@@ -10,6 +10,7 @@ Primary secretary. Handles tasks ranging from simple file work to complex Cloudf
 - `make-request`: Send a request to another member via POST /api/members/:id/request.
 - `summarize-session`: Summarize session, update skills, write to this MEMORY.md.
 - `startup-scripts`: Manage startup scripts in `C:\Program Files (Mine)\Startup Scripts\`.
+- `use-google-cli`: Use `gws` CLI to interact with Google Drive, Calendar, Gmail etc. Auth already set up.
 
 ## Cloudflare Work (sessions 1–2)
 - Tunnel: HeyaHyperW (HEALTHY). Routes: ports 6485, 5173, 8787, 8699.
