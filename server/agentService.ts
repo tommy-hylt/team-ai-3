@@ -1,5 +1,5 @@
 import { spawn, ChildProcess } from "child_process";
-import { readFileSync, writeFileSync } from "fs";
+import { readFileSync, writeFileSync, openSync } from "fs";
 import { readFile, appendFile } from "fs/promises";
 import { randomBytes } from "crypto";
 import { join, dirname } from "path";
@@ -146,6 +146,27 @@ export function cancelAllRequests(memberId: string): void {
     }
   }
   writeProcessFile(remaining);
+}
+
+export function spawnWorker(memberId: string, requestId: string): void {
+  const workerPath = join(__dirname, "scripts", "agent-worker.ts");
+  const tsxBin = join(__dirname, "node_modules", "tsx", "dist", "cli.mjs");
+
+  const outFd = openSync(join(__dirname, "out.log"), "a");
+  const errFd = openSync(join(__dirname, "err.log"), "a");
+
+  const child = spawn(process.execPath, [tsxBin, workerPath, memberId, requestId, serverId], {
+    detached: true,
+    stdio: ["ignore", outFd, errFd],
+    windowsHide: true,
+    cwd: __dirname,
+  });
+
+  child.on("error", (err) => {
+    console.error(`[spawnWorker] Failed to spawn worker for ${memberId}:`, err);
+  });
+
+  child.unref();
 }
 
 export function isMemberBusy(memberId: string): boolean {

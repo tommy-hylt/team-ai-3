@@ -20,7 +20,7 @@
     "typescript": "^5.0.4"
   },
   "scripts": {
-    "dev": "tsx watch server.ts",
+    "dev": "tsx watch --ignore ../members --ignore ../web --ignore ../agents server.ts",
     "build": "tsc"
   }
 }

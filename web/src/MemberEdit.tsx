@@ -2,7 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiEdit2, FiCheck, FiX, FiFolder, FiCopy, FiTrash2, FiMessageSquare, FiPlus, FiBell, FiBellOff, FiPlayCircle, FiPauseCircle } from "react-icons/fi";
-import { Routine } from "./types";
+import { Routine, Todo } from "./types";
 import "./MemberEdit.css";
 
 interface MemberDetails {
@@ -35,6 +35,9 @@ export function MemberEdit() {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [editingRoutines, setEditingRoutines] = useState(false);
   const [tempRoutines, setTempRoutines] = useState<Routine[]>([]);
+  const [todos, setTodos] = useState<Todo[]>([]);
+  const [editingTodos, setEditingTodos] = useState(false);
+  const [tempTodos, setTempTodos] = useState<Todo[]>([]);
   const [isAddingTeam, setIsAddingTeam] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
 
@@ -51,6 +54,10 @@ export function MemberEdit() {
       fetch(`/api/members/${id}/routines`)
         .then(res => res.json())
         .then(setRoutines);
+
+      fetch(`/api/members/${id}/todos`)
+        .then(res => res.json())
+        .then(setTodos);
 
       Promise.all([
         fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
@@ -159,6 +166,43 @@ export function MemberEdit() {
     const current = (editValue as string[]) || [];
     const updated = current.filter(t => t !== teamName);
     setEditValue(updated.length > 0 ? updated : ["General"]);
+  }
+
+  async function handleSaveTodos() {
+    if (!id) return;
+    const res = await fetch(`/api/members/${id}/todos`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(tempTodos)
+    });
+    if (res.ok) {
+      setTodos(tempTodos);
+      setEditingTodos(false);
+    }
+  }
+
+  function startEditingTodos() {
+    setTempTodos([...todos]);
+    setEditingTodos(true);
+  }
+
+  function addTodo() {
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const defaultTime = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    setTempTodos([...tempTodos, { id: crypto.randomUUID?.() || Date.now().toString(), triggerTime: defaultTime, requestText: "", notify: true, status: "active" }]);
+  }
+
+  function updateTodo(index: number, key: keyof Todo, value: any) {
+    const updated = [...tempTodos];
+    updated[index] = { ...updated[index], [key]: value };
+    setTempTodos(updated);
+  }
+
+  function deleteTodo(index: number) {
+    const updated = [...tempTodos];
+    updated.splice(index, 1);
+    setTempTodos(updated);
   }
 
   async function handleSaveRoutines() {
@@ -545,6 +589,86 @@ export function MemberEdit() {
                     ))
                   ) : (
                     <pre>(No routines)</pre>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Todos */}
+          <div className={`Field ${editingTodos ? "editing" : ""}`}>
+            <div className="FieldHeader">
+              <label>Todos</label>
+              {!editingTodos ? (
+                <button className="EditButton" onClick={startEditingTodos}>
+                  <FiEdit2 />
+                </button>
+              ) : (
+                <div className="EditActions">
+                  <button className="SaveButton" onClick={handleSaveTodos}><FiCheck /></button>
+                  <button className="CancelButton" onClick={() => setEditingTodos(false)}><FiX /></button>
+                </div>
+              )}
+            </div>
+            <div className="FieldContent">
+              {editingTodos ? (
+                <div className="RoutinesEditor">
+                  {tempTodos.map((todo, i) => (
+                    <div key={todo.id} className="RoutineEditRow">
+                      <div className="RoutineEditRowHeader">
+                        <button
+                          className={`StatusToggle ${todo.status || "active"}`}
+                          onClick={() => updateTodo(i, "status", (todo.status || "active") === "active" ? "disabled" : "active")}
+                          title={(todo.status || "active") === "active" ? "Disable todo" : "Activate todo"}
+                        >
+                          {(todo.status || "active") === "active" ? <FiPlayCircle /> : <FiPauseCircle />}
+                        </button>
+                        <div className="TodoDateWrapper">
+                          <span className={`TodoDateMask ${todo.status === "disabled" ? "disabled" : ""}`}>{todo.triggerTime}</span>
+                          <input
+                            type="datetime-local"
+                            className="TodoDateInput"
+                            value={todo.triggerTime.replace(" ", "T")}
+                            onChange={(e) => updateTodo(i, "triggerTime", e.target.value.replace("T", " "))}
+                          />
+                        </div>
+                        <button
+                          className={`NotifyToggle ${todo.notify ? "on" : "off"}`}
+                          onClick={() => updateTodo(i, "notify", !todo.notify)}
+                          title="Toggle notifications"
+                        >
+                          {todo.notify ? <FiBell /> : <FiBellOff />}
+                        </button>
+                        <button className="RemoveRoutineButton" onClick={() => deleteTodo(i)}><FiX /></button>
+                      </div>
+                      <textarea
+                        className="RoutineTextInput"
+                        value={todo.requestText}
+                        onChange={(e) => updateTodo(i, "requestText", e.target.value)}
+                        placeholder="Request text"
+                        rows={2}
+                      />
+                    </div>
+                  ))}
+                  <button className="AddRoutineButton" onClick={addTodo}>
+                    <FiPlus /> Add Todo
+                  </button>
+                </div>
+              ) : (
+                <div className="RoutinesList">
+                  {todos.length > 0 ? (
+                    todos.map(todo => (
+                      <div key={todo.id} className={`RoutineRow ${todo.status === "disabled" ? "disabled" : ""}`}>
+                        <span className="RoutineCron">
+                          {(todo.status || "active") === "active" ? <FiPlayCircle style={{marginRight: 6}} /> : <FiPauseCircle style={{marginRight: 6}} />}
+                          {todo.triggerTime}
+                          {!todo.notify ? <FiBellOff style={{marginLeft: 8, color: '#6b7280'}} title="Notifications disabled" /> : <FiBell style={{marginLeft: 8}} title="Notifications enabled" />}
+                        </span>
+                        <span className="RoutineText">{todo.requestText}</span>
+                      </div>
+                    ))
+                  ) : (
+                    <pre>(No todos)</pre>
                   )}
                 </div>
               )}

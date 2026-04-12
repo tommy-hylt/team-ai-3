@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect, useMemo } from "react";
 import { MemberContext } from "./MemberContext";
 import { useNavigate } from "react-router-dom";
-import { FiPlus, FiBell, FiChevronDown, FiChevronRight, FiArrowUp, FiArrowDown } from "react-icons/fi";
+import { FiPlus, FiBell, FiChevronDown, FiChevronRight, FiArrowUp, FiArrowDown, FiChevronUp } from "react-icons/fi";
 import "./MemberList.css";
 
 interface MemberListProps {
@@ -13,6 +13,10 @@ interface MemberListProps {
 export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberListProps) {
   const { members, selectedMember, loading } = useContext(MemberContext);
   const navigate = useNavigate();
+  const [bannerExpanded, setBannerExpanded] = useState<boolean>(() => {
+    const saved = localStorage.getItem("notificationBannerExpanded");
+    return saved === null ? true : saved === "true";
+  });
   const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>(() => {
     const saved = localStorage.getItem("expandedTeams");
     return saved ? JSON.parse(saved) : { "General": true };
@@ -95,13 +99,28 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
       </div>
       {!subscribed && onSubscribe && (
         <div className="NotificationBanner">
-          <div className="BannerText">
-            <FiBell className="BannerIcon" />
-            Get notified when agents reply.
+          <div className="BannerHeader">
+            <div className="BannerText">
+              <FiBell className="BannerIcon" />
+              Get notified when agents reply.
+            </div>
+            <button
+              className="BannerCollapseButton"
+              onClick={() => {
+                const next = !bannerExpanded;
+                setBannerExpanded(next);
+                localStorage.setItem("notificationBannerExpanded", String(next));
+              }}
+              title={bannerExpanded ? "Collapse" : "Expand"}
+            >
+              {bannerExpanded ? <FiChevronUp /> : <FiChevronDown />}
+            </button>
           </div>
-          <button className="SubscribeButton" onClick={onSubscribe}>
-            Enable Notifications
-          </button>
+          {bannerExpanded && (
+            <button className="SubscribeButton" onClick={onSubscribe}>
+              Enable Notifications
+            </button>
+          )}
         </div>
       )}
       <div className="Content">

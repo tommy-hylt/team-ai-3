@@ -21,6 +21,14 @@ export interface ResponseMessage {
 
 export type MessageType = RequestMessage | ResponseMessage;
 
+export interface Todo {
+  id: string;
+  triggerTime: string; // "yyyy-MM-dd HH:mm" in server local time
+  requestText: string;
+  notify: boolean;
+  status: "active" | "disabled";
+}
+
 export interface Routine {
   id: string;
   cronPattern: string;

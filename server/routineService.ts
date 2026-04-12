@@ -3,11 +3,10 @@ import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 import { randomUUID } from "crypto";
 import { CronExpressionParser } from "cron-parser";
-import { listMembers, getMember } from "./memberService.ts";
-import { addRequest, getRequestStatus, updateRequestStatus, addResponse } from "./chatService.ts";
-import { isMemberBusy, runAgent } from "./agentService.ts";
+import { listMembers } from "./memberService.ts";
+import { addRequest } from "./chatService.ts";
+import { isMemberBusy, spawnWorker } from "./agentService.ts";
 import { broadcast } from "./notificationService.ts";
-import { sendNotification } from "./pushService.ts";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -141,47 +140,18 @@ async function processRoutines() {
 }
 
 async function dispatchRoutineRequest(memberId: string, text: string, notify: boolean) {
-  const member = await getMember(memberId);
-  if (!member) return;
-
   const request = {
     id: randomUUID(),
     text,
     requester: "Routine",
     requestTime: new Date(),
-    notify: notify,
+    notify,
     echo: false,
     status: "running" as const,
   };
 
   await addRequest(memberId, request);
   broadcast(memberId, "request", request);
-
-  try {
-    console.log(`[routineService] Running routine agent for ${memberId}...`);
-    const agentResult = await runAgent(member, request.text, request.id);
-
-    // Check if aborted during execution
-    const currentStatus = await getRequestStatus(memberId, request.id);
-    if (currentStatus === "aborted") return;
-
-    const response = {
-      text: agentResult.text,
-      time: new Date(),
-      requestId: request.id,
-      agent: agentResult.agentName,
-      notify: request.notify,
-    };
-
-    await addResponse(memberId, response);
-    await updateRequestStatus(memberId, request.id, "completed");
-    broadcast(memberId, "response", response);
-    broadcast(memberId, "status_update", { id: response.requestId, status: "completed" });
-
-    if (response.notify) {
-      sendNotification(`Routine message from ${member.name}`, agentResult.text.substring(0, 100), `/${memberId}`);
-    }
-  } catch (e) {
-    console.error(`[routineService] Routine agent error for ${memberId}:`, e);
-  }
+  spawnWorker(memberId, request.id);
+  console.log(`[routineService] Spawned worker for ${memberId}, request ${request.id}`);
 }

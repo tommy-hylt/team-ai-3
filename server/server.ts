@@ -7,18 +7,21 @@ import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest } from "./chatService.ts";
-import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess } from "./agentService.ts";
+import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess, spawnWorker } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, getFileBuffer, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 import { getRoutines, saveRoutines, startRoutineLoop } from "./routineService.ts";
+import { getTodos, saveTodos, startTodoLoop } from "./todoService.ts";
 
 const app = express();
 const port = 8699;
 
 initPush().then(() => console.log("[server] Push notifications initialized"));
+
 startRoutineLoop();
+startTodoLoop();
 
 app.use(cors());
 app.use(express.json());
@@ -66,6 +69,20 @@ app.get("/api/members/:id/routines", async (req, res) => {
 app.post("/api/members/:id/routines", async (req, res) => {
   try {
     await saveRoutines(req.params.id, req.body);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as any).message });
+  }
+});
+
+app.get("/api/members/:id/todos", async (req, res) => {
+  const todos = await getTodos(req.params.id);
+  res.json(todos);
+});
+
+app.post("/api/members/:id/todos", async (req, res) => {
+  try {
+    await saveTodos(req.params.id, req.body);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: (error as any).message });
@@ -216,27 +233,7 @@ app.post("/api/members/:id/responses", async (req, res) => {
 
 function handleAgentRequest(memberId: string, request: any) {
   console.log(`Spawning detached worker for ${memberId}, request ${request.id}...`);
-  
-  const workerPath = path.join(__dirname, "scripts", "agent-worker.ts");
-  const tsxBin = path.join(__dirname, "node_modules", "tsx", "dist", "cli.mjs");
-
-  const outFd = fs.openSync(path.join(__dirname, "out.log"), "a");
-  const errFd = fs.openSync(path.join(__dirname, "err.log"), "a");
-
-  // Call node.exe directly with the tsx CLI to bypass all Windows shell escaping issues
-  const child = spawn(process.execPath, [tsxBin, workerPath, memberId, request.id, getServerId()], {
-    detached: true,
-    stdio: ["ignore", outFd, errFd],
-    windowsHide: true,
-    cwd: __dirname
-  });
-
-  child.on("error", (err) => {
-    console.error(`Failed to spawn worker for ${memberId}:`, err);
-  });
-
-  // Unreference the child so the server can exit independently
-  child.unref();
+  spawnWorker(memberId, request.id);
 }
 
 app.post("/api/members/:id/request", async (req, res) => {
