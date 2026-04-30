@@ -12,7 +12,7 @@ import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, getFileBuffer, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
-import { getRoutines, saveRoutines, startRoutineLoop } from "./routineService.ts";
+import { getRoutines, saveRoutines, startRoutineLoop, type Routine } from "./routineService.ts";
 import { getTodos, saveTodos, startTodoLoop } from "./todoService.ts";
 
 const app = express();
@@ -68,7 +68,19 @@ app.get("/api/members/:id/routines", async (req, res) => {
 
 app.post("/api/members/:id/routines", async (req, res) => {
   try {
-    await saveRoutines(req.params.id, req.body);
+    const newRoutines: Routine[] = req.body;
+    const existingRoutines = await getRoutines(req.params.id);
+    const existingMap = new Map(existingRoutines.map(r => [r.id, r]));
+    const now = new Date().toISOString();
+
+    for (const routine of newRoutines) {
+      const existing = existingMap.get(routine.id);
+      if (existing?.status === "disabled" && routine.status === "active") {
+        routine.lastTime = now; // skip any missed runs during suspension
+      }
+    }
+
+    await saveRoutines(req.params.id, newRoutines);
     res.json({ ok: true });
   } catch (error) {
     res.status(500).json({ error: (error as any).message });
