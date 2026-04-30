@@ -38,9 +38,25 @@ Update a member's configuration.
   - `agents` (string[], optional): Updates the list of agent models to use.
 - **Returns:** Updated details object.
 
+#### `GET /api/members/running`
+Get the running state of all members. A member is **running** if they have any request with `status === "running"` in `requests.json`. Use this for UI indicators.
+- **Returns:** `{ [memberId]: boolean }`.
+- **Note:** This route must be registered before `GET /api/members/:id` in Express to avoid "running" being matched as a member ID.
+
 #### `GET /api/members/:id/busy`
-Check if a member is currently running an agent process.
+Check if a member has an active OS-level worker process registered in `processes.json`. A member is **busy** if a worker entry exists — but note this can be stale if a worker died without cleanup. Use for process-level checks, not UI indicators.
 - **Returns:** `{ busy: boolean }`.
+
+---
+
+### Busy vs Running — Two Distinct Concepts
+
+| | Source of truth | Function | Endpoint | Use for |
+|---|---|---|---|---|
+| **Busy** | `processes.json` | `isMemberBusy()` in `agentService.ts` | `GET /api/members/:id/busy` | Process-level checks |
+| **Running** | `requests.json` | `hasMemberRunningRequest()` in `chatService.ts` | `GET /api/members/running` | UI indicators |
+
+`processes.json` can accumulate stale entries when workers die without calling `DELETE /api/processes/:requestId`. Never rely on it for UI running indicators.
 
 ---
 

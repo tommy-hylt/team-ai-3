@@ -6,7 +6,7 @@ import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
-import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest } from "./chatService.ts";
+import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest, hasMemberRunningRequest } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess, spawnWorker } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
 import { listFiles, getFile, getFileBuffer, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
@@ -147,6 +147,15 @@ app.post("/api/members/:id/chat/clear", async (req, res) => {
   await clearChatHistory(req.params.id);
   await expireAllSessions(req.params.id);
   res.json({ ok: true });
+});
+
+app.get("/api/members/running", async (req, res) => {
+  const members = await listMembers();
+  const states: Record<string, boolean> = {};
+  await Promise.all(members.map(async member => {
+    states[member.id] = await hasMemberRunningRequest(member.id);
+  }));
+  res.json(states);
 });
 
 app.get("/api/members/:id", async (req, res) => {

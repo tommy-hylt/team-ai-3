@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck, FiZap } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -56,12 +56,28 @@ const ChatInput = memo(function ChatInput({
   onSend: (text: string) => void;
 }) {
   const [input, setInput] = useState(initialValue);
+  const [showSkills, setShowSkills] = useState(false);
+  const [skills, setSkills] = useState<string[]>([]);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Sync when initialValue arrives after async draft check
   useEffect(() => {
     setInput(initialValue);
   }, [initialValue]);
+
+  // Fetch skills for this member
+  useEffect(() => {
+    Promise.all([
+      fetch(`/api/members/${memberId}/files?path=.claude/skills`).then(r => r.json()),
+      fetch(`/api/members/${memberId}/files?path=.gemini/skills`).then(r => r.json()),
+    ]).then(([claude, gemini]) => {
+      const getDirs = (entries: any[]) =>
+        Array.isArray(entries) ? entries.filter(e => e.type === "directory").map(e => e.name) : [];
+      const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini)])].sort();
+      setSkills(allNames);
+    }).catch(() => {});
+  }, [memberId]);
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const val = e.target.value;
@@ -78,24 +94,59 @@ const ChatInput = memo(function ChatInput({
     onSend(text);
   }
 
+  function handleSkillClick(skillName: string) {
+    const newValue = `/${skillName} `;
+    setInput(newValue);
+    setShowSkills(false);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(newValue.length, newValue.length);
+    }, 0);
+  }
+
+  const hasText = input.trim().length > 0;
+
   return (
     <div className="InputArea">
       <div className="InputWrapper">
-        <textarea
-          value={input}
-          rows={3}
-          onChange={handleChange}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-              e.preventDefault();
-              send();
+        {showSkills ? (
+          <div className="SkillPicker">
+            {skills.length === 0
+              ? <span className="SkillEmpty">No skills available</span>
+              : skills.map(skill => (
+                  <button key={skill} className="SkillChip" onClick={() => handleSkillClick(skill)}>
+                    /{skill}
+                  </button>
+                ))
             }
-          }}
-          placeholder={`Message ${memberName}...`}
-        />
-        <button onClick={send} disabled={!input.trim()}>
-          <FiSend />
-        </button>
+          </div>
+        ) : (
+          <textarea
+            ref={textareaRef}
+            value={input}
+            onChange={handleChange}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                e.preventDefault();
+                send();
+              }
+            }}
+            placeholder={`Message ${memberName}...`}
+          />
+        )}
+        {showSkills ? (
+          <button className="CloseBtn" onClick={() => setShowSkills(false)}>
+            <FiX />
+          </button>
+        ) : hasText ? (
+          <button onClick={send}>
+            <FiSend />
+          </button>
+        ) : (
+          <button onClick={() => setShowSkills(true)}>
+            <FiZap />
+          </button>
+        )}
       </div>
     </div>
   );
@@ -111,6 +162,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [copied, setCopied] = useState<Record<number, boolean>>({});
   const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
   const [showLog, setShowLog] = useState<Record<string, boolean>>({});
+  const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstLoad = useRef(true);
@@ -345,7 +397,33 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 <div className="RequesterName">{m.requester}</div>
               )}
               <div className={`Text ${renderMd[i] !== false ? "markdown-enabled" : ""}`}>
-                {renderMd[i] !== false ? <ReactMarkdown remarkPlugins={[remarkGfm]}>{m.text}</ReactMarkdown> : m.text}
+                {renderMd[i] !== false ? (
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      img: ({ src, alt }) => {
+                        const resolved = src?.startsWith("http")
+                          ? src
+                          : `/api/members/${id}/files-raw/${src}`;
+                        const imgKey = `${i}-${src}`;
+                        const filename = src?.split("/").pop() || "image";
+                        if (i >= messages.length - 5 || expandedImages.has(imgKey)) {
+                          return <img src={resolved} alt={alt || ""} className="InlineImage" />;
+                        }
+                        return (
+                          <button
+                            className="ShowImageBtn"
+                            onClick={() => setExpandedImages(prev => new Set([...prev, imgKey]))}
+                          >
+                            Show {filename}
+                          </button>
+                        );
+                      }
+                    }}
+                  >
+                    {m.text}
+                  </ReactMarkdown>
+                ) : m.text}
               </div>
               <div className="MetaRow">
                 <MessageTime date={m.type === "response" ? m.time : m.requestTime} />

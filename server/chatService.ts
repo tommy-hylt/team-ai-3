@@ -50,6 +50,11 @@ export async function getRequest(memberName: string, requestId: string) {
   return requests.find(r => r.id === requestId);
 }
 
+export async function hasMemberRunningRequest(memberName: string): Promise<boolean> {
+  const requests = await readJson<Request[]>(memberName, "requests.json") || [];
+  return requests.some(r => r.status === "running");
+}
+
 export async function clearChatHistory(memberName: string) {
   await writeJson(memberName, "requests.json", []);
   await writeJson(memberName, "responses.json", []);

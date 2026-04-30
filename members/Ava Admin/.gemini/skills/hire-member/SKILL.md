@@ -29,26 +29,20 @@ Returns the created member details object.
 |---|---|---|---|
 | `name` | Yes | — | Display name, also used as the folder name. Use `"FirstName Role"` format (e.g. `"Yuki Tutor"`). |
 | `description` | No | `""` | One-line summary of the member's role, shown in the UI. |
-| `agents` | No | `["gemini-2.5-flash"]` | AI model(s) to power this member. See agent guide below. |
+| `agents` | No | — | AI model(s) to power this member. Always choose based on the member's role — see Agent Selection below. |
 | `teams` | No | `["General"]` | Team(s) for UI grouping (e.g. `["Dev"]`, `["HR", "General"]`). |
 | `character` | No | `""` | Full content of `CHARACTER.md` — personality, role, responsibilities, behaviour instructions. |
 | `memory` | No | `""` | Initial content of `MEMORY.md`. Typically left empty on hire. |
 
-## Agent Selection Guide
+## Agent Selection
 
-| Agent | Best for |
-|---|---|
-| `gemini-2.5-flash` | Default. Fast and capable. Good for most general-purpose members. |
-| `gemini-2.5-pro` | Complex reasoning, research, long-context analysis. |
-| `gemini-2.0-flash` | Lightweight tasks, high-frequency routines. |
-| `claude-sonnet` | Nuanced writing, instruction-following, chat-heavy roles. |
-| `claude-opus` | Senior or complex roles requiring deep reasoning. |
-| `claude-haiku` | Simple, fast, repetitive tasks. |
-| `codex-gpt-5.3-codex` | Coding-focused roles (programmer, code reviewer). |
-| `codex-gpt-5.2` | General coding with broader knowledge. |
-| `codex-gpt-5.1-codex-mini` | Lightweight coding tasks. |
+Available agents are discovered at runtime. You must list the `agents/` folder (located at `../../agents/` relative to the workspace root) to find currently supported models.
 
-Multiple agents can be listed — the server uses the first available.
+Each agent folder contains a `DESCRIPTION.md` explaining its strengths and best-use cases.
+
+Always pick the agent that best fits the member's role and responsibilities. Never fall back to a default — read the descriptions and make an informed choice.
+
+Multiple agents can be listed in the `agents` field — the server uses the first available one that is currently configured.
 
 ## Name Format
 
@@ -63,10 +57,14 @@ If neither is provided, choose both a name and position that fit the described r
 
 ## Workflow
 
-1. Gather details from the user's request: name, role, teams, agent
-2. List the members directory (`../../members/` relative to the skill folder, or check `GET http://localhost:8699/api/members`) to get all existing member names
-3. If filling in a first name, ensure it does not match the first name of any existing member (case-insensitive). Pick a different name if there is a clash
-4. If the name is missing a first name or position (or both), fill in suitable values following the Name Format above — clash-free
-5. Compose the `character` field — describe who they are, their responsibilities, communication style, and any behavioural constraints
-6. Call the API
-7. Report the created member's name (including any filled-in parts), agent, and teams to the user
+1. **Mandatory Step:** Explicitly re-read the project's `agents` folder (located at `../../agents/` relative to the workspace root or equivalent path) on every run to verify current agent availability.
+   - List the directory to find available agent names (folder names).
+   - Read `DESCRIPTION.md` within the chosen agent's folder if more context on its capabilities is needed.
+   - Do not rely on previously seen or cached agent lists, as availability changes frequently.
+2. Gather details from the user's request: name, role, teams, agent
+3. List the members directory (`../../members/` relative to the skill folder, or check `GET http://localhost:8699/api/members`) to get all existing member names
+4. If filling in a first name, ensure it does not match the first name of any existing member (case-insensitive). Pick a different name if there is a clash
+5. If the name is missing a first name or position (or both), fill in suitable values following the Name Format above — clash-free
+6. Compose the `character` field — describe who they are, their responsibilities, communication style, and any behavioural constraints
+7. Call the API
+8. Report the created member's name (including any filled-in parts), agent, and teams to the user

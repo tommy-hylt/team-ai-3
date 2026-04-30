@@ -13,6 +13,7 @@ interface MemberListProps {
 export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberListProps) {
   const { members, selectedMember, loading } = useContext(MemberContext);
   const navigate = useNavigate();
+  const [runningStates, setRunningStates] = useState<Record<string, boolean>>({});
   const [bannerExpanded, setBannerExpanded] = useState<boolean>(() => {
     const saved = localStorage.getItem("notificationBannerExpanded");
     return saved === null ? true : saved === "true";
@@ -21,6 +22,14 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
     const saved = localStorage.getItem("expandedTeams");
     return saved ? JSON.parse(saved) : { "General": true };
   });
+
+  // Fetch running states on mount
+  useEffect(() => {
+    fetch("/api/members/running")
+      .then(r => r.json())
+      .then(data => setRunningStates(data))
+      .catch(() => {});
+  }, []);
 
   // Group members by team
   const teamsMap = useMemo(() => {
@@ -124,23 +133,32 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
         </div>
       )}
       <div className="Content">
-        {teamOrder.map((team, index) => (
+        {teamOrder.map((team, index) => {
+          const teamMembers = teamsMap[team] || [];
+          const teamHasRunning = teamMembers.some(m => runningStates[m.id]);
+          const showDotOnHeader = !expandedTeams[team] && teamHasRunning;
+          return (
           <div key={team} className="TeamSection">
             <div className="TeamHeader" onClick={() => toggleTeam(team)}>
               <div className="TeamExpander">
                 {expandedTeams[team] ? <FiChevronDown /> : <FiChevronRight />}
                 <span className="TeamName">{team}</span>
+                {showDotOnHeader && (
+                  <span className="LoadingDots">
+                    <span /><span /><span />
+                  </span>
+                )}
               </div>
               <div className="TeamActions">
-                <button 
-                  className="OrderButton" 
+                <button
+                  className="OrderButton"
                   disabled={index === 0}
                   onClick={(e) => moveTeam(index, 'up', e)}
                 >
                   <FiArrowUp />
                 </button>
-                <button 
-                  className="OrderButton" 
+                <button
+                  className="OrderButton"
                   disabled={index === teamOrder.length - 1}
                   onClick={(e) => moveTeam(index, 'down', e)}
                 >
@@ -159,7 +177,14 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
                   >
                     <div className="Info">
                       <div className="NameRow">
-                        <span className="Name">{member.name}</span>
+                        <div className="NameGroup">
+                          <span className="Name">{member.name}</span>
+                          {runningStates[member.id] && (
+                            <span className="LoadingDots">
+                              <span /><span /><span />
+                            </span>
+                          )}
+                        </div>
                         {member.agents.length > 0 && (
                           <span className="AgentTag">{member.agents[0]}</span>
                         )}
@@ -171,7 +196,8 @@ export function MemberList({ onSelect, subscribed = true, onSubscribe }: MemberL
               </div>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
