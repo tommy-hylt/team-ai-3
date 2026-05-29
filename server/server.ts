@@ -5,17 +5,19 @@ import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
 import cors from "cors";
+import multer from "multer";
 import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMember, deleteMember } from "./memberService.ts";
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest, hasMemberRunningRequest } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess, spawnWorker } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
-import { listFiles, getFile, getFileBuffer, saveFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
+import { listFiles, getFile, getFileBuffer, saveFile, saveBinaryFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 import { getRoutines, saveRoutines, startRoutineLoop, type Routine } from "./routineService.ts";
 import { getTodos, saveTodos, startTodoLoop } from "./todoService.ts";
 
 const app = express();
+const upload = multer({ storage: multer.memoryStorage() });
 const port = 8699;
 
 initPush().then(() => console.log("[server] Push notifications initialized"));
@@ -370,6 +372,18 @@ app.post("/api/members/:id/files", async (req, res) => {
   if (!path) return res.status(400).json({ error: "path is required" });
   await saveFile(req.params.id, path, content || "");
   res.json({ ok: true });
+});
+
+app.post("/api/members/:id/files/upload", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const filePath = req.body.path;
+    if (!filePath) return res.status(400).json({ error: "path is required" });
+    await saveBinaryFile(req.params.id, filePath, req.file.buffer);
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ error: (error as any).message });
+  }
 });
 
 app.delete("/api/members/:id/files/*", async (req, res) => {

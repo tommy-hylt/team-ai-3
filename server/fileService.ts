@@ -56,6 +56,18 @@ export async function saveFile(memberId: string, relativePath: string, content: 
   }
 }
 
+/** Save binary file content (Buffer), with skill sync across vendor folders */
+export async function saveBinaryFile(memberId: string, relativePath: string, buffer: Buffer) {
+  const paths = getSkillSyncPaths(relativePath);
+  const base = memberDir(memberId);
+
+  for (const p of paths) {
+    const fullPath = join(base, p);
+    await mkdir(dirname(fullPath), { recursive: true });
+    await writeFile(fullPath, buffer);
+  }
+}
+
 /** Delete file or folder, with skill sync across vendor folders */
 export async function deleteFile(memberId: string, relativePath: string) {
   const paths = getSkillSyncPaths(relativePath);

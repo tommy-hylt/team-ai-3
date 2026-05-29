@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { FiChevronLeft, FiFolder, FiFile, FiTrash2, FiPlus } from "react-icons/fi";
+import { FiChevronLeft, FiFolder, FiFile, FiTrash2, FiPlus, FiUpload } from "react-icons/fi";
 import "./SkillList.css";
 
 interface FileEntry {
@@ -18,6 +18,7 @@ export function MemberFileBrowser() {
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
   const [showNew, setShowNew] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadFiles();
@@ -64,6 +65,18 @@ export function MemberFileBrowser() {
     loadFiles();
   }
 
+  async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file || !id) return;
+    const fullPath = currentPath ? `${currentPath}/${file.name}` : file.name;
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("path", fullPath);
+    await fetch(`/api/members/${id}/files/upload`, { method: "POST", body: formData });
+    e.target.value = "";
+    loadFiles();
+  }
+
   async function handleCreate() {
     const name = newName.trim();
     if (!name || !id) return;
@@ -85,7 +98,16 @@ export function MemberFileBrowser() {
           <FiChevronLeft />
         </button>
         <h2>{currentPath || "Files"}</h2>
-        <button className="AddButton" onClick={() => setShowNew(true)}>
+        <input
+          ref={fileInputRef}
+          type="file"
+          style={{ display: "none" }}
+          onChange={handleUpload}
+        />
+        <button className="AddButton" title="Upload file" onClick={() => fileInputRef.current?.click()}>
+          <FiUpload />
+        </button>
+        <button className="AddButton" title="New file" onClick={() => setShowNew(true)}>
           <FiPlus />
         </button>
       </div>
