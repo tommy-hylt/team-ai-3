@@ -345,6 +345,9 @@ app.get("/api/members/:id/skills/:skillName/files/:fileName/sync", async (req, r
   res.json(results);
 });
 
+const __serverDir = path.dirname(fileURLToPath(import.meta.url));
+const MEMBERS_DIR = path.resolve(__serverDir, "../members");
+
 const FILE_MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
   gif: "image/gif", webp: "image/webp", svg: "image/svg+xml",
@@ -367,6 +370,31 @@ app.get("/api/members/:id/files-raw/*", async (req, res) => {
   const data = await getFileBuffer(req.params.id, relativePath);
   if (!data) return res.status(404).json({ error: "File not found" });
   const ext = relativePath.split(".").pop()?.toLowerCase() || "";
+  res.setHeader("Content-Type", FILE_MIME[ext] || "application/octet-stream");
+  res.send(data);
+});
+
+// Serve absolute member file paths linked from agent messages (e.g. /C:/Users/.../members/...)
+app.get(/^\/[A-Za-z]:\//, async (req, res) => {
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(req.path);
+  } catch {
+    return res.status(400).json({ error: "Invalid path" });
+  }
+  // Strip leading slash to recover the Windows absolute path (C:/...)
+  const resolved = path.resolve(decoded.slice(1));
+  // Security: must be within the members directory
+  if (!resolved.startsWith(MEMBERS_DIR + path.sep)) {
+    return res.status(403).json({ error: "Access denied" });
+  }
+  let data: Buffer;
+  try {
+    data = await fs.promises.readFile(resolved);
+  } catch {
+    return res.status(404).json({ error: "File not found" });
+  }
+  const ext = resolved.split(".").pop()?.toLowerCase() || "";
   res.setHeader("Content-Type", FILE_MIME[ext] || "application/octet-stream");
   res.send(data);
 });
