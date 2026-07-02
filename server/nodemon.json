@@ -1,0 +1,18 @@
+{
+  "exec": "tsx server.ts",
+  "ext": "ts",
+  "watch": ["."],
+  "ignore": [
+    "../members",
+    "../web",
+    "../agents",
+    "processes.json",
+    "subscriptions.json",
+    "vapid.json",
+    "logs",
+    "out.log",
+    "err.log",
+    "server.log",
+    "agent_raw_output.log"
+  ]
+}

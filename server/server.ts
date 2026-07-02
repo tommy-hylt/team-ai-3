@@ -345,10 +345,21 @@ app.get("/api/members/:id/skills/:skillName/files/:fileName/sync", async (req, r
   res.json(results);
 });
 
-const IMAGE_MIME: Record<string, string> = {
+const FILE_MIME: Record<string, string> = {
   png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg",
   gif: "image/gif", webp: "image/webp", svg: "image/svg+xml",
   bmp: "image/bmp", ico: "image/x-icon",
+  txt: "text/plain; charset=utf-8", md: "text/plain; charset=utf-8",
+  json: "application/json; charset=utf-8", jsonc: "text/plain; charset=utf-8",
+  ts: "text/plain; charset=utf-8", tsx: "text/plain; charset=utf-8",
+  js: "text/javascript; charset=utf-8", jsx: "text/javascript; charset=utf-8",
+  css: "text/css; charset=utf-8", html: "text/html; charset=utf-8",
+  xml: "text/xml; charset=utf-8", yaml: "text/yaml; charset=utf-8",
+  yml: "text/yaml; charset=utf-8", csv: "text/csv; charset=utf-8",
+  sh: "text/plain; charset=utf-8", py: "text/plain; charset=utf-8",
+  rb: "text/plain; charset=utf-8", go: "text/plain; charset=utf-8",
+  rs: "text/plain; charset=utf-8", toml: "text/plain; charset=utf-8",
+  env: "text/plain; charset=utf-8", log: "text/plain; charset=utf-8",
 };
 
 app.get("/api/members/:id/files-raw/*", async (req, res) => {
@@ -356,7 +367,7 @@ app.get("/api/members/:id/files-raw/*", async (req, res) => {
   const data = await getFileBuffer(req.params.id, relativePath);
   if (!data) return res.status(404).json({ error: "File not found" });
   const ext = relativePath.split(".").pop()?.toLowerCase() || "";
-  res.setHeader("Content-Type", IMAGE_MIME[ext] || "application/octet-stream");
+  res.setHeader("Content-Type", FILE_MIME[ext] || "application/octet-stream");
   res.send(data);
 });
 

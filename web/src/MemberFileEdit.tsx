@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { FiChevronLeft, FiTrash2, FiEdit2, FiMoreHorizontal } from "react-icons/fi";
+import { FiChevronLeft, FiTrash2, FiEdit2, FiMoreHorizontal, FiExternalLink } from "react-icons/fi";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./SkillFileEdit.css";
@@ -85,11 +85,23 @@ export function MemberFileEdit() {
         {showFullPath ? (
           <h2 className="FullPathTitle">{rootPath}/{filePath}</h2>
         ) : (
-          <h2>{filePath.split("/").pop()} <span className="SkillPath">{filePath.split("/").slice(0, -1).join("/")}/</span></h2>
+          <h2>
+            <span className="FileName">{filePath.split("/").pop()}</span>
+            {filePath.includes("/") && <span className="SkillPath">{filePath.split("/").slice(0, -1).join("/")}/</span>}
+          </h2>
         )}
         <button className="ActionButton" title="Toggle full path" onClick={() => setShowFullPath(v => !v)}>
           <FiMoreHorizontal />
         </button>
+        <a
+          className="ActionButton"
+          title="View raw"
+          href={`/api/members/${id}/files-raw/${filePath.split("/").map(encodeURIComponent).join("/")}`}
+          target="_blank"
+          rel="noreferrer"
+        >
+          <FiExternalLink />
+        </a>
         {!isImage && !isEditing && (
           <button className="ActionButton" onClick={() => setIsEditing(true)}>
             <FiEdit2 />
