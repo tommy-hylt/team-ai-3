@@ -1,6 +1,6 @@
 ---
 name: sync-skills
-description: Sync skill folders across all members — ensures .claude/skills/, .gemini/skills/, and .agents/skills/ are identical for each member. Uses .claude/skills/ as source of truth.
+description: Sync skill folders across all members — ensures .claude/skills/, .gemini/skills/, .agents/skills/, and .grok/skills/ are identical for each member. Uses the latest modified version as the source of truth.
 ---
 
 When called, run the sync script to housekeep skill folders for all members.
@@ -15,13 +15,13 @@ node ".claude/skills/sync-skills/sync.js"
 
 This script:
 - Loops over every member folder in `../` (siblings of your working directory)
-- For each member that has at least one skills folder, checks whether `.claude/skills/`, `.gemini/skills/`, and `.agents/skills/` contain identical skills
+- For each member that has at least one skills folder, checks whether `.claude/skills/`, `.gemini/skills/`, `.agents/skills/`, and `.grok/skills/` contain identical skills
 - Where they differ, copies missing or outdated skills from the source of truth folder to the others
 
 ### 2. Review the output
 
 The script prints a per-member, per-skill report:
-- `OK` — skill is already in sync across all 3 folders
+- `OK` — skill is already in sync across all 4 folders
 - `Synced` — skill was copied from source of truth to one or more out-of-sync folders
 - Members with no skills folders at all are skipped silently
 

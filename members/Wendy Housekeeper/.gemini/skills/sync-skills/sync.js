@@ -13,7 +13,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const FOLDERS = ['.claude', '.gemini', '.agents'];
+const FOLDERS = ['.claude', '.gemini', '.agents', '.grok'];
 
 // __dirname = <members>/<MemberName>/.claude/skills/housekeep-skills
 // memberRoot = <members>/<MemberName>  (go up 3 levels)
@@ -50,6 +50,18 @@ function newestMtime(dirPath) {
     if (t > latest) latest = t;
   }
   return latest;
+}
+
+/** Recursively count files under dirPath. */
+function countFiles(dirPath) {
+  if (!fs.existsSync(dirPath)) return 0;
+  const stat = fs.statSync(dirPath);
+  if (!stat.isDirectory()) return 1;
+  let count = 0;
+  for (const name of fs.readdirSync(dirPath)) {
+    count += countFiles(path.join(dirPath, name));
+  }
+  return count;
 }
 
 /**
@@ -102,13 +114,20 @@ for (const memberName of memberEntries) {
   console.log(`\n[${memberName}]`);
 
   for (const skillName of [...allSkills].sort()) {
-    // Paths for this skill in each of the 3 folders
+    // Paths for this skill in each of the 4 folders
     const skillPaths = FOLDERS.map(f => path.join(memberRoot, f, 'skills', skillName));
 
-    // Pick source of truth: the existing folder with the newest file mtime
+    // Pick source of truth: the existing folder with the newest file mtime.
+    // If tie, pick the one with more files.
     const existing = skillPaths.filter(p => fs.existsSync(p));
     if (existing.length === 0) continue; // shouldn't happen, but guard anyway
-    const source = existing.reduce((a, b) => newestMtime(a) >= newestMtime(b) ? a : b);
+    const source = existing.reduce((a, b) => {
+      const mA = newestMtime(a);
+      const mB = newestMtime(b);
+      if (mA > mB) return a;
+      if (mB > mA) return b;
+      return countFiles(a) >= countFiles(b) ? a : b;
+    });
 
     const sourceHash = hashDir(source);
     const outOfSync = skillPaths.filter(p => hashDir(p) !== sourceHash);
@@ -118,6 +137,7 @@ for (const memberName of memberEntries) {
       totalOk++;
     } else {
       for (const dest of outOfSync) {
+        fs.rmSync(dest, { recursive: true, force: true });
         copyDir(source, dest);
         console.log(`  Synced ${skillName}  →  ${path.relative(memberRoot, dest)}`);
       }

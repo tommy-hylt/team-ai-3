@@ -4,7 +4,7 @@ import { fileURLToPath } from "url";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const MEMBERS_DIR = join(__dirname, "../members");
-const VENDOR_FOLDERS = [".claude", ".gemini", ".agents"];
+const VENDOR_FOLDERS = [".claude", ".gemini", ".agents", ".grok"];
 
 function memberDir(memberId: string) {
   return join(MEMBERS_DIR, memberId);

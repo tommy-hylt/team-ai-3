@@ -55,10 +55,11 @@ export function MemberNew() {
           fetch(`/api/members/${cloneId}/files?path=.claude/skills`).then(r => r.json()),
           fetch(`/api/members/${cloneId}/files?path=.gemini/skills`).then(r => r.json()),
           fetch(`/api/members/${cloneId}/files?path=.agents/skills`).then(r => r.json()),
-        ]).then(([claude, gemini, agent]) => {
+          fetch(`/api/members/${cloneId}/files?path=.grok/skills`).then(r => r.json()),
+        ]).then(([claude, gemini, agent, grok]) => {
           const getDirs = (entries: any[]) =>
             (Array.isArray(entries) ? entries : []).filter((e: any) => e.type === "directory").map((e: any) => e.name);
-          const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini), ...getDirs(agent)])];
+          const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini), ...getDirs(agent), ...getDirs(grok)])];
           allNames.sort();
           setAvailableSkills(allNames);
           setSelectedSkills(allNames); // Default select all

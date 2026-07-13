@@ -26,14 +26,17 @@ server/logs/
 !/members/*/member.json
 !/members/*/MEMORY.md
 
-!/members/*/.agent/
+!/members/*/.agents/
 !/members/*/.claude/
 !/members/*/.gemini/
+!/members/*/.grok/
 
-/members/*/.agent/*
+/members/*/.agents/*
 /members/*/.claude/*
 /members/*/.gemini/*
+/members/*/.grok/*
 
-!/members/*/.agent/skills/
+!/members/*/.agents/skills/
 !/members/*/.claude/skills/
 !/members/*/.gemini/skills/
+!/members/*/.grok/skills/
