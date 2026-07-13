@@ -1,0 +1,22 @@
+{
+  "name": "grok-composer-2.5-fast",
+  "executable": "grok",
+  "args": [
+    {
+      "type": "basic",
+      "parts": [
+        "-m",
+        "grok-composer-2.5-fast",
+        "--always-approve",
+        "--output-format",
+        "streaming-json"
+      ]
+    },
+    {
+      "type": "resume",
+      "parts": [
+        "-r"
+      ]
+    }
+  ]
+}

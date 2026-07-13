@@ -311,11 +311,24 @@ async function invokeAgent(
     }
   }
 
+  // grok's headless mode needs the prompt as a file (via --prompt-file) rather than
+  // stdin — piping to stdin leaves it stuck in the interactive TUI, and passing the
+  // multi-line prompt as a "-p" argument breaks under the shell:true spawn below
+  // (embedded newlines get split into separate argv tokens by cmd.exe).
+  const isGrok = config.executable === "grok";
+  if (isGrok) {
+    const promptFilePath = join(__dirname, "logs", `${requestId}-grok-prompt.txt`);
+    writeFileSync(promptFilePath, prompt, "utf-8");
+    // shell:true on Windows does not auto-quote args containing spaces (this repo's
+    // own path has one: "260204 TeamAI2") — quote explicitly or cmd.exe splits it.
+    finalArgs.push("--prompt-file", `"${promptFilePath}"`);
+  }
+
   console.log(`[invokeAgent] Executing: ${config.executable} ${finalArgs.join(' ')}`);
   console.log(`[invokeAgent] prompt length=${prompt.length} chars, resume=${!!sessionId}`);
 
   const startTime = Date.now();
-  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, prompt);
+  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, isGrok ? undefined : prompt);
   const elapsed = Date.now() - startTime;
   console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result?.text?.length || 0}`);
 
@@ -376,6 +389,7 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     if (stdinData) {
       console.log(`[executeAgent] Writing ${stdinData.length} chars to stdin`);
+      proc.stdin.on("error", () => {}); // suppress EPIPE: child may close stdin before server ends it
       proc.stdin.write(stdinData);
       proc.stdin.end();
     }
@@ -490,6 +504,12 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
           assistantMsgs.length = 0;
         } else if (json.role === "assistant" && typeof json.content === "string") {
           assistantMsgs.push(json.content);
+        } else if (json.type === "text" && typeof json.data === "string") {
+          // Grok streaming-json text chunks
+          assistantMsgs.push(json.data);
+        } else if (json.type === "end" && json.sessionId) {
+          // Grok streaming-json end marker with session ID
+          collectedSessionId = json.sessionId;
         }
       } catch { }
     }

@@ -1,0 +1,20 @@
+{
+  "name": "agy-3.1-flash-lite",
+  "executable": "agy",
+  "args": [
+    {
+      "type": "basic",
+      "parts": [
+        "--model",
+        "gemini-3.1-flash-lite",
+        "--dangerously-skip-permissions"
+      ]
+    },
+    {
+      "type": "resume",
+      "parts": [
+        "--conversation"
+      ]
+    }
+  ]
+}

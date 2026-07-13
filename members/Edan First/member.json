@@ -2,8 +2,8 @@
   "name": "Edan First",
   "description": "First of the kind",
   "agents": [
-    "claude-sonnet",
-    "gemini-3.1-pro-preview"
+    "claude-sonnet-5",
+    "agy-3.1-pro"
   ],
   "teams": [
     "General"

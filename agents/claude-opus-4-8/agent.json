@@ -1,12 +1,12 @@
 {
-  "name": "claude-haiku",
+  "name": "claude-opus-4-8",
   "executable": "claude",
   "args": [
     {
       "type": "basic",
       "parts": [
         "--model",
-        "haiku",
+        "claude-opus-4-8",
         "--dangerously-skip-permissions",
         "--print",
         "--verbose",

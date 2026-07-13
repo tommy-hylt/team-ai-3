@@ -1,12 +1,12 @@
 {
-  "name": "claude-sonnet",
+  "name": "claude-fable-5",
   "executable": "claude",
   "args": [
     {
       "type": "basic",
       "parts": [
         "--model",
-        "sonnet",
+        "claude-fable-5",
         "--dangerously-skip-permissions",
         "--print",
         "--verbose",

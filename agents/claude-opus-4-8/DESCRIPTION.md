@@ -1,7 +1,7 @@
-# claude-opus
+# claude-opus-4-8
 
 **Provider:** Anthropic (via Claude Code CLI)
-**Model:** claude-3-opus-latest (or similar)
+**Model:** claude-opus-4-8
 
 **Use this agent when:**
 - The task is genuinely hard (architecture, tricky bugs, deep reasoning).

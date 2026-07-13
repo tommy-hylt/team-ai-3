@@ -1,7 +1,7 @@
-# claude-sonnet
+# claude-sonnet-5
 
 **Provider:** Anthropic (via Claude Code CLI)
-**Model:** claude-3-5-sonnet-latest (or similar)
+**Model:** claude-sonnet-5
 
 **Use this agent when:**
 - You need a strong balance of reasoning, coding ability, and speed.

@@ -1,7 +1,7 @@
-# claude-haiku
+# claude-haiku-4-5
 
 **Provider:** Anthropic (via Claude Code CLI)
-**Model:** claude-3-5-haiku-latest (or similar)
+**Model:** claude-haiku-4-5-20251001
 
 **Use this agent when you need:**
 - The lowest cost / highest throughput Claude option.

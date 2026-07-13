@@ -20,23 +20,24 @@ Minimal schema:
 
 ```json
 {
-  "name": "gemini-2.5-flash",
-  "executable": "gemini",
+  "name": "agy-2.5-flash",
+  "executable": "agy",
   "args": [
-    { "type": "basic", "parts": ["-m", "gemini-2.5-flash", "-y", "-o", "json"] },
-    { "type": "resume", "parts": ["-r"] }
+    { "type": "basic", "parts": ["--model", "gemini-2.5-flash", "--dangerously-skip-permissions"] },
+    { "type": "resume", "parts": ["--conversation"] }
   ]
 }
 ```
 
-- `executable`: The command-line tool to run (e.g., `claude`, `gemini`, `codex`).
+- `executable`: The command-line tool to run (e.g., `claude`, `agy`, `grok`, `codex`).
 - `args`: An array of parts conditionally included based on session history.
     - `type: "basic"`: Always included.
     - `type: "resume"`: Included when a stored session ID exists, to resume a conversation.
 - The prompt is delivered via a stdin pipe to the executable.
 
-## Available Agent Families (9 total)
+## Available Agent Families
 
-- **Claude**: `claude-haiku`, `claude-sonnet`, `claude-opus`
-- **Gemini**: `gemini-2.0-flash`, `gemini-2.5-flash`, `gemini-2.5-pro`
-- **Codex (OpenAI)**: `codex-gpt-5.2`, `codex-gpt-5.3-codex`, `codex-gpt-5.3-codex-spark`
+- **Claude**: `claude-haiku-4-5`, `claude-sonnet-5`, `claude-opus-4-8`, `claude-fable-5`
+- **Agy (Google Gemini successor)**: `agy-3.1-flash-lite`, `agy-3.5-flash`, `agy-3.1-pro`
+- **Grok (xAI)**: `grok-composer-2.5-fast`, `grok-4.5`
+- **Codex (OpenAI)**: `codex-gpt-5.6-luna`, `codex-gpt-5.6-terra`, `codex-gpt-5.6-sol`

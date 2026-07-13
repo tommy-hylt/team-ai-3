@@ -1,0 +1,24 @@
+{
+  "name": "claude-sonnet-5",
+  "executable": "claude",
+  "args": [
+    {
+      "type": "basic",
+      "parts": [
+        "--model",
+        "claude-sonnet-5",
+        "--dangerously-skip-permissions",
+        "--print",
+        "--verbose",
+        "--output-format",
+        "stream-json"
+      ]
+    },
+    {
+      "type": "resume",
+      "parts": [
+        "-r"
+      ]
+    }
+  ]
+}
