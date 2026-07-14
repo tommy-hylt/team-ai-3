@@ -5,6 +5,18 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import "./SkillFileEdit.css";
 
+// Resolves a markdown image path (relative to the folder containing the
+// currently viewed file) into the folder-relative path the files-raw API expects.
+function resolveRelativePath(basePath: string, relPath: string): string {
+  const stack = basePath.split("/").slice(0, -1);
+  for (const seg of relPath.split("/")) {
+    if (seg === "" || seg === ".") continue;
+    if (seg === "..") stack.pop();
+    else stack.push(seg);
+  }
+  return stack.join("/");
+}
+
 export function MemberFileEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -126,7 +138,24 @@ export function MemberFileEdit() {
         ) : (
           <div className={`ReadMode${isMarkdown ? " markdown-enabled" : ""}`}>
             {isMarkdown
-              ? <div className="MarkdownBody"><ReactMarkdown remarkPlugins={[remarkGfm]}>{value || "(Empty file)"}</ReactMarkdown></div>
+              ? (
+                <div className="MarkdownBody">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      img: ({ src, alt }) => {
+                        if (!src) return null;
+                        const resolved = /^(https?:)?\/\//.test(src)
+                          ? src
+                          : `/api/members/${id}/files-raw/${resolveRelativePath(filePath, src).split("/").map(encodeURIComponent).join("/")}`;
+                        return <img src={resolved} alt={alt || ""} className="InlineImage" />;
+                      }
+                    }}
+                  >
+                    {value || "(Empty file)"}
+                  </ReactMarkdown>
+                </div>
+              )
               : <pre>{value || "(Empty file)"}</pre>
             }
           </div>
