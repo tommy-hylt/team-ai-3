@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
 import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck, FiZap } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MessageTime } from "./MessageTime";
 import { MessageType } from "./types";
@@ -152,6 +152,49 @@ const ChatInput = memo(function ChatInput({
   );
 });
 
+// Decides whether a markdown link href points at a file inside this member's
+// folder, and if so, what path to pass to the file viewer. Returns null when
+// the link should be left as a plain external/unrelated-path anchor:
+// - absolute Windows paths outside this member's own root
+// - anything with a URI scheme (http:, https:, mailto:, ...) — a single
+//   drive letter ("C:") is excluded since it isn't a real scheme here
+function resolveMemberFileHref(rawHref: string, rootPath: string): string | null {
+  if (!rawHref || rawHref.startsWith("#")) return null;
+
+  // react-markdown's mdast->hast conversion percent-encodes the URL (spaces
+  // become %20, etc.) before it ever reaches urlTransform/components, so
+  // decode it back before comparing against the filesystem rootPath.
+  let href = rawHref;
+  try { href = decodeURIComponent(rawHref); } catch { /* leave as-is if malformed */ }
+
+  // Absolute Windows path, with or without a leading slash: "/C:/..." or "C:/..."
+  const winMatch = href.match(/^\/?([A-Za-z]:[\\/].*)$/);
+  if (winMatch) {
+    if (!rootPath) return null;
+    const abs = winMatch[1].replace(/\\/g, "/");
+    const root = rootPath.replace(/\\/g, "/");
+    if (abs.toLowerCase() === root.toLowerCase()) return "";
+    if (abs.toLowerCase().startsWith(root.toLowerCase() + "/")) {
+      return abs.slice(root.length + 1);
+    }
+    return null; // outside this member's folder
+  }
+
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(href)) return null; // external scheme
+
+  // Relative path — chat has no "current file", so resolve against the member root
+  return href.replace(/^\.\//, "").replace(/^\//, "");
+}
+
+// react-markdown's default URL sanitizer treats "C:" as an unrecognized
+// protocol and strips it, so Windows absolute paths never reach the `a`
+// component's href. Let those through unchanged; defer everything else
+// (including any genuinely dangerous protocol) to the default sanitizer.
+function urlTransform(url: string): string {
+  if (/^\/?[A-Za-z]:[\\/]/.test(url)) return url;
+  return defaultUrlTransform(url);
+}
+
 export function Chat({ onBack }: { onBack: () => void }) {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -163,6 +206,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [logs, setLogs] = useState<Record<string, LogEntry[]>>({});
   const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set());
+  const [rootPath, setRootPath] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstLoad = useRef(true);
@@ -170,6 +214,14 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const clientId = useRef(Math.random().toString(36).substring(7));
 
   const selectedMember = members.find(m => m.id === id);
+
+  useEffect(() => {
+    if (!id) return;
+    fetch(`/api/members/${id}/rootpath`)
+      .then(res => res.json())
+      .then(data => setRootPath(data.rootPath || ""))
+      .catch(() => {});
+  }, [id]);
 
   useEffect(() => {
     if (!id) return;
@@ -400,6 +452,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 {renderMd[i] !== false ? (
                   <ReactMarkdown
                     remarkPlugins={[remarkGfm]}
+                    urlTransform={urlTransform}
                     components={{
                       img: ({ src, alt }) => {
                         const resolved = src?.startsWith("http")
@@ -417,6 +470,18 @@ export function Chat({ onBack }: { onBack: () => void }) {
                           >
                             Show {filename}
                           </button>
+                        );
+                      },
+                      a: ({ href, children }) => {
+                        const relPath = href ? resolveMemberFileHref(href, rootPath) : null;
+                        if (relPath === null) {
+                          return <a href={href} target="_blank" rel="noreferrer">{children}</a>;
+                        }
+                        const target = `/${id}/files/edit?path=${encodeURIComponent(relPath)}`;
+                        return (
+                          <a href={target} onClick={(e) => { e.preventDefault(); navigate(target); }}>
+                            {children}
+                          </a>
                         );
                       }
                     }}
