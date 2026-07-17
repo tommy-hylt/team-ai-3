@@ -429,6 +429,7 @@
     padding: 0 40px 40px;
     display: flex;
     gap: 12px;
+    min-width: 0;
     background: linear-gradient(to top, #08090a 80%, #08090a00);
     z-index: 5;
 
@@ -438,6 +439,7 @@
 
     .InputWrapper {
       flex: 1;
+      min-width: 0;
       display: flex;
       align-items: stretch;
       background-color: #0f1113;
@@ -475,6 +477,58 @@
 
       &::placeholder { color: #4b5563; }
       &:disabled { opacity: 0.5; }
+    }
+
+    .HistoryPicker {
+      flex: 1;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 8px 10px;
+      overflow-y: auto;
+      height: 90px;
+
+      &::-webkit-scrollbar { display: none; }
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+
+      .SkillEmpty {
+        color: #4b5563;
+        font-size: 13px;
+        align-self: center;
+        margin: auto 0;
+      }
+
+      .HistoryItem {
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        box-sizing: border-box;
+        text-align: left;
+        background: none;
+        border: 1px solid #2a2e35;
+        border-radius: 8px;
+        padding: 6px 10px;
+        color: #c4cad3;
+        font-size: 13.5px;
+        font-family: inherit;
+        font-weight: 400;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+        transition: 0.15s;
+        height: auto;
+
+        &:hover {
+          background-color: #0abab511;
+          border-color: #0abab533;
+          color: #e0e6ed;
+          transform: none;
+        }
+      }
     }
 
     .SkillPicker {
@@ -548,6 +602,30 @@
         &:hover {
           background-color: #2a2e35;
           color: #e0e6ed;
+          transform: none;
+        }
+      }
+    }
+
+    .ActionStack {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 48px;
+
+      .SkillBtn { flex: 3; }
+
+      .HistoryBtn {
+        flex: 1;
+        font-size: 13px;
+        background: none;
+        border: 1px solid #2a2e35;
+        color: #6b7280;
+
+        &:hover:not(:disabled) {
+          background-color: #0abab511;
+          border-color: #0abab5;
+          color: #0abab5;
           transform: none;
         }
       }

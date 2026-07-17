@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck, FiZap } from "react-icons/fi";
+import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck, FiZap, FiClock } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -38,6 +38,28 @@ function saveDraft(memberId: string, text: string) {
   localStorage.setItem("chat_drafts", JSON.stringify(drafts));
 }
 
+interface MessageHistory {
+  [memberId: string]: string[];
+}
+
+function getMessageHistory(memberId: string): string[] {
+  try {
+    const all: MessageHistory = JSON.parse(localStorage.getItem("chat_message_history") || "{}");
+    return all[memberId] || [];
+  } catch {
+    return [];
+  }
+}
+
+function saveSentMessage(memberId: string, text: string) {
+  try {
+    const all: MessageHistory = JSON.parse(localStorage.getItem("chat_message_history") || "{}");
+    const rest = (all[memberId] || []).filter(m => m !== text);
+    all[memberId] = [text, ...rest].slice(0, 5);
+    localStorage.setItem("chat_message_history", JSON.stringify(all));
+  } catch { /* ignore quota/serialization errors */ }
+}
+
 interface LogEntry {
   filename: string;
   content: string;
@@ -58,6 +80,8 @@ const ChatInput = memo(function ChatInput({
   const [input, setInput] = useState(initialValue);
   const [showSkills, setShowSkills] = useState(false);
   const [skills, setSkills] = useState<string[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [history, setHistory] = useState<string[]>(() => getMessageHistory(memberId));
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const saveDraftTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -91,6 +115,8 @@ const ChatInput = memo(function ChatInput({
     if (!text) return;
     setInput("");
     if (saveDraftTimer.current) clearTimeout(saveDraftTimer.current);
+    saveSentMessage(memberId, text);
+    setHistory(getMessageHistory(memberId));
     onSend(text);
   }
 
@@ -101,6 +127,15 @@ const ChatInput = memo(function ChatInput({
     setTimeout(() => {
       textareaRef.current?.focus();
       textareaRef.current?.setSelectionRange(newValue.length, newValue.length);
+    }, 0);
+  }
+
+  function handleHistoryClick(text: string) {
+    setInput(text);
+    setShowHistory(false);
+    setTimeout(() => {
+      textareaRef.current?.focus();
+      textareaRef.current?.setSelectionRange(text.length, text.length);
     }, 0);
   }
 
@@ -120,6 +155,17 @@ const ChatInput = memo(function ChatInput({
                 ))
             }
           </div>
+        ) : showHistory ? (
+          <div className="HistoryPicker">
+            {history.length === 0
+              ? <span className="SkillEmpty">No message history yet</span>
+              : history.map((msg, i) => (
+                  <button key={i} className="HistoryItem" onClick={() => handleHistoryClick(msg)}>
+                    {msg}
+                  </button>
+                ))
+            }
+          </div>
         ) : (
           <textarea
             ref={textareaRef}
@@ -134,8 +180,8 @@ const ChatInput = memo(function ChatInput({
             placeholder={`Message ${memberName}...`}
           />
         )}
-        {showSkills ? (
-          <button className="CloseBtn" onClick={() => setShowSkills(false)}>
+        {showSkills || showHistory ? (
+          <button className="CloseBtn" onClick={() => { setShowSkills(false); setShowHistory(false); }}>
             <FiX />
           </button>
         ) : hasText ? (
@@ -143,9 +189,14 @@ const ChatInput = memo(function ChatInput({
             <FiSend />
           </button>
         ) : (
-          <button onClick={() => setShowSkills(true)}>
-            <FiZap />
-          </button>
+          <div className="ActionStack">
+            <button className="SkillBtn" onClick={() => setShowSkills(true)}>
+              <FiZap />
+            </button>
+            <button className="HistoryBtn" onClick={() => setShowHistory(true)}>
+              <FiClock />
+            </button>
+          </div>
         )}
       </div>
     </div>
