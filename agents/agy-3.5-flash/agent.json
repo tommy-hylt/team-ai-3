@@ -6,7 +6,7 @@
       "type": "basic",
       "parts": [
         "--model",
-        "gemini-3.5-flash",
+        "Gemini 3.5 Flash (Medium)",
         "--dangerously-skip-permissions"
       ]
     },

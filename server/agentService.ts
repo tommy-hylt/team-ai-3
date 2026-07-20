@@ -324,11 +324,21 @@ async function invokeAgent(
     finalArgs.push("--prompt-file", `"${promptFilePath}"`);
   }
 
+  // agy also requires the prompt as a "--print <text>" argument, not stdin, and has
+  // no --prompt-file equivalent. Unlike grok, agy.exe is a real executable (not an
+  // npm .cmd shim), so it can be spawned with shell:false — Node then quotes the
+  // argv array itself via CreateProcess, which handles embedded spaces/newlines
+  // correctly, sidestepping the cmd.exe splitting problem entirely.
+  const isAgy = config.executable === "agy";
+  if (isAgy) {
+    finalArgs.push("--print", prompt);
+  }
+
   console.log(`[invokeAgent] Executing: ${config.executable} ${finalArgs.join(' ')}`);
   console.log(`[invokeAgent] prompt length=${prompt.length} chars, resume=${!!sessionId}`);
 
   const startTime = Date.now();
-  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, isGrok ? undefined : prompt);
+  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, (isGrok || isAgy) ? undefined : prompt, !isAgy);
   const elapsed = Date.now() - startTime;
   console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result?.text?.length || 0}`);
 
@@ -368,13 +378,15 @@ interface AgentResult {
   sessionId?: string;
 }
 
-function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, agentName: string, stdinData?: string): Promise<AgentResult> {
+function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, agentName: string, stdinData?: string, useShell = true): Promise<AgentResult> {
   return new Promise((resolve) => {
     console.log(`[executeAgent] Spawning: ${executable} ${args.join(' ')} (cwd: ${cwd})`);
     const env = { ...process.env };
     delete env.CLAUDECODE;
-    // Re-enable shell for command discovery (especially for .cmd files on Windows like gemini)
-    const proc = spawn(executable, args, { shell: true, env, cwd });
+    // Re-enable shell for command discovery (especially for .cmd files on Windows like gemini).
+    // Callers that need a raw argv element preserved verbatim (e.g. agy's multi-line
+    // prompt argument) pass useShell=false to bypass cmd.exe's re-tokenizing entirely.
+    const proc = spawn(executable, args, { shell: useShell, env, cwd });
 
     // Register in-memory for direct (non-worker) invocations
     activeProcesses.set(requestId, { process: proc, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId });
