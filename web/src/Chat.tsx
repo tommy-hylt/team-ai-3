@@ -6,7 +6,7 @@ import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { MessageTime } from "./MessageTime";
-import { MessageType } from "./types";
+import { MessageType, RequestMessage } from "./types";
 import "./Chat.css";
 
 interface Drafts {
@@ -258,6 +258,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [showLog, setShowLog] = useState<Record<string, boolean>>({});
   const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set());
   const [rootPath, setRootPath] = useState("");
+  const [sendStatus, setSendStatus] = useState<Record<string, "sending" | "sent">>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstLoad = useRef(true);
@@ -327,9 +328,11 @@ export function Chat({ onBack }: { onBack: () => void }) {
         setMessages(prev => {
           if (prev.some(m => m.type === "request" && m.id === req.id)) return prev;
           // Remove matching optimistic bubble (SSE may arrive before POST response returns)
-          const filtered = prev.filter(m =>
-            !(m.type === "request" && m.id?.startsWith("__optimistic_") && m.text === req.text)
+          const optimisticMatch = prev.find((m): m is RequestMessage =>
+            m.type === "request" && !!m.id?.startsWith("__optimistic_") && m.text === req.text
           );
+          if (optimisticMatch?.id) markSent(optimisticMatch.id, req.id);
+          const filtered = prev.filter(m => m !== optimisticMatch);
           return [...filtered, { ...req, type: "request" }].sort((a, b) =>
             new Date(a.type === "request" ? a.requestTime : a.time).getTime() -
             new Date(b.type === "request" ? b.requestTime : b.time).getTime()
@@ -373,6 +376,25 @@ export function Chat({ onBack }: { onBack: () => void }) {
     return () => clearTimeout(timer);
   }, [messages]);
 
+  // Transitions a just-sent message from "sending" (spinner) to "sent" (tick),
+  // then clears it after a couple seconds — purely client-side, never persisted.
+  function markSent(tempId: string, realId: string) {
+    setSendStatus(prev => {
+      const next = { ...prev };
+      delete next[tempId];
+      next[realId] = "sent";
+      return next;
+    });
+    setTimeout(() => {
+      setSendStatus(prev => {
+        if (prev[realId] !== "sent") return prev;
+        const next = { ...prev };
+        delete next[realId];
+        return next;
+      });
+    }, 2000);
+  }
+
   async function handleSend(text: string) {
     if (!selectedMember || isSending.current) return;
 
@@ -393,6 +415,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
       echo: false,
       status: "running",
     }]);
+    setSendStatus(prev => ({ ...prev, [tempId]: "sending" }));
 
     try {
       const res = await fetch(`/api/members/${selectedMember.id}/request`, {
@@ -407,13 +430,16 @@ export function Chat({ onBack }: { onBack: () => void }) {
         setMessages(prev => prev.map(m =>
           m.type === "request" && m.id === tempId ? { ...m, id: data.requestId } : m
         ));
+        markSent(tempId, data.requestId);
       } else {
         console.error(`[Chat ${clientId.current}] POST failed with status ${res.status}`);
         setMessages(prev => prev.filter(m => !(m.type === "request" && m.id === tempId)));
+        setSendStatus(prev => { const next = { ...prev }; delete next[tempId]; return next; });
       }
     } catch (e) {
       console.error(`[Chat ${clientId.current}] handleSend error:`, e);
       setMessages(prev => prev.filter(m => !(m.type === "request" && m.id === tempId)));
+      setSendStatus(prev => { const next = { ...prev }; delete next[tempId]; return next; });
     } finally {
       isSending.current = false;
     }
@@ -543,6 +569,16 @@ export function Chat({ onBack }: { onBack: () => void }) {
               </div>
               <div className="MetaRow">
                 <MessageTime date={m.type === "response" ? m.time : m.requestTime} />
+                {m.type === "request" && m.id && sendStatus[m.id] === "sending" && (
+                  <span className="SendStatus sending" title="Sending...">
+                    <span className="Spinner" />
+                  </span>
+                )}
+                {m.type === "request" && m.id && sendStatus[m.id] === "sent" && (
+                  <span className="SendStatus sent" title="Sent">
+                    <FiCheck />
+                  </span>
+                )}
                 {m.type === "response" && m.agent && <span className="AgentLabel">{m.agent}</span>}
                 {m.type === "request" && m.status === "aborted" && <span className="AbortedLabel">Aborted</span>}
                 <div className="ToggleGroup">

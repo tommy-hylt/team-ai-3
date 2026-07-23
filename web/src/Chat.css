@@ -260,6 +260,26 @@
       opacity: 0.7;
     }
 
+    .SendStatus {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+
+      &.sending .Spinner {
+        width: 9px;
+        height: 9px;
+        border: 1.5px solid #4b556355;
+        border-top-color: #94a3b8;
+        border-radius: 50%;
+        animation: Chat-spin 0.7s linear infinite;
+      }
+
+      &.sent {
+        color: #0abab5;
+        font-size: 11px;
+      }
+    }
+
     .AgentLabel {
       font-size: 9px;
       font-weight: 700;
@@ -682,4 +702,8 @@
 @keyframes Chat-typing {
   0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
   30% { transform: translateY(-4px); opacity: 1; }
+}
+
+@keyframes Chat-spin {
+  to { transform: rotate(360deg); }
 }
