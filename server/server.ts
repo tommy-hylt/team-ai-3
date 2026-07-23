@@ -244,7 +244,7 @@ app.post("/api/members/:id/responses", async (req, res) => {
     
     // Push Notification
     if (response.notify) {
-      sendNotification(`New message from ${member.name}`, response.text.substring(0, 100), `/${memberId}`);
+      sendNotification(`${member.name} sent a new message`, response.text.substring(0, 100), `/${memberId}`);
     }
 
     res.json({ ok: true });
