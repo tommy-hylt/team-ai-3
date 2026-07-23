@@ -106,6 +106,21 @@ Fetch execution logs for a specific request.
 
 ---
 
+### Agent Execution (`agentService.ts`)
+
+Agent CLIs are configured under `/agents/<name>/agent.json` (executable + args). `invokeAgent()` pipes the prompt to the child process's **stdin by default**, but two executables need special-casing because they don't support that in headless mode — piping to stdin instead leaves them stuck waiting on their interactive TUI, which just hangs (no error) rather than failing fast:
+
+- **`grok`**: prompt goes to a `--prompt-file <path>` (written to a temp file in `server/logs/`), not stdin.
+- **`agy`**: prompt goes to an inline `--print <text>` argument, not stdin. Since `agy.exe` is a real executable (not an npm `.cmd` shim like most other CLIs here), it's spawned with `shell:false` instead of the default `shell:true` — this lets Node's own argument quoting preserve a multi-line prompt correctly, where `cmd.exe` (used by `shell:true`) would otherwise split it apart on the embedded whitespace/newlines. `shell:false` does not affect window visibility; that's governed separately by the `windowsHide`/`detached` options already set on the parent worker process.
+
+`agy`'s `--model` value must also match the exact tiered display name from `agy models` (e.g. `"Gemini 3.1 Pro (High)"`) — this CLI's model catalog format has changed vendor-side without notice before.
+
+`agy` also does not treat the spawn `cwd` as its workspace by itself — it keeps its own persistent directory→project registry (`~/.gemini/antigravity-cli/cache/projects.json`), and a directory it has never seen before silently falls through to a shared scratch project instead of the member's own folder. `invokeAgent()` always passes `--add-dir <cwd>` on `agy` calls to force it to use the correct directory regardless of prior registration state.
+
+If adding a new agent executable, verify prompt delivery works headlessly before assuming stdin — a request that never completes and produces no log file is the signature of this bug.
+
+---
+
 ### 📂 Files
 
 #### `GET /api/members/:id/files`

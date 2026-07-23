@@ -15,13 +15,13 @@ Team AI allows you to manage multiple AI agents, each with their own unique char
 
 ## Key Features
 
-- **Multi-Agent Architecture**: Support for Claude, Gemini, and Codex CLI-based AI agents.
+- **Multi-Agent Architecture**: Support for Claude, Gemini (via the `agy` CLI), Grok, and Codex CLI-based AI agents. Each vendor's CLI has its own quirks for how it wants the prompt delivered (stdin vs. an inline argument vs. a file) — see `agents/README.md` and `server/README.md` before adding a new one.
 - **Detached Execution**: Agent CLI tools run in a resilient, detached background worker process (`agent-worker.ts`), ensuring tasks finish and save to disk even if the main server restarts or crashes.
-- **Real-time Chat**: Live updates via Server-Sent Events (SSE) and webhook pings. Includes an interactive execution log viewer.
+- **Real-time Chat**: Live updates via Server-Sent Events (SSE) and webhook pings. Includes an interactive execution log viewer. Markdown links/images resolve to a member's own files where possible.
 - **Routines System**: Schedule automated background tasks and requests for members using cron patterns. You can toggle routines active/disabled.
 - **Web Push Notifications**: Get notified when an agent replies even if the tab is closed.
-- **Skill System**: Shared skills synchronized across all supported AI vendor formats (`.claude`, `.gemini`, `.agents`).
-- **Smart Drafts**: Chat inputs are automatically saved to local storage.
+- **Skill System**: Shared skills synchronized across all supported AI vendor formats (`.claude`, `.gemini`, `.agents`, `.grok`).
+- **Smart Drafts & History**: Chat inputs are automatically saved to local storage; the last 5 sent messages per member can be resent from a small history picker.
 
 ## Getting Started
 
@@ -36,7 +36,7 @@ dev.cmd
 
 ## Cleaning Up Stray Agent Processes
 
-When the server crashes or is killed, spawned agent processes (Claude, Gemini) can become orphans. The server tracks all active agent PIDs in `server/processes.json` at runtime. Each record includes a `server` field — a UUIDv7 that identifies the server instance that spawned it.
+When the server crashes or is killed, spawned agent processes (Claude, Gemini/agy, Grok, Codex) can become orphans. The server tracks all active agent PIDs in `server/processes.json` at runtime. Each record includes a `server` field — a UUIDv7 that identifies the server instance that spawned it.
 
 To kill orphaned processes from a previous server instance, run:
 
