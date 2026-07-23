@@ -329,9 +329,17 @@ async function invokeAgent(
   // npm .cmd shim), so it can be spawned with shell:false — Node then quotes the
   // argv array itself via CreateProcess, which handles embedded spaces/newlines
   // correctly, sidestepping the cmd.exe splitting problem entirely.
+  //
+  // agy also does NOT treat the OS-level spawn cwd as its workspace by itself — it
+  // keeps its own persistent directory->project registry in
+  // ~/.gemini/antigravity-cli/cache/projects.json. A directory that has never been
+  // used with agy before falls through to a shared scratch project instead of the
+  // member's own folder (confirmed 2026-07-23: a brand-new member's first-ever agy
+  // request wrote its files into that shared scratch dir, not the member's folder).
+  // Passing --add-dir <cwd> makes it register/use the given directory immediately.
   const isAgy = config.executable === "agy";
   if (isAgy) {
-    finalArgs.push("--print", prompt);
+    finalArgs.push("--add-dir", cwd, "--print", prompt);
   }
 
   console.log(`[invokeAgent] Executing: ${config.executable} ${finalArgs.join(' ')}`);
