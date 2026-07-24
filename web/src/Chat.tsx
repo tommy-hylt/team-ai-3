@@ -259,6 +259,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set());
   const [rootPath, setRootPath] = useState("");
   const [sendStatus, setSendStatus] = useState<Record<string, "sending" | "sent">>({});
+  const sendStartTimes = useRef<Record<string, number>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const isFirstLoad = useRef(true);
@@ -376,23 +377,37 @@ export function Chat({ onBack }: { onBack: () => void }) {
     return () => clearTimeout(timer);
   }, [messages]);
 
-  // Transitions a just-sent message from "sending" (spinner) to "sent" (tick),
-  // then clears it after a couple seconds — purely client-side, never persisted.
+  // Transitions a just-sent message from "sending" (spinner) to "sent" (tick).
+  // The tick sticks around for the rest of the session (purely client-side
+  // state — never persisted, so it's gone on refresh/navigation) rather than
+  // auto-hiding, matching a normal chat app's "delivered" indicator.
+  // Enforces an 800ms minimum spinner lifetime so it's visible even when the
+  // round trip is too fast to perceive (e.g. localhost).
   function markSent(tempId: string, realId: string) {
+    const startedAt = sendStartTimes.current[tempId] ?? 0;
+    const remaining = 800 - (Date.now() - startedAt);
+
+    // Re-key "sending" from tempId to realId immediately — the message's own
+    // id is swapped to realId in the same tick this is called from, so if we
+    // waited for the full delay before updating sendStatus too, the lookup
+    // would match neither key for a moment and the spinner would blink off.
     setSendStatus(prev => {
       const next = { ...prev };
       delete next[tempId];
-      next[realId] = "sent";
+      next[realId] = "sending";
       return next;
     });
-    setTimeout(() => {
-      setSendStatus(prev => {
-        if (prev[realId] !== "sent") return prev;
-        const next = { ...prev };
-        delete next[realId];
-        return next;
-      });
-    }, 2000);
+
+    const finish = () => {
+      delete sendStartTimes.current[tempId];
+      setSendStatus(prev => ({ ...prev, [realId]: "sent" }));
+    };
+
+    if (remaining > 0) {
+      setTimeout(finish, remaining);
+    } else {
+      finish();
+    }
   }
 
   async function handleSend(text: string) {
@@ -416,6 +431,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
       status: "running",
     }]);
     setSendStatus(prev => ({ ...prev, [tempId]: "sending" }));
+    sendStartTimes.current[tempId] = Date.now();
 
     try {
       const res = await fetch(`/api/members/${selectedMember.id}/request`, {
@@ -435,11 +451,13 @@ export function Chat({ onBack }: { onBack: () => void }) {
         console.error(`[Chat ${clientId.current}] POST failed with status ${res.status}`);
         setMessages(prev => prev.filter(m => !(m.type === "request" && m.id === tempId)));
         setSendStatus(prev => { const next = { ...prev }; delete next[tempId]; return next; });
+        delete sendStartTimes.current[tempId];
       }
     } catch (e) {
       console.error(`[Chat ${clientId.current}] handleSend error:`, e);
       setMessages(prev => prev.filter(m => !(m.type === "request" && m.id === tempId)));
       setSendStatus(prev => { const next = { ...prev }; delete next[tempId]; return next; });
+      delete sendStartTimes.current[tempId];
     } finally {
       isSending.current = false;
     }
