@@ -11,7 +11,7 @@ function toggleGlobalMode() {
   listeners.forEach((l) => l(globalMode));
 }
 
-function formatPrecise(diffInSeconds: number): string {
+export function formatPrecise(diffInSeconds: number): string {
   if (diffInSeconds <= 0) return "now";
   if (diffInSeconds < 60) return `${diffInSeconds}s`;
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ${diffInSeconds % 60}s`;

@@ -320,8 +320,12 @@ app.get("/api/requests/:id/logs", async (req, res) => {
     
     const logs = [];
     for (const f of matchingFiles) {
-      const content = await fs.promises.readFile(path.join(logDir, f), "utf-8");
-      logs.push({ filename: f, content });
+      const filePath = path.join(logDir, f);
+      const [content, stat] = await Promise.all([
+        fs.promises.readFile(filePath, "utf-8"),
+        fs.promises.stat(filePath),
+      ]);
+      logs.push({ filename: f, content, mtime: stat.mtimeMs });
     }
     res.json({ logs });
   } catch (error) {

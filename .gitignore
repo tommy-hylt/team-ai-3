@@ -16,6 +16,7 @@ server/processes.json
 server/logs/
 
 /members/*
+!/members/README.md
 !/members/Ava Admin/
 !/members/Edan First/
 !/members/Emily Secretary/

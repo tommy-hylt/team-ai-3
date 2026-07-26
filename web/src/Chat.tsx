@@ -5,7 +5,7 @@ import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, F
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { MessageTime } from "./MessageTime";
+import { MessageTime, formatPrecise } from "./MessageTime";
 import { MessageType, RequestMessage } from "./types";
 import "./Chat.css";
 
@@ -63,6 +63,23 @@ function saveSentMessage(memberId: string, text: string) {
 interface LogEntry {
   filename: string;
   content: string;
+  mtime?: number;
+}
+
+// Ticks every second so a stalled log's "ago" keeps growing, making a hang visible at a glance
+function LogAge({ mtime }: { mtime: number }) {
+  const [ago, setAgo] = useState("");
+
+  useEffect(() => {
+    function update() {
+      setAgo(formatPrecise(Math.floor((Date.now() - mtime) / 1000)));
+    }
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [mtime]);
+
+  return <span className="LogMtime">updated {ago} ago</span>;
 }
 
 // Extracted so keystrokes only re-render this small component, not the message list
@@ -482,12 +499,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
     }
   }
 
-  async function toggleLog(logKey: string, requestId: string) {
-    if (showLog[logKey]) {
-      setShowLog(prev => ({ ...prev, [logKey]: false }));
-      return;
-    }
-    setShowLog(prev => ({ ...prev, [logKey]: true }));
+  async function fetchLogs(logKey: string, requestId: string) {
     try {
       const res = await fetch(`/api/requests/${requestId}/logs`);
       if (!res.ok) {
@@ -500,6 +512,28 @@ export function Chat({ onBack }: { onBack: () => void }) {
       setLogs(prev => ({ ...prev, [logKey]: [{ filename: "Error", content: "Error fetching logs." }] }));
     }
   }
+
+  async function toggleLog(logKey: string, requestId: string) {
+    if (showLog[logKey]) {
+      setShowLog(prev => ({ ...prev, [logKey]: false }));
+      return;
+    }
+    setShowLog(prev => ({ ...prev, [logKey]: true }));
+    await fetchLogs(logKey, requestId);
+  }
+
+  // Re-poll open logs for still-running requests so mtime/content stay live — lets the
+  // user tell a stalled process (mtime frozen) from one that's just busy (mtime keeps moving).
+  useEffect(() => {
+    const runningLogKeys = messages
+      .filter((m): m is RequestMessage => m.type === "request" && m.status === "running" && !!m.id && !!showLog[`loading-${m.id}`])
+      .map(m => ({ logKey: `loading-${m.id}`, requestId: m.id! }));
+    if (runningLogKeys.length === 0) return;
+    const interval = setInterval(() => {
+      runningLogKeys.forEach(({ logKey, requestId }) => fetchLogs(logKey, requestId));
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [messages, showLog]);
 
   if (loading) {
     return (
@@ -635,7 +669,10 @@ export function Chat({ onBack }: { onBack: () => void }) {
                 <div className="LogArea">
                   {(logs[logKey] || []).map((log, idx) => (
                     <div key={idx} className="LogEntry">
-                      <div className="LogHeader">{log.filename}</div>
+                      <div className="LogHeader">
+                        <span>{log.filename}</span>
+                        {log.mtime !== undefined && <LogAge mtime={log.mtime} />}
+                      </div>
                       <pre>{log.content}</pre>
                     </div>
                   ))}
@@ -676,7 +713,10 @@ export function Chat({ onBack }: { onBack: () => void }) {
                   <div className="LogArea">
                     {(logs[`loading-${m.id}`] || []).map((log, idx) => (
                       <div key={idx} className="LogEntry">
-                        <div className="LogHeader">{log.filename}</div>
+                        <div className="LogHeader">
+                          <span>{log.filename}</span>
+                          {log.mtime !== undefined && <LogAge mtime={log.mtime} />}
+                        </div>
                         <pre>{log.content}</pre>
                       </div>
                     ))}

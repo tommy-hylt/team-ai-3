@@ -358,6 +358,10 @@
         }
 
         .LogHeader {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
           background-color: #121417;
           padding: 6px 12px;
           font-size: 10px;
@@ -366,6 +370,14 @@
           text-transform: uppercase;
           letter-spacing: 0.05em;
           border-bottom: 1px solid #1c1f23;
+
+          .LogMtime {
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: normal;
+            color: #4b5563;
+            white-space: nowrap;
+          }
         }
 
         pre {
