@@ -29,7 +29,7 @@ export async function createMember(data: any) {
   const memberJson = {
     name: name,
     description: data.description || "",
-    agents: data.agents || ["agy-3.1-flash-lite"],
+    agents: data.agents || ["claude-haiku-4-5"],
     teams: data.teams || ["General"]
   };
 
@@ -44,7 +44,7 @@ export async function createMember(data: any) {
 
   if (data.cloneFrom) {
     const sourceDir = join(__dirname, "../members", data.cloneFrom);
-    const vendorFolders = [".claude", ".gemini", ".agents", ".grok"];
+    const vendorFolders = [".claude", ".agents", ".grok"];
 
     for (const vendor of vendorFolders) {
       const sourceSkills = join(sourceDir, vendor, "skills");

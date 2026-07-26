@@ -25,22 +25,20 @@ export function SkillEdit() {
     if (!id || !skillName) return;
     setLoading(true);
     try {
-      // Fetch entries from all 4 vendor folders to ensure we don't miss files that only exist in one
-      const [claudeRes, geminiRes, agentRes, grokRes] = await Promise.all([
+      // Fetch entries from all 3 vendor folders to ensure we don't miss files that only exist in one
+      const [claudeRes, agentRes, grokRes] = await Promise.all([
         fetch(`/api/members/${id}/files?path=.claude/skills/${skillName}`),
-        fetch(`/api/members/${id}/files?path=.gemini/skills/${skillName}`),
         fetch(`/api/members/${id}/files?path=.agents/skills/${skillName}`),
         fetch(`/api/members/${id}/files?path=.grok/skills/${skillName}`)
       ]);
 
       const claudeEntries: FileEntry[] = claudeRes.ok ? await claudeRes.json() : [];
-      const geminiEntries: FileEntry[] = geminiRes.ok ? await geminiRes.json() : [];
       const agentEntries: FileEntry[] = agentRes.ok ? await agentRes.json() : [];
       const grokEntries: FileEntry[] = grokRes.ok ? await grokRes.json() : [];
 
       // Merge unique file names
       const allFilesMap = new Map<string, FileEntry>();
-      [...claudeEntries, ...geminiEntries, ...agentEntries, ...grokEntries].forEach(e => {
+      [...claudeEntries, ...agentEntries, ...grokEntries].forEach(e => {
         if (e.type === "file") {
           allFilesMap.set(e.name, e);
         }

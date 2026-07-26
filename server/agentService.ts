@@ -324,29 +324,11 @@ async function invokeAgent(
     finalArgs.push("--prompt-file", `"${promptFilePath}"`);
   }
 
-  // agy also requires the prompt as a "--print <text>" argument, not stdin, and has
-  // no --prompt-file equivalent. Unlike grok, agy.exe is a real executable (not an
-  // npm .cmd shim), so it can be spawned with shell:false — Node then quotes the
-  // argv array itself via CreateProcess, which handles embedded spaces/newlines
-  // correctly, sidestepping the cmd.exe splitting problem entirely.
-  //
-  // agy also does NOT treat the OS-level spawn cwd as its workspace by itself — it
-  // keeps its own persistent directory->project registry in
-  // ~/.gemini/antigravity-cli/cache/projects.json. A directory that has never been
-  // used with agy before falls through to a shared scratch project instead of the
-  // member's own folder (confirmed 2026-07-23: a brand-new member's first-ever agy
-  // request wrote its files into that shared scratch dir, not the member's folder).
-  // Passing --add-dir <cwd> makes it register/use the given directory immediately.
-  const isAgy = config.executable === "agy";
-  if (isAgy) {
-    finalArgs.push("--add-dir", cwd, "--print", prompt);
-  }
-
   console.log(`[invokeAgent] Executing: ${config.executable} ${finalArgs.join(' ')}`);
   console.log(`[invokeAgent] prompt length=${prompt.length} chars, resume=${!!sessionId}`);
 
   const startTime = Date.now();
-  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, (isGrok || isAgy) ? undefined : prompt, !isAgy);
+  const result = await executeAgent(config.executable, finalArgs, cwd, requestId, memberId, agentName, isGrok ? undefined : prompt);
   const elapsed = Date.now() - startTime;
   console.log(`[invokeAgent] Completed in ${elapsed}ms, result length=${result?.text?.length || 0}`);
 
@@ -363,7 +345,6 @@ function isAgentResponseFailed(text: string): boolean {
   const failurePatterns = [
     /^you've hit your limit . resets \d+(am|pm)( \([^)]+\))?$/i, // Claude (account for dot separator)
     /^failed to authenticate\..*$/i,                             // Claude Auth failure
-    /^quota exceeded$/i,                                         // Gemini (strict)
     /^rate limit reached$/i,                                     // OpenAI/Codex (strict)
     /^too many requests$/i                                       // Generic (strict)
   ];
@@ -386,15 +367,13 @@ interface AgentResult {
   sessionId?: string;
 }
 
-function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, agentName: string, stdinData?: string, useShell = true): Promise<AgentResult> {
+function executeAgent(executable: string, args: string[], cwd: string, requestId: string, memberId: string, agentName: string, stdinData?: string): Promise<AgentResult> {
   return new Promise((resolve) => {
     console.log(`[executeAgent] Spawning: ${executable} ${args.join(' ')} (cwd: ${cwd})`);
     const env = { ...process.env };
     delete env.CLAUDECODE;
     // Re-enable shell for command discovery (especially for .cmd files on Windows like gemini).
-    // Callers that need a raw argv element preserved verbatim (e.g. agy's multi-line
-    // prompt argument) pass useShell=false to bypass cmd.exe's re-tokenizing entirely.
-    const proc = spawn(executable, args, { shell: useShell, env, cwd });
+    const proc = spawn(executable, args, { shell: true, env, cwd });
 
     // Register in-memory for direct (non-worker) invocations
     activeProcesses.set(requestId, { process: proc, memberId, pid: proc.pid!, executable, startTime: new Date().toISOString(), server: serverId });
@@ -501,9 +480,9 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
     collectedSessionId = sessionMatch[1];
   }
 
-  // 1. Try parsing JSONL top-to-bottom to collect thread/session IDs, text, and gemini delta messages.
-  // assistantMsgs accumulates gemini stream-json delta content; reset on tool_result so only the
-  // final response block (after the last tool call) is kept.
+  // 1. Try parsing JSONL top-to-bottom to collect thread/session IDs and text.
+  // assistantMsgs accumulates grok's streaming-json text chunks; reset on tool_result
+  // so only the final response block (after the last tool call) is kept.
   const assistantMsgs: string[] = [];
   for (const line of lines) {
     const l = line.trim();
@@ -522,8 +501,6 @@ function tryParseAgentJson(output: string): AgentResult | undefined {
 
         if (json.type === "tool_result") {
           assistantMsgs.length = 0;
-        } else if (json.role === "assistant" && typeof json.content === "string") {
-          assistantMsgs.push(json.content);
         } else if (json.type === "text" && typeof json.data === "string") {
           // Grok streaming-json text chunks
           assistantMsgs.push(json.data);

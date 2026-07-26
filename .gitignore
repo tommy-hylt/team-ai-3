@@ -28,15 +28,12 @@ server/logs/
 
 !/members/*/.agents/
 !/members/*/.claude/
-!/members/*/.gemini/
 !/members/*/.grok/
 
 /members/*/.agents/*
 /members/*/.claude/*
-/members/*/.gemini/*
 /members/*/.grok/*
 
 !/members/*/.agents/skills/
 !/members/*/.claude/skills/
-!/members/*/.gemini/skills/
 !/members/*/.grok/skills/

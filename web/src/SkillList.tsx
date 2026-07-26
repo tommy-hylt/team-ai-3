@@ -28,21 +28,21 @@ export function SkillList() {
   async function loadSkills() {
     if (!id) return;
     setLoading(true);
-    // List skill folders from all 3 vendors and compare
+    // List skill folders from all vendors and compare
     Promise.all([
       fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
-      fetch(`/api/members/${id}/files?path=.gemini/skills`).then(r => r.json()),
       fetch(`/api/members/${id}/files?path=.agents/skills`).then(r => r.json()),
-    ]).then(([claude, gemini, agent]) => {
+      fetch(`/api/members/${id}/files?path=.grok/skills`).then(r => r.json()),
+    ]).then(([claude, agent, grok]) => {
       const getDirs = (entries: SkillEntry[]) =>
         (Array.isArray(entries) ? entries : []).filter(e => e.type === "directory").map(e => e.name);
 
       const claudeDirs = getDirs(claude);
-      const geminiDirs = getDirs(gemini);
       const agentDirs = getDirs(agent);
+      const grokDirs = getDirs(grok);
 
       // Union of all skill names
-      const allNames = [...new Set([...claudeDirs, ...geminiDirs, ...agentDirs])];
+      const allNames = [...new Set([...claudeDirs, ...agentDirs, ...grokDirs])];
       allNames.sort();
 
       setSkills(allNames.map(name => ({ name, type: "directory" })));
@@ -51,8 +51,8 @@ export function SkillList() {
       for (const name of allNames) {
         sync[name] = {
           ".claude": claudeDirs.includes(name),
-          ".gemini": geminiDirs.includes(name),
           ".agents": agentDirs.includes(name),
+          ".grok": grokDirs.includes(name),
         };
       }
       setSyncMap(sync);

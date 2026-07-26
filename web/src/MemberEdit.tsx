@@ -61,13 +61,12 @@ export function MemberEdit() {
 
       Promise.all([
         fetch(`/api/members/${id}/files?path=.claude/skills`).then(r => r.json()),
-        fetch(`/api/members/${id}/files?path=.gemini/skills`).then(r => r.json()),
         fetch(`/api/members/${id}/files?path=.agents/skills`).then(r => r.json()),
         fetch(`/api/members/${id}/files?path=.grok/skills`).then(r => r.json()),
-      ]).then(([claude, gemini, agent, grok]) => {
+      ]).then(([claude, agent, grok]) => {
         const getDirs = (entries: any[]) =>
           (Array.isArray(entries) ? entries : []).filter((e: any) => e.type === "directory").map((e: any) => e.name);
-        const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini), ...getDirs(agent), ...getDirs(grok)])];
+        const allNames = [...new Set([...getDirs(claude), ...getDirs(agent), ...getDirs(grok)])];
         allNames.sort();
         setSkillNames(allNames);
       });

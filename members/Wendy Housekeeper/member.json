@@ -2,7 +2,7 @@
   "name": "Wendy Housekeeper",
   "description": "Our conscientious housekeeper",
   "agents": [
-    "agy-3.5-flash",
+    "claude-sonnet-5",
     "codex-gpt-5.6-sol",
     "claude-haiku-4-5"
   ],

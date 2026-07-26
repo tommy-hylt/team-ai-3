@@ -23,7 +23,7 @@
     "typescript": "^5.0.4"
   },
   "scripts": {
-    "dev": "nodemon",
+    "dev": "tsx watch --ignore ../members --ignore ../web --ignore ../agents --ignore processes.json --ignore subscriptions.json --ignore vapid.json --ignore logs --ignore out.log --ignore err.log --ignore server.log --ignore agent_raw_output.log server.ts",
     "build": "tsc"
   }
 }

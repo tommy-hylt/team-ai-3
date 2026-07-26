@@ -15,7 +15,7 @@ This project strictly follows "Tommy's Rules":
 - **Member List**: Sidebar to browse available AI members with notification subscription prompts.
 - **Chat Interface**: Real-time interaction via Server-Sent Events (SSE), supporting multiline input and Ctrl+Enter to send. Markdown links/images pointing at a member's own files (absolute Windows paths or relative paths) resolve to the internal file viewer/raw file endpoint instead of a dead href — see the react-markdown `urlTransform` gotchas noted in `Chat.tsx`.
 - **Member Creation & Cloning**: Interface to create new members or selectively clone existing ones (including skills).
-- **Skills Management**: Browse, create, edit, and delete skills across all 4 vendor folders (`.claude`, `.gemini`, `.agents`, `.grok`). Compares vendor folders and shows detailed sync warnings (newest/longest file).
+- **Skills Management**: Browse, create, edit, and delete skills across all 3 vendor folders (`.claude`, `.agents`, `.grok`). Compares vendor folders and shows detailed sync warnings (newest/longest file).
 - **Request Control**: Ability to cancel running agent requests.
 - **Web Push Notifications**: Background notifications for new messages.
 - **Drafts**: Auto-saving of chat inputs to `localStorage`.

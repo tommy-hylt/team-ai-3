@@ -94,11 +94,10 @@ const ChatInput = memo(function ChatInput({
   useEffect(() => {
     Promise.all([
       fetch(`/api/members/${memberId}/files?path=.claude/skills`).then(r => r.json()),
-      fetch(`/api/members/${memberId}/files?path=.gemini/skills`).then(r => r.json()),
-    ]).then(([claude, gemini]) => {
+    ]).then(([claude]) => {
       const getDirs = (entries: any[]) =>
         Array.isArray(entries) ? entries.filter(e => e.type === "directory").map(e => e.name) : [];
-      const allNames = [...new Set([...getDirs(claude), ...getDirs(gemini)])].sort();
+      const allNames = [...new Set([...getDirs(claude)])].sort();
       setSkills(allNames);
     }).catch(() => {});
   }, [memberId]);
@@ -241,8 +240,11 @@ function resolveMemberFileHref(rawHref: string, rootPath: string): string | null
 // protocol and strips it, so Windows absolute paths never reach the `a`
 // component's href. Let those through unchanged; defer everything else
 // (including any genuinely dangerous protocol) to the default sanitizer.
+// Backslash-style paths (C:\Users\...) need a second check: react-markdown's
+// own encoding step (which runs before urlTransform ever sees the string)
+// converts "\" to "%5C", so the raw-backslash pattern alone misses them.
 function urlTransform(url: string): string {
-  if (/^\/?[A-Za-z]:[\\/]/.test(url)) return url;
+  if (/^\/?[A-Za-z]:(?:[\\/]|%5[Cc])/.test(url)) return url;
   return defaultUrlTransform(url);
 }
 
