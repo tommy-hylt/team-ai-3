@@ -281,7 +281,6 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const sendStartTimes = useRef<Record<string, number>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const isFirstLoad = useRef(true);
   const isSending = useRef(false);
   const clientId = useRef(Math.random().toString(36).substring(7));
 
@@ -386,12 +385,11 @@ export function Chat({ onBack }: { onBack: () => void }) {
   }, [id]);
 
   useEffect(() => {
-    // Slight delay to allow React to render the new messages to the DOM
+    // Slight delay to allow React to render the new messages to the DOM.
+    // Always jump instantly — smooth-scrolling from wherever the viewport was
+    // to the bottom of a long chat looked janky, especially as history grows.
     const timer = setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({
-        behavior: isFirstLoad.current ? "auto" : "smooth"
-      });
-      isFirstLoad.current = false;
+      messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
     }, 50);
     return () => clearTimeout(timer);
   }, [messages]);

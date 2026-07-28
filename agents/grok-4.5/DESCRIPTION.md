@@ -8,4 +8,4 @@
 - You need strong reasoning at lower latency and cost than a typical Opus-class model.
 
 **Avoid when:**
-- You need faster/cheaper responses for simple tasks (use grok-composer-2.5-fast).
+- N/A — this is currently the only Grok model available on this account's subscription tier (`grok-composer-2.5-fast` was removed 2026-07-27 after the subscription stopped providing it).
