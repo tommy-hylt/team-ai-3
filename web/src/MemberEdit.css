@@ -308,10 +308,23 @@
         }
       }
 
+      /* While the native datetime-local input is focused, its own inline
+         segment editing (the browser's own UI, not something we control)
+         needs to actually be visible — hide our mask and reveal the
+         input's real text/caret instead of leaving them stacked. */
+      .TodoDateWrapper:focus-within .TodoDateMask {
+        display: none;
+      }
+
       .TodoDateInput {
         width: 100%;
         color: transparent;
         caret-color: transparent;
+
+        &:focus {
+          color: #0abab5;
+          caret-color: #0abab5;
+        }
 
         &::-webkit-calendar-picker-indicator {
           cursor: pointer;
