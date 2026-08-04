@@ -13,6 +13,7 @@ Each subfolder here is one AI team member's complete, durable state: identity, m
 - **`requests.json`** / **`responses.json`**: Full chat history, maintained by `chatService.ts`. Source of truth for `GET /chat` and for whether a member is currently "running" a request.
 - **`sessions.json`**: One entry per `(agent, status)`, maintained by `sessionService.ts` — tracks the CLI's own session/thread ID per agent so a follow-up message resumes context instead of starting fresh. `status: "active" | "expired"`.
 - **`routines.json`** / **`todos.json`**: Scheduled requests — recurring (cron) and one-shot respectively. See `server/README.md`'s "Routines & Todos Scheduling".
+- **`shortcuts.json`**: A flat array of relative file paths the user has pinned for quick access — shown as a "Shortcuts" section on the file browser's root page. Purely a UI convenience; not read by agents, not synced to vendor folders.
 - **`processes.json`** is **not** per-member — it's a single shared file under `server/`, not here.
 
 ### Skills (vendor folders, sync'd automatically)

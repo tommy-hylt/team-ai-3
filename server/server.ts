@@ -10,7 +10,7 @@ import { listMembers, getMember, getMemberDetails, updateMemberDetails, createMe
 import { getChatHistory, addRequest, addResponse, updateRequestStatus, getRequestStatus, clearChatHistory, getRequest, hasMemberRunningRequest } from "./chatService.ts";
 import { runAgent, cancelRequest, cancelAllRequests, getServerId, isMemberBusy, registerProcess, unregisterProcess, spawnWorker } from "./agentService.ts";
 import { expireAllSessions } from "./sessionService.ts";
-import { listFiles, getFile, getFileBuffer, saveFile, saveBinaryFile, deleteFile, checkFileSync, getMemberRootPath } from "./fileService.ts";
+import { listFiles, getFile, getFileBuffer, saveFile, saveBinaryFile, deleteFile, checkFileSync, getMemberRootPath, getShortcuts, addShortcut, removeShortcut } from "./fileService.ts";
 import { subscribe, broadcast } from "./notificationService.ts";
 import { initPush, getPublicKey, saveSubscription, sendNotification } from "./pushService.ts";
 import { getRoutines, saveRoutines, startRoutineLoop, type Routine } from "./routineService.ts";
@@ -347,6 +347,21 @@ app.get("/api/members/:id/skills/:skillName/files/:fileName/sync", async (req, r
   const { id, skillName, fileName } = req.params;
   const results = await checkFileSync(id, skillName, fileName);
   res.json(results);
+});
+
+app.get("/api/members/:id/shortcuts", async (req, res) => {
+  res.json(await getShortcuts(req.params.id));
+});
+
+app.post("/api/members/:id/shortcuts", async (req, res) => {
+  const { path: filePath } = req.body;
+  if (!filePath) return res.status(400).json({ error: "path is required" });
+  res.json({ ok: true, shortcuts: await addShortcut(req.params.id, filePath) });
+});
+
+app.delete("/api/members/:id/shortcuts/*", async (req, res) => {
+  const relativePath = (req.params as any)[0];
+  res.json({ ok: true, shortcuts: await removeShortcut(req.params.id, relativePath) });
 });
 
 const __serverDir = path.dirname(fileURLToPath(import.meta.url));

@@ -1,11 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate, useSearchParams } from "react-router-dom";
-import { FiChevronLeft, FiFolder, FiFile, FiTrash2, FiPlus, FiUpload } from "react-icons/fi";
+import { FiChevronLeft, FiFolder, FiFile, FiTrash2, FiPlus, FiUpload, FiStar, FiExternalLink } from "react-icons/fi";
 import "./SkillList.css";
+import "./MemberFileBrowser.css";
 
 interface FileEntry {
   name: string;
   type: string;
+}
+
+function rawFileUrl(id: string, fullPath: string): string {
+  return `/api/members/${id}/files-raw/${fullPath.split("/").map(encodeURIComponent).join("/")}`;
 }
 
 export function MemberFileBrowser() {
@@ -18,11 +23,17 @@ export function MemberFileBrowser() {
   const [loading, setLoading] = useState(true);
   const [newName, setNewName] = useState("");
   const [showNew, setShowNew] = useState(false);
+  const [shortcuts, setShortcuts] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     loadFiles();
   }, [id, currentPath]);
+
+  useEffect(() => {
+    if (!id) return;
+    loadShortcuts();
+  }, [id]);
 
   async function loadFiles() {
     if (!id) return;
@@ -36,6 +47,31 @@ export function MemberFileBrowser() {
     } finally {
       setLoading(false);
     }
+  }
+
+  async function loadShortcuts() {
+    if (!id) return;
+    try {
+      const res = await fetch(`/api/members/${id}/shortcuts`);
+      const data = await res.json();
+      setShortcuts(Array.isArray(data) ? data : []);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function toggleShortcut(fullPath: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!id) return;
+    const isShortcut = shortcuts.includes(fullPath);
+    const res = await fetch(
+      `/api/members/${id}/shortcuts${isShortcut ? `/${fullPath.split("/").map(encodeURIComponent).join("/")}` : ""}`,
+      isShortcut
+        ? { method: "DELETE" }
+        : { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ path: fullPath }) }
+    );
+    const data = await res.json();
+    if (Array.isArray(data.shortcuts)) setShortcuts(data.shortcuts);
   }
 
   function handleNavigate(entry: FileEntry) {
@@ -92,7 +128,7 @@ export function MemberFileBrowser() {
   }
 
   return (
-    <div className="SkillList">
+    <div className="SkillList FileBrowser">
       <div className="Header">
         <button className="BackButton" onClick={() => (currentPath ? goUp() : navigate(`/${id}`))}>
           <FiChevronLeft />
@@ -112,6 +148,48 @@ export function MemberFileBrowser() {
         </button>
       </div>
       <div className="ScrollArea">
+        {!currentPath && shortcuts.length > 0 && (
+          <div className="ShortcutsSection">
+            <div className="ShortcutsLabel">Shortcuts</div>
+            <div className="SkillItems">
+              {shortcuts.map(shortcutPath => {
+                const parts = shortcutPath.split("/");
+                const name = parts.pop() || shortcutPath;
+                const dir = parts.join("/");
+                return (
+                  <div
+                    key={shortcutPath}
+                    className="SkillItem"
+                    onClick={() => navigate(`/${id}/files/edit?path=${encodeURIComponent(shortcutPath)}`)}
+                  >
+                    <FiFile className="FolderIcon" />
+                    <span className="SkillName">
+                      {name}
+                      {dir && <span className="ShortcutDir">{dir}/</span>}
+                    </span>
+                    <a
+                      className="ItemActionBtn"
+                      title="View raw"
+                      href={rawFileUrl(id!, shortcutPath)}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={e => e.stopPropagation()}
+                    >
+                      <FiExternalLink />
+                    </a>
+                    <button
+                      className="ItemActionBtn active"
+                      title="Remove shortcut"
+                      onClick={e => toggleShortcut(shortcutPath, e)}
+                    >
+                      <FiStar />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {showNew && (
           <div className="NewSkill">
             <input
@@ -130,22 +208,47 @@ export function MemberFileBrowser() {
             <div className="EmptyState">Loading files...</div>
           ) : (
             <>
-              {entries.map(entry => (
-                <div
-                  key={entry.name}
-                  className="SkillItem"
-                  onClick={() => handleNavigate(entry)}
-                >
-                  {entry.type === "directory" ? <FiFolder className="FolderIcon" /> : <FiFile className="FolderIcon" />}
-                  <span className="SkillName">{entry.name}</span>
-                  <button
-                    className="ItemDeleteBtn"
-                    onClick={e => handleDelete(entry.name, e)}
+              {entries.map(entry => {
+                const fullPath = currentPath ? `${currentPath}/${entry.name}` : entry.name;
+                const isFile = entry.type !== "directory";
+                return (
+                  <div
+                    key={entry.name}
+                    className="SkillItem"
+                    onClick={() => handleNavigate(entry)}
                   >
-                    <FiTrash2 />
-                  </button>
-                </div>
-              ))}
+                    {entry.type === "directory" ? <FiFolder className="FolderIcon" /> : <FiFile className="FolderIcon" />}
+                    <span className="SkillName">{entry.name}</span>
+                    {isFile && (
+                      <a
+                        className="ItemActionBtn"
+                        title="View raw"
+                        href={rawFileUrl(id!, fullPath)}
+                        target="_blank"
+                        rel="noreferrer"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <FiExternalLink />
+                      </a>
+                    )}
+                    {isFile && (
+                      <button
+                        className={`ItemActionBtn ${shortcuts.includes(fullPath) ? "active" : ""}`}
+                        title={shortcuts.includes(fullPath) ? "Remove shortcut" : "Add to shortcuts"}
+                        onClick={e => toggleShortcut(fullPath, e)}
+                      >
+                        <FiStar />
+                      </button>
+                    )}
+                    <button
+                      className="ItemDeleteBtn"
+                      onClick={e => handleDelete(entry.name, e)}
+                    >
+                      <FiTrash2 />
+                    </button>
+                  </div>
+                );
+              })}
               {entries.length === 0 && !showNew && (
                 <div className="EmptyState">Folder is empty</div>
               )}

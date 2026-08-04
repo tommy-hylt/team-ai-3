@@ -107,6 +107,38 @@ export function getMemberRootPath(memberId: string): string {
   return memberDir(memberId);
 }
 
+function shortcutsPath(memberId: string) {
+  return join(memberDir(memberId), "shortcuts.json");
+}
+
+/** Get a member's list of shortcut file paths (relative to their root) */
+export async function getShortcuts(memberId: string): Promise<string[]> {
+  try {
+    const content = await readFile(shortcutsPath(memberId), "utf-8");
+    const parsed = JSON.parse(content);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+/** Add a file path to a member's shortcut list (deduped) */
+export async function addShortcut(memberId: string, relativePath: string): Promise<string[]> {
+  const shortcuts = await getShortcuts(memberId);
+  if (!shortcuts.includes(relativePath)) {
+    shortcuts.push(relativePath);
+    await writeFile(shortcutsPath(memberId), JSON.stringify(shortcuts, null, 2), "utf-8");
+  }
+  return shortcuts;
+}
+
+/** Remove a file path from a member's shortcut list */
+export async function removeShortcut(memberId: string, relativePath: string): Promise<string[]> {
+  const shortcuts = (await getShortcuts(memberId)).filter(p => p !== relativePath);
+  await writeFile(shortcutsPath(memberId), JSON.stringify(shortcuts, null, 2), "utf-8");
+  return shortcuts;
+}
+
 /** Check if a skill exists in all 3 vendor folders */
 export async function checkSkillSync(memberId: string, skillName: string) {
   const base = memberDir(memberId);

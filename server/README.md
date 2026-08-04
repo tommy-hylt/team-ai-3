@@ -233,6 +233,20 @@ Delete a file or folder from the workspace, mirrored across vendor skill folders
 Check whether a specific skill file is identical across all 3 vendor folders.
 - **Returns:** `{ [vendor]: { exists: boolean, content?: string, mtime?: number, size?: number } }`.
 
+#### `GET /api/members/:id/shortcuts`
+List a member's shortcut file paths (persisted in `members/<id>/shortcuts.json`, deliberately not synced to any vendor folder — it's a personal quick-access list, not agent-facing content). The file browser's root page renders these as a quick-access section.
+- **Returns:** `string[]` (relative paths).
+
+#### `POST /api/members/:id/shortcuts`
+Add a file to the shortcut list (deduplicated — adding an already-present path is a no-op).
+- **Body:**
+  - `path` (string, **mandatory**): Relative path within the workspace.
+- **Returns:** `{ ok: true, shortcuts: string[] }` (the full updated list).
+
+#### `DELETE /api/members/:id/shortcuts/*`
+Remove a file from the shortcut list. Does not delete the file itself — only unpins it. Removing a path that isn't a shortcut is a no-op.
+- **Returns:** `{ ok: true, shortcuts: string[] }`.
+
 ---
 
 ### 🔁 Routines & Todos
