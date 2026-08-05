@@ -537,6 +537,8 @@
         width: 100%;
         min-width: 0;
         max-width: 100%;
+        flex-shrink: 0; /* .HistoryPicker is a column flex container, so without this items get
+                            squeezed to fit the fixed height instead of overflowing and scrolling */
         box-sizing: border-box;
         text-align: left;
         background: none;
