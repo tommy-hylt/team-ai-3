@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState, useRef, memo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { MemberContext } from "./MemberContext";
-import { FiChevronLeft, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck, FiZap, FiClock } from "react-icons/fi";
+import { FiChevronLeft, FiChevronDown, FiSettings, FiSend, FiFolder, FiTerminal, FiX, FiCopy, FiCheck, FiZap, FiClock } from "react-icons/fi";
 import { TbMarkdown, TbMarkdownOff } from "react-icons/tb";
 import ReactMarkdown, { defaultUrlTransform } from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -278,6 +278,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const [expandedImages, setExpandedImages] = useState<Set<string>>(new Set());
   const [rootPath, setRootPath] = useState("");
   const [sendStatus, setSendStatus] = useState<Record<string, "sending" | "sent">>({});
+  const [showScrollButton, setShowScrollButton] = useState(false);
   const sendStartTimes = useRef<Record<string, number>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -393,6 +394,35 @@ export function Chat({ onBack }: { onBack: () => void }) {
     }, 50);
     return () => clearTimeout(timer);
   }, [messages]);
+
+  // Show a "scroll to bottom" button once there's enough history to make manually
+  // swiping back down annoying, but only once the user has actually scrolled far
+  // enough away from the bottom for it to be worth showing.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    function checkScrollButton() {
+      if (!el) return;
+      const chatHeight = el.clientHeight;
+      const distanceFromBottom = el.scrollHeight - el.scrollTop - chatHeight;
+      const hasEnoughHistory = el.scrollHeight >= chatHeight * 3;
+      const isFarFromBottom = distanceFromBottom > chatHeight * 3;
+      setShowScrollButton(hasEnoughHistory && isFarFromBottom);
+    }
+
+    checkScrollButton();
+    el.addEventListener("scroll", checkScrollButton);
+    window.addEventListener("resize", checkScrollButton);
+    return () => {
+      el.removeEventListener("scroll", checkScrollButton);
+      window.removeEventListener("resize", checkScrollButton);
+    };
+  }, [messages]);
+
+  function scrollToBottom() {
+    messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+  }
 
   // Transitions a just-sent message from "sending" (spinner) to "sent" (tick).
   // The tick sticks around for the rest of the session (purely client-side
@@ -728,6 +758,11 @@ export function Chat({ onBack }: { onBack: () => void }) {
         })}
         <div ref={messagesEndRef} />
       </div>
+      {showScrollButton && (
+        <button className="ScrollToBottomBtn" onClick={scrollToBottom} title="Scroll to bottom">
+          <FiChevronDown />
+        </button>
+      )}
       <ChatInput
         key={id}
         memberId={id!}
