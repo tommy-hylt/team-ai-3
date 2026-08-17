@@ -71,11 +71,7 @@
     }
 
     .SkillName {
-      font-size: 13px;
-      min-width: 0;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      font-size: 13px; /* truncation itself now lives in SkillList.css's base .SkillName rule */
     }
 
     .ItemActionBtn,

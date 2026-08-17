@@ -1,5 +1,9 @@
 .SkillList {
   flex: 1;
+  min-width: 0; /* as a flex child of .Layout, without this a long name's intrinsic
+                   width forces this whole panel wider than the viewport, and
+                   .Layout's overflow:hidden just silently clips it instead of
+                   letting anything actually shrink or scroll */
   display: flex;
   flex-direction: column;
   background-color: #08090a;
@@ -65,7 +69,9 @@
 
   .ScrollArea {
     flex: 1;
+    min-width: 0;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 24px;
   }
 
@@ -137,6 +143,7 @@
     border-radius: 10px;
     cursor: pointer;
     transition: 0.2s;
+    min-width: 0; /* without this, a long name's intrinsic width can force the row wider than its container */
 
     &:hover {
       border-color: #4b5563;
@@ -151,6 +158,10 @@
 
     .SkillName {
       flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       font-size: 14px;
       font-weight: 600;
       color: #e0e6ed;
