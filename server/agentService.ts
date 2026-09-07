@@ -386,6 +386,48 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     const logFilePath = join(__dirname, "logs", `${requestId}-${agentName}.log`);
 
+    // grok's streaming-json emits one JSON object per tiny token (e.g. {"type":"text","data":"I"},
+    // {"type":"text","data":"'ll"}, {"type":"text","data":" restore"}, ...), which makes the
+    // persisted per-request log nearly unreadable — thousands of one-word lines. Buffer grok's
+    // stdout and merge consecutive same-type chunks before writing to the log every couple of
+    // seconds, purely for log readability. The in-memory `stdout` used for the actual parsed
+    // response below is unaffected — it still accumulates every raw chunk immediately.
+    const isGrokStream = executable === "grok";
+    let grokLogBuffer = "";
+
+    function flushGrokLog(final: boolean) {
+      if (!grokLogBuffer) return;
+      const lines = grokLogBuffer.split("\n");
+      grokLogBuffer = final ? "" : (lines.pop() ?? "");
+      if (lines.length === 0) return;
+
+      const merged: { type: string; text: string }[] = [];
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed) continue;
+        try {
+          const json = JSON.parse(trimmed);
+          if (typeof json.type === "string" && typeof json.data === "string") {
+            const last = merged[merged.length - 1];
+            if (last && last.type === json.type) {
+              last.text += json.data;
+            } else {
+              merged.push({ type: json.type, text: json.data });
+            }
+            continue;
+          }
+        } catch { /* malformed/non {type,data} line (e.g. the final "end" marker) — preserve raw below */ }
+        merged.push({ type: "__raw__", text: trimmed });
+      }
+
+      const out = merged
+        .map(m => m.type === "__raw__" ? m.text : JSON.stringify({ type: m.type, data: m.text }))
+        .join("\n") + "\n";
+      appendFile(logFilePath, out, "utf-8").catch(() => {});
+    }
+
+    const grokFlushTimer = isGrokStream ? setInterval(() => flushGrokLog(false), 2000) : undefined;
+
     if (stdinData) {
       console.log(`[executeAgent] Writing ${stdinData.length} chars to stdin`);
       proc.stdin.on("error", () => {}); // suppress EPIPE: child may close stdin before server ends it
@@ -396,7 +438,11 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     proc.stdout.on("data", (data) => {
       const chunk = data.toString();
       stdout += chunk;
-      appendFile(logFilePath, chunk, "utf-8").catch(() => {});
+      if (isGrokStream) {
+        grokLogBuffer += chunk;
+      } else {
+        appendFile(logFilePath, chunk, "utf-8").catch(() => {});
+      }
       console.log(`[executeAgent] stdout chunk (${chunk.length} chars): ${chunk.substring(0, 200)}`);
     });
 
@@ -409,6 +455,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
 
     proc.on("error", (err) => {
       console.error(`[executeAgent] Process error:`, err);
+      if (grokFlushTimer) clearInterval(grokFlushTimer);
+      flushGrokLog(true);
       activeProcesses.delete(requestId);
       if (!isResolved) {
         isResolved = true;
@@ -417,6 +465,8 @@ function executeAgent(executable: string, args: string[], cwd: string, requestId
     });
 
     proc.on("exit", (code) => {
+      if (grokFlushTimer) clearInterval(grokFlushTimer);
+      flushGrokLog(true);
       activeProcesses.delete(requestId);
       console.log(`[executeAgent] Process exited with code ${code}`);
 
