@@ -1,12 +1,12 @@
 {
-  "name": "grok-4.5",
+  "name": "grok-4.6",
   "executable": "grok",
   "args": [
     {
       "type": "basic",
       "parts": [
         "-m",
-        "grok-4.5",
+        "grok-4.6",
         "--always-approve",
         "--output-format",
         "streaming-json"

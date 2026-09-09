@@ -3,7 +3,7 @@
   "description": "Primay secretary of this team",
   "agents": [
     "claude-sonnet-5",
-    "claude-opus-4-8"
+    "claude-opus-5"
   ],
   "teams": [
     "General"
