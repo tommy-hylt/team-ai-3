@@ -270,6 +270,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
   const navigate = useNavigate();
   const { members, loading } = useContext(MemberContext);
   const [messages, setMessages] = useState<MessageType[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(true);
   const [initialDraft, setInitialDraft] = useState("");
   const [renderMd, setRenderMd] = useState<Record<number, boolean>>({});
   const [copied, setCopied] = useState<Record<number, boolean>>({});
@@ -301,6 +302,7 @@ export function Chat({ onBack }: { onBack: () => void }) {
     // Reset state for new ID
     setMessages([]);
     setInitialDraft("");
+    setMessagesLoading(true);
 
     // Load initial history
     fetch(`/api/members/${id}/chat`)
@@ -337,7 +339,8 @@ export function Chat({ onBack }: { onBack: () => void }) {
             setInitialDraft(draftText);
           }
         }
-      });
+      })
+      .finally(() => setMessagesLoading(false));
 
     // Subscribe to events
     const evtSource = new EventSource(`/api/members/${id}/events`);
@@ -598,6 +601,11 @@ export function Chat({ onBack }: { onBack: () => void }) {
         </div>
       </div>
       <div className="MessageList" ref={scrollRef}>
+        {messagesLoading ? (
+          <div className="EmptyState">Loading messages...</div>
+        ) : messages.length === 0 ? (
+          <div className="EmptyState">No messages yet — say hello!</div>
+        ) : null}
         {messages.map((m, i) => {
           const reqId = m.type === "request" ? m.id : m.requestId;
           const logKey = `${m.type}-${reqId}`;
