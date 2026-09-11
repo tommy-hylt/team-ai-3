@@ -19,7 +19,7 @@ export function MemberNew() {
   const [data, setData] = useState({
     name: "",
     description: "",
-    agents: ["gemini-2.5-flash"],
+    agents: ["claude-haiku-4-5"],
     teams: ["General"],
     character: "",
     memory: ""
