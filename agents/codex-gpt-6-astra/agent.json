@@ -1,0 +1,8 @@
+{
+  "name": "codex-gpt-6-astra",
+  "executable": "codex",
+  "args": [
+    { "type": "basic", "parts": ["exec", "--json", "--dangerously-bypass-approvals-and-sandbox", "-m", "gpt-6-astra"] },
+    { "type": "resume", "parts": ["resume"] }
+  ]
+}
